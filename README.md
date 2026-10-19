@@ -4,7 +4,7 @@ A pixel-art adventure for Kindergarten to Grade 3 in the style of classic handhe
 
 ## How to play
 
-- Pick a **buddy** at Professor Pi's lab: Sproutle, Emberkit or Splashfin. Your buddy follows you everywhere and helps with every kind of math. Turn around and press A to talk to it.
+- Pick a **buddy** at Professor Pi's lab: Sproutle, Emberkit or Splashfin. Your buddy follows you everywhere and helps with every kind of math. Turn around and press A to talk to it. Any Legend on your team can be your buddy: MENU → Team → pick one → Make buddy.
 - Walk through the tall grass on Route 1. Each wild Legend asks one kind of math puzzle:
 
   | Puzzles | Route 1 | Sunny Shore | Dusty Canyon | Frostpeak | Glowcap Cave |
@@ -70,7 +70,7 @@ On top of that, wild encounters follow the player's needs: while one skill is cl
 - **Progress:** MENU → Grown-ups shows first-try accuracy and mastery for each skill, which skill is being practiced most, and how many missed problems are waiting for review.
 - Progress is saved on the device (browser storage). Nothing is sent anywhere.
 - **Save files:** MENU → Save & load → Export save file downloads (or shares) a backup. Load save file brings it back on any device, and the title screen has Load save file too.
-- **Devices:** works on phones, tablets and computers. On iPad and other tablets it scales up, and in landscape the controls sit on either side of the screen.
+- **Devices:** works on phones, tablets and computers. On iPad and other tablets it scales up. Turned sideways, the controls move to a grip on each side of the screen, like a Nintendo Switch. MENU → Settings → Controls can keep them on the sides or below the screen all the time (this setting stays on the device, not in save files).
 
 ## Running it
 

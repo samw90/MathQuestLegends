@@ -573,38 +573,77 @@ body.kb .ans.sel { outline: .9cqw solid var(--accent); outline-offset: .3cqw; }
   .keys { font-size: 15px; }
 }
 
-/* ---------- landscape: controls beside the screen, like a real handheld ---------- */
-@media (orientation: landscape) and (min-width: 600px) {
-  body { align-items: center; padding: 0; }
-  .console {
-    width: 100%;
-    max-width: none;
-    min-height: 100dvh;
-    border-radius: 0;
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    grid-template-areas: 'dpad screen ab' 'keys start keys2';
-    grid-template-rows: 1fr auto;
-    align-items: center;
-    justify-items: center;
-    column-gap: 24px;
-    padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left));
-  }
-  /* Leave about 270px on each side for the controls, and fit the height. */
-  .bezel { grid-area: screen; width: min(calc((100dvh - 120px) * 1.11 + 36px), calc(100vw - 600px)); min-width: 0; }
-  .pad { display: contents; }
-  .dpad { grid-area: dpad; }
-  .ab { grid-area: ab; transform: rotate(-22deg); }
-  .start { grid-area: start; }
-  .keys { display: none; }
-  .keypad { grid-area: ab; width: 250px; max-width: none; gap: 10px; }
-  .keypad .key { height: 60px; }
-  .console.typing .pad { display: none; }
+/* ---------- side layout: like a Switch, with a grip on each side of the screen ----------
+   Used when the device is sideways, or always if Settings -> Controls says so.
+   Control sizes follow the grip width, so they fit phones and tablets alike. */
+.console.side {
+  --grip: clamp(150px, 24vw, 280px);
+  width: 100%;
+  max-width: none;
+  min-height: 100dvh;
+  border-radius: 0;
+  box-shadow: none;
+  display: grid;
+  grid-template-columns: var(--grip) minmax(0, 1fr) var(--grip);
+  grid-template-rows: 1fr 1fr;
+  grid-template-areas: 'dpad screen ab' 'dpad screen start';
+  align-items: center;
+  justify-items: center;
+  gap: 0 14px;
+  padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  background: #2b2840;
 }
-
-@media (orientation: landscape) and (min-width: 600px) and (min-height: 700px) {
-  .dpad { grid-template: repeat(3, 72px) / repeat(3, 72px); }
-  .ab button { width: 96px; height: 96px; font-size: 30px; }
-  .ab .b { margin-top: 50px; }
-  .start { font-size: 18px; padding: 10px 34px; }
+body:has(.console.side) { align-items: stretch; padding: 0; }
+/* The two grips (blue left, red right) sit behind the controls. */
+.console.side::before,
+.console.side::after {
+  content: '';
+  grid-row: 1 / -1;
+  align-self: stretch;
+  justify-self: stretch;
+  box-shadow: inset 0 -6px 0 #0002, inset 0 4px 0 #fff3;
 }
+.console.side::before { grid-column: 1; background: #1fb4e3; border-radius: 48px 14px 14px 48px; }
+.console.side::after { grid-column: 3; background: #ff5b4f; border-radius: 14px 48px 48px 14px; }
+.console.side .bezel {
+  grid-area: screen;
+  width: min(100%, calc((100dvh - 80px) * 1.11 + 36px));
+  min-width: 0;
+  background: #1c1a2b;
+  border-radius: 14px;
+}
+.console.side .pad { display: contents; }
+.console.side .dpad,
+.console.side .ab,
+.console.side .start,
+.console.side .keypad { position: relative; z-index: 1; }
+.console.side .dpad {
+  grid-area: dpad;
+  --d: calc(var(--grip) * .25);
+  grid-template: repeat(3, var(--d)) / repeat(3, var(--d));
+}
+.console.side .d { background: #20202a; }
+.console.side .d.on { background: #4a4566; }
+.console.side .ab { grid-area: ab; align-self: end; margin: 0 0 calc(var(--grip) * .1); transform: rotate(-22deg); gap: calc(var(--grip) * .06); }
+.console.side .ab button {
+  --b: calc(var(--grip) * .32);
+  width: var(--b);
+  height: var(--b);
+  font-size: calc(var(--b) * .33);
+  background: #2b2840;
+  box-shadow: 0 5px 0 #14121f;
+}
+.console.side .ab .b { margin-top: calc(var(--grip) * .17); }
+.console.side .ab button.on { box-shadow: 0 1px 0 #14121f; }
+.console.side .start { grid-area: start; align-self: start; margin-top: calc(var(--grip) * .14); background: #2b2840; box-shadow: 0 3px 0 #14121f; }
+.console.side .keys { display: none; }
+.console.side .keypad {
+  grid-column: 3;
+  grid-row: 1 / -1;
+  width: calc(var(--grip) - 24px);
+  max-width: none;
+  gap: 8px;
+  padding: 0;
+}
+.console.side .keypad .key { height: calc(var(--grip) * .21); font-size: calc(var(--grip) * .11); }
+.console.side.typing .pad { display: none; }

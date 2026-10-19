@@ -266,6 +266,26 @@
     document.querySelector('.pad').after(k);
     return k;
   })();
+  // Controls below the screen, or on both sides like a Switch. Auto uses the
+  // sides when the device is sideways. Saved per device, not in save files.
+  const LAYOUTS = ['auto', 'side', 'below'];
+  let layout = 'auto';
+  try { layout = localStorage.getItem('mql:layout') || 'auto'; } catch (e) { /* ignore */ }
+  const wide = matchMedia('(orientation: landscape) and (min-width: 600px)');
+  const roomy = matchMedia('(min-width: 600px)'); // phones held upright are too narrow for grips
+  function applyLayout() {
+    const side = (layout === 'side' && roomy.matches) || (layout === 'auto' && wide.matches);
+    consoleEl.classList.toggle('side', side);
+  }
+  wide.addEventListener('change', applyLayout);
+  roomy.addEventListener('change', applyLayout);
+  applyLayout();
+  function layoutLabel() {
+    if (layout === 'side') return 'On the sides';
+    if (layout === 'below') return 'Below';
+    return wide.matches ? 'Auto (sides)' : 'Auto (below)';
+  }
+
   function showKeypad(fn) { keyInput = fn; keypad.hidden = false; consoleEl.classList.add('typing'); }
   function hideKeypad() { keyInput = null; keypad.hidden = true; consoleEl.classList.remove('typing'); }
 
@@ -1010,7 +1030,7 @@
     async starter(n) {
       const id = STARTERS[n - 1], sp = SPECIES[id];
       if (S.flags.starter) {
-        await say(S.sidekick === id ? `${sp.name} used to sleep right here!` : `${sp.name} is taking a nap. Professor Pi looks after it.`);
+        await say(S.party.some((c) => c.sp === id) ? `${sp.name} used to sleep right here!` : `${sp.name} is taking a nap. Professor Pi looks after it.`);
         return;
       }
       const close = popCreature(id);
@@ -1415,9 +1435,19 @@
       const i = await teamPicker('Your team (★ = buddy)');
       if (i < 0) return;
       const c = S.party[i];
-      const a = await choose(['Look', 'Go first', 'Back'], { cls: 'start-menu' });
+      const isBuddy = c.sp === S.sidekick;
+      const a = await choose(['Look', isBuddy ? 'Buddy ★' : 'Make buddy', 'Go first', 'Back'], { cls: 'start-menu' });
       if (a === 0) await creatureInfo(c);
-      if (a === 1 && i > 0) {
+      if (a === 1) {
+        if (isBuddy) { await say(`${nameOf(c)} is already your buddy!`); continue; }
+        S.sidekick = c.sp;
+        S.party.splice(i, 1);
+        S.party.unshift(c);
+        sfx('select');
+        await say([`${nameOf(c)} is your new buddy!`, 'It will walk with you and go first.']);
+        writeSave();
+      }
+      if (a === 2 && i > 0) {
         S.party.splice(i, 1);
         S.party.unshift(c);
         await say(`${nameOf(c)} will go first next time!`);
@@ -1487,6 +1517,7 @@
         `Voice: ${currentVoice() ? currentVoice().name.replace(/\s*\(.*\)$/, '') : 'None'}`,
         `Sound: ${soundOn ? 'On' : 'Off'}`,
         `Answers: ${answerLabel()}`,
+        `Controls: ${layoutLabel()}`,
         'Back',
       ], { cls: 'start-menu' });
       if (i === 0) {
@@ -1504,6 +1535,10 @@
       } else if (i === 4) {
         const modes = ['auto', 'type', 'pick'];
         S.answerMode = modes[(modes.indexOf(S.answerMode || 'auto') + 1) % modes.length];
+      } else if (i === 5) {
+        layout = LAYOUTS[(LAYOUTS.indexOf(layout) + 1) % LAYOUTS.length];
+        try { localStorage.setItem('mql:layout', layout); } catch (e) { /* ignore */ }
+        applyLayout();
       } else {
         writeSave();
         return;
