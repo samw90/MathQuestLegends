@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Math Quest Legends</title>
+<meta name="description" content="A pixel-art monster-catching adventure where every battle move is a math problem.">
+<meta name="theme-color" content="#2d2a4a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MQ Legends">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Pixelify+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="console">
+  <div class="bezel">
+    <div class="screen" id="screen">
+      <canvas id="cv" width="160" height="144"></canvas>
+      <div id="ui"></div>
+      <div id="fade"></div>
+    </div>
+    <div class="brand">MATH QUEST <b>LEGENDS</b></div>
+  </div>
+
+  <div class="pad">
+    <div class="dpad">
+      <button data-btn="up" class="d up" aria-label="Up"></button>
+      <button data-btn="left" class="d left" aria-label="Left"></button>
+      <span class="d mid"></span>
+      <button data-btn="right" class="d right" aria-label="Right"></button>
+      <button data-btn="down" class="d down" aria-label="Down"></button>
+    </div>
+    <div class="ab">
+      <button data-btn="b" class="b" aria-label="B button">B</button>
+      <button data-btn="a" class="a" aria-label="A button">A</button>
+    </div>
+  </div>
+  <button data-btn="start" class="start">MENU</button>
+  <p class="keys">Arrows / WASD move · Z or Space = A · X = B · Enter = Menu</p>
+</main>
+
+<script src="js/data.js"></script>
+<script src="js/art.js"></script>
+<script src="js/math.js"></script>
+<script src="js/game.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+}
+</script>
+</body>
+</html>
