@@ -1,11 +1,11 @@
 // Offline support. Same-site files are fetched from the network first (so new
 // uploads show up right away) and fall back to the cache when offline.
 // Bump CACHE (v1 -> v2 ...) when files are renamed or removed.
-const CACHE = 'mql-v4';
+const CACHE = 'mql-v5';
 const ASSETS = [
   './', './index.html', './style.css', './manifest.webmanifest',
   './js/data.js', './js/art.js', './js/math.js', './js/game.js',
-  './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon-32.png',
+  './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png', './favicon-32.png',
 ];
 
 self.addEventListener('install', (e) => {
