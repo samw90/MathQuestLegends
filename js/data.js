@@ -10,47 +10,47 @@ const SPECIES = {
   sproutle: {
     name: 'Sproutle', hp: 22, atk: 11, sidekick: true,
     moves: ['Leaf Swipe', 'Vine Whip'],
-    dex: 'A cheerful sprout. It loves to help you think.',
+    dex: 'A cheerful little sprout who loves helping you think.',
   },
   emberkit: {
     name: 'Emberkit', hp: 20, atk: 12, sidekick: true,
     moves: ['Ember Pounce', 'Warm Glow'],
-    dex: 'A brave little cat. Its tail glows when it has an idea.',
+    dex: 'A brave little cat. Its tail glows whenever it gets an idea.',
   },
   splashfin: {
     name: 'Splashfin', hp: 24, atk: 10, sidekick: true,
     moves: ['Bubble Burst', 'Tail Splash'],
-    dex: 'A calm fish. It blows a bubble when it finds the answer.',
+    dex: 'A calm little fish. It blows a bubble when it finds the answer.',
   },
   hootsum: {
     name: 'Hootsum', hp: 20, atk: 10, family: 'add',
     moves: ['Plus Gust', 'Wing Flap'],
-    dex: 'Its puzzles are about adding. See the plus on its chest?',
+    dex: 'It loves adding puzzles. See the plus sign on its chest?',
   },
   snipsnap: {
     name: 'Snipsnap', hp: 20, atk: 10, family: 'sub',
     moves: ['Snip Away', 'Claw Pinch'],
-    dex: 'Its puzzles are about taking away. Snip, snip!',
+    dex: 'It loves take-away puzzles. Snip, snip!',
   },
   pebblit: {
     name: 'Pebblit', hp: 22, atk: 9, family: 'compare',
     moves: ['Rock Roll', 'Pebble Toss'],
-    dex: 'Its puzzles ask which number is bigger.',
+    dex: 'It loves asking which number is bigger.',
   },
   buzzlet: {
     name: 'Buzzlet', hp: 18, atk: 10, family: 'mult',
     moves: ['Buzz Loop', 'Group Sting'],
-    dex: 'Its puzzles are about equal groups. It counts by 2s, 5s, and 10s.',
+    dex: 'It loves equal groups and counts by 2s, 5s, and 10s.',
   },
   shareling: {
     name: 'Shareling', hp: 22, atk: 10, family: 'div',
     moves: ['Spore Share', 'Cap Bonk'],
-    dex: 'Its puzzles are about sharing equally. It splits its cap with friends.',
+    dex: 'It loves sharing things equally, even its own cap!',
   },
   gridrex: {
     name: 'Gridrex', hp: 30, atk: 12, family: 'mixed',
     moves: ['Grid Stomp', 'Array Slam'],
-    dex: 'Ranger Rowan\'s partner. Its puzzles mix every kind of math.',
+    dex: 'Ranger Rowan\'s partner. It loves every kind of math puzzle.',
   },
 };
 
@@ -146,9 +146,9 @@ const MAPS = {
       { x: 10, y: 17, to: 'town', tx: 10, ty: 1, dir: 'down' },
     ],
     signs: {
-      '13,8': ['ROUTE 1', 'Wild Legends hide in tall grass!'],
-      '9,0': ['Route 2 is not ready yet.', 'Come back soon!'],
-      '10,0': ['Route 2 is not ready yet.', 'Come back soon!'],
+      '13,8': ['ROUTE 1', 'Wild Legends hide in the tall grass!'],
+      '9,0': ['Route 2 isn\'t open yet.', 'Come back soon!'],
+      '10,0': ['Route 2 isn\'t open yet.', 'Come back soon!'],
     },
     wild: true,
   },

@@ -9,6 +9,11 @@
   const OPPOSITE = { up: 'down', down: 'up', left: 'right', right: 'left' };
   const SAVE_KEY = 'mql:save:v2';
   const DAY = 24 * 60 * 60 * 1000;
+  // How each kind of puzzle is named in battle: "It loves take-away puzzles!"
+  const FAMILY_PHRASE = {
+    add: 'adding', sub: 'take-away', compare: 'bigger-number',
+    mult: 'equal-groups', div: 'sharing', mixed: 'all kinds of',
+  };
   const FAMILY_LABEL = {
     add: 'Adding', sub: 'Taking away', compare: 'Comparing numbers',
     mult: 'Equal groups and times', div: 'Sharing equally', mixed: 'All kinds of math',
@@ -81,7 +86,7 @@
   function healAll() { S.party.forEach((c) => { c.hp = maxHp(c); }); }
   function puzzleLabel(sp) {
     const s = SPECIES[sp];
-    return s.sidekick ? 'Buddy: helps with all math' : `Puzzles: ${FAMILY_LABEL[s.family]}`;
+    return s.sidekick ? 'Buddy: helps with every kind of math' : `Puzzles: ${FAMILY_LABEL[s.family]}`;
   }
 
   // ---------------------------------------------------------------- sound + voice
@@ -129,13 +134,44 @@
       .replace(/\bLv\b/g, 'level').replace(/\bXP\b/g, 'X P')
       .replace(/\s+/g, ' ').trim();
   }
+  // Browsers often default to a flat, robotic voice even when the device has
+  // natural ones installed, so rank the English voices and use the best.
+  const NOVELTY = /albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|eddy|flo|fred|good news|grandma|grandpa|hysterical|jester|junior|kathy|organ|ralph|reed|rocko|sandy|shelley|superstar|trinoids|whisper|wobble|zarvox/i;
+  function voiceScore(v) {
+    const n = v.name;
+    let score = 0;
+    if (NOVELTY.test(n)) return -100;
+    if (/natural|neural/i.test(n)) score += 60; // Edge / Windows natural voices
+    if (/premium|enhanced|siri/i.test(n)) score += 50; // Apple high-quality voices
+    if (/google/i.test(n)) score += 30; // Chrome's online voices
+    if (/compact|espeak/i.test(n)) score -= 30;
+    if (/samantha|ava|allison|evan|nathan|zoe|susan|karen|serena|aria|jenny|guy|libby|sonia/i.test(n)) score += 15;
+    if (/en[-_]US/i.test(v.lang)) score += 5;
+    return score;
+  }
+  let voices = [];
+  function loadVoices() {
+    if (!window.speechSynthesis) return;
+    voices = speechSynthesis.getVoices()
+      .filter((v) => /^en/i.test(v.lang) && voiceScore(v) > -100)
+      .sort((x, y) => voiceScore(y) - voiceScore(x));
+  }
+  if (window.speechSynthesis) {
+    loadVoices();
+    speechSynthesis.addEventListener('voiceschanged', loadVoices);
+  }
+  const currentVoice = () => (S && S.voiceName && voices.find((v) => v.name === S.voiceName)) || voices[0] || null;
+
   function speak(text, force) {
     if (!(force || (S && S.voice)) || !window.speechSynthesis) return;
     try {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(spoken(text));
-      u.rate = 0.9;
-      u.pitch = 1.05;
+      const v = currentVoice();
+      if (v) { u.voice = v; u.lang = v.lang; }
+      // Natural voices sound best near normal speed; basic ones a touch slower.
+      u.rate = v && voiceScore(v) >= 30 ? 0.95 : 0.88;
+      u.pitch = 1;
       speechSynthesis.speak(u);
     } catch (e) { /* no voice */ }
   }
@@ -465,7 +501,7 @@
         const lesson = MathEngine.teach(p);
         if (lesson) await teachPanel(lesson);
         const t = MathEngine.twin(p);
-        await say(`${buddyName()}: Now you try one like it!`);
+        await say(`${buddyName()}: Your turn! Try one just like it.`);
         const r = await ask(t, { canTeach: false, head: 'Your turn!' });
         res({ result: r.result === 'miss' ? 'miss' : 'helped', ms: performance.now() - t0, taught: true });
       }
@@ -503,7 +539,7 @@
         sfx('bad');
         if (tries === 1) {
           showVisual();
-          sayBubble(MathEngine.mistakeHint(p, p.choices[i]) || (p.visual ? 'Not quite. Look at the picture and try again!' : 'Not quite. Try again. You can do it!'));
+          sayBubble(MathEngine.mistakeHint(p, p.choices[i]) || (p.visual ? 'Almost! Look at the picture and give it another try.' : 'Almost! Give it another try. You\'ve got this!'));
           sel = live()[0];
           draw();
           return;
@@ -513,7 +549,7 @@
         hush();
         btns[p.choices.indexOf(p.answer)].classList.add('right');
         btns.forEach((b) => { b.disabled = true; });
-        sayBubble(`Here is the answer: ${p.explain}`);
+        sayBubble(`Here's the answer: ${p.explain}`);
         foot.textContent = '';
         const okBtn = el('button', 'hintbtn', 'OK');
         okBtn.type = 'button';
@@ -799,13 +835,13 @@
     const legend = SPECIES[FAMILY_SPECIES[fam]].name;
     const allMastered = MathEngine.gradeSkills(S.grade).every((id) => MathEngine.stretchLevel(S.skills[id]) === 2);
     if (allMastered) {
-      await say([`${buddyName()}: You are a math star!`, 'Ask a grown-up to try the next grade.']);
+      await say([`${buddyName()}: You're a math star!`, 'Maybe ask a grown-up about trying the next grade.']);
       return;
     }
     await say([
       `${buddyName()}: Let's practice ${MathEngine.SKILLS[weak].label.toLowerCase()}!`,
-      !s || s.attempts < 3 ? `${legend} asks those puzzles.` : `${legend} asks those puzzles. We are getting better!`,
-      'Let\'s find one in the tall grass.',
+      !s || s.attempts < 3 ? `${legend} loves those puzzles.` : `${legend} loves those puzzles. We're getting better at them!`,
+      'Let\'s go find one in the tall grass!',
     ]);
   }
 
@@ -855,23 +891,23 @@
 
   const SCRIPTS = {
     mom: () => say(S.flags.starter
-      ? ['{buddy} is so cute!', 'If your team gets tired, go to the Rest Center.', 'It has a pink roof.']
-      : ['Good morning, {name}!', 'Professor Pi wants to see you.', 'The lab has a blue roof.']),
+      ? ['{buddy} is so cute!', 'If your team gets tired, the Rest Center can help.', 'It\'s the building with the pink roof.']
+      : ['Good morning, {name}!', 'Professor Pi was looking for you.', 'The lab is the building with the blue roof.']),
 
     prof: () => {
-      if (!S.flags.starter) return say(['Hi, {name}! I am Professor Pi.', 'Wild Legends love math puzzles.', 'Pick a buddy from my table.', 'Your buddy will help you think!']);
-      if (!S.flags.badge1) return say(['Ranger Rowan is at the end of Route 1.', 'Rowan picks puzzles you need to practice.', 'Beat Rowan to win a badge!']);
-      return say(['You got the Sum Badge! Great job!', 'Route 2 will open soon.']);
+      if (!S.flags.starter) return say(['Hi, {name}! I\'m Professor Pi.', 'Wild Legends love math puzzles.', 'Go ahead and pick a buddy from my table.', 'Your buddy will help you think things through!']);
+      if (!S.flags.badge1) return say(['Ranger Rowan is waiting at the end of Route 1.', 'Rowan likes to pick the puzzles you need most.', 'Win, and you\'ll earn a badge!']);
+      return say(['You earned the Sum Badge! Way to go!', 'Route 2 will open soon.']);
     },
 
     async starter(n) {
       const id = STARTERS[n - 1], sp = SPECIES[id];
       if (S.flags.starter) {
-        await say(S.sidekick === id ? `This is where ${sp.name} used to sleep!` : `${sp.name} is napping. Professor Pi takes care of it.`);
+        await say(S.sidekick === id ? `${sp.name} used to sleep right here!` : `${sp.name} is taking a nap. Professor Pi looks after it.`);
         return;
       }
       const close = popCreature(id);
-      const ok = await yesNo([`This is ${sp.name}!`, sp.dex, `Do you want ${sp.name} as your buddy?`]);
+      const ok = await yesNo([`This is ${sp.name}!`, sp.dex, `Want ${sp.name} to be your buddy?`]);
       if (!ok) { close(); return; }
       S.party.push(mon(id, 5));
       S.sidekick = id;
@@ -879,52 +915,52 @@
       STARTERS.forEach((s) => { S.seen[s] = true; });
       S.caught[id] = true;
       sfx('friend');
-      await say(`${sp.name} is your buddy now!`);
+      await say(`You and ${sp.name} are buddies now!`);
       close();
       await say([
         'PROF. PI: Great choice!',
-        'Your buddy goes everywhere with you.',
-        'Wild Legends ask math puzzles.',
-        'Solve them to calm the Legend down.',
-        'Some will want to be your friend!',
-        'If a puzzle is hard, press HINT.',
-        `${sp.name} will help you.`,
-        'Route 1 is north of town. Have fun!',
+        'Your buddy will go everywhere with you.',
+        'Out in the wild, Legends love math puzzles.',
+        'Solve their puzzles, and they calm down.',
+        'Some might even want to be your friend!',
+        'If a puzzle feels hard, press HINT.',
+        `${sp.name} will help you out.`,
+        'Route 1 is just north of town. Have fun!',
       ]);
       writeSave();
     },
 
     nurse: async () => {
-      await say(['Welcome to the Rest Center!', 'Let me help your team.']);
+      await say(['Welcome to the Rest Center!', 'Let\'s get your team feeling better.']);
       healAll();
       sfx('heal');
       await sleep(900);
-      await say(['Your team feels great now!', 'Come back any time!']);
+      await say(['All better! Your team is ready to go.', 'Come back any time!']);
       writeSave();
     },
 
     kid: () => say(S.flags.starter
       ? ['Your buddy follows you everywhere!', 'Turn around and press A to talk to it.']
-      : ['Wild Legends hide in tall grass.', 'You need a buddy to go there.']),
+      : ['Wild Legends hide in the tall grass.', 'You\'ll need a buddy before you go in there.']),
 
-    kidBlock: () => say(['Wait! Stop!', 'Wild Legends are in the tall grass.', 'Get a buddy from Professor Pi first.']),
+    kidBlock: () => say(['Wait, stop!', 'There are wild Legends in that tall grass.', 'Get a buddy from Professor Pi first.']),
 
-    girl: () => say(['Stuck on a puzzle? Press HINT.', 'Press it again, and your buddy will teach you.', 'Step by step!']),
+    girl: () => say(['Stuck on a puzzle? Press HINT.', 'Press it again, and your buddy will show you how.', 'One step at a time!']),
 
-    hiker: () => say(['Each wild Legend asks its own kind of math.', 'Hootsum asks adding puzzles.', 'Snipsnap asks take-away puzzles.']),
+    hiker: () => say(['Every wild Legend has its own kind of puzzle.', 'Hootsum loves adding.', 'Snipsnap loves taking away.']),
 
-    routeKid: () => say(['Solve puzzles on the first try.', 'Then Legends want to be your friend!']),
+    routeKid: () => say(['Try to solve puzzles on the first try.', 'Legends really like that. They might want to be friends!']),
 
     ranger: async () => {
-      if (S.flags.badge1) return say(['Great job, {name}!', 'Keep training your team!']);
-      await say(['I am Ranger Rowan.', 'I keep Route 2 safe.', 'Show me your math power!']);
+      if (S.flags.badge1) return say(['Great job, {name}!', 'Keep training with your team!']);
+      await say(['I\'m Ranger Rowan.', 'I keep watch over Route 2.', 'Let\'s see your math power!']);
       const weak = MathEngine.weakestSkill(S.grade, S.skills);
       const first = FAMILY_SPECIES[MathEngine.SKILLS[weak].family];
       const result = await battle([mon(first, 5, weak), mon('gridrex', 6)], { trainer: 'Ranger Rowan' });
       if (result === 'win') {
         S.flags.badge1 = true;
         sfx('level');
-        await say(['RANGER ROWAN: Wow! You are strong!', 'Here is the Sum Badge!', 'Route 2 is not ready yet.', 'Come back soon for more!']);
+        await say(['RANGER ROWAN: Wow, you two make a great team!', 'This Sum Badge is yours!', 'Route 2 isn\'t ready yet.', 'Come back soon for more!']);
         writeSave();
       }
     },
@@ -1034,7 +1070,7 @@
     });
     const fam = SPECIES[B.enemy.sp].family;
     if (B.trainer) await say([`${B.trainer} wants to battle!`, `${B.trainer} sends out ${nameOf(B.enemy)}!`]);
-    else await say([`A wild ${nameOf(B.enemy)} jumped out!`, `It has ${FAMILY_LABEL[fam].toLowerCase()} puzzles!`]);
+    else await say([`A wild ${nameOf(B.enemy)} jumped out!`, `It loves ${FAMILY_PHRASE[fam]} puzzles!`]);
     await say(`Go, ${nameOf(B.me)}!`);
 
     let result = null;
@@ -1049,7 +1085,7 @@
       if (result === 'lose') { healAll(); placePlayer('center', 3, 3, 'up'); }
     });
     if (result === 'lose') {
-      await say(['NURSE ADA: Your team feels great now!', 'Every puzzle helps you learn.', 'You can do it. Try again!']);
+      await say(['NURSE ADA: There! Your team feels great again.', 'Every puzzle helps you learn.', 'You\'ll get it next time!']);
     }
     writeSave();
     return result;
@@ -1079,7 +1115,7 @@
     const r = await ask(p, { head });
     record(p, r.result, r.ms);
     if (r.result === 'miss') {
-      await say(`${nameOf(B.me)} missed. Keep trying!`);
+      await say(`${nameOf(B.me)} missed. That's okay, keep trying!`);
       return foeTurn(false);
     }
     const fast = r.result === 'first' && r.ms < fastLimit(p);
@@ -1087,14 +1123,14 @@
     const mult = r.result === 'first' ? (fast ? 1.5 : 1) : 0.6;
     await say(`${nameOf(B.me)} uses ${move}!`);
     await hurt(B.enemy, damage(40, atkOf(B.me), mult), 'e');
-    if (r.result === 'first') await say(fast ? 'So fast! Extra power!' : 'Great job!');
+    if (r.result === 'first') await say(fast ? 'Wow, so fast! Extra power!' : 'Nice work!');
     else await say('You figured it out!');
     if (!alive(B.enemy)) return foeCalmed();
     return foeTurn(true);
   }
 
   async function switchTeam() {
-    const i = await teamPicker('Who goes in?');
+    const i = await teamPicker('Who should go in?');
     if (i < 0 || S.party[i] === B.me) return null;
     const c = S.party[i];
     if (!alive(c)) { await say(`${nameOf(c)} needs a rest.`); return null; }
@@ -1115,15 +1151,15 @@
     if (alive(B.me)) return null;
 
     await faintAnim('p');
-    await say(`${nameOf(B.me)} needs a rest!`);
+    await say(`${nameOf(B.me)} is all tired out!`);
     if (!S.party.some(alive)) {
-      await say(['Your whole team needs a rest.', 'You run back to the Rest Center.']);
+      await say(['Your whole team is tired out.', 'You hurry back to the Rest Center.']);
       return 'lose';
     }
-    let i = await teamPicker('Pick another Legend.', false, S.party.findIndex(alive));
+    let i = await teamPicker('Who should go next?', false, S.party.findIndex(alive));
     while (!alive(S.party[i])) {
       await say(`${nameOf(S.party[i])} needs a rest.`);
-      i = await teamPicker('Pick another Legend.', false, S.party.findIndex(alive));
+      i = await teamPicker('Who should go next?', false, S.party.findIndex(alive));
     }
     B.me = S.party[i];
     B.fx.p.hide = false;
@@ -1135,7 +1171,7 @@
   // The foe is out of energy. Wild Legends calm down and may want to be friends.
   async function foeCalmed() {
     await faintAnim('e');
-    await say(B.trainer ? `${nameOf(B.enemy)} is all done!` : `${foeName()} calmed down!`);
+    await say(B.trainer ? `${nameOf(B.enemy)} is all done!` : `The wild ${nameOf(B.enemy)} calmed down!`);
     const gain = Math.round(B.enemy.lv * 6 * (B.trainer ? 1.5 : 1));
     await gainXp(B.me, gain);
     B.ei++;
@@ -1143,7 +1179,7 @@
       B.enemy = B.foes[B.ei];
       B.fx.e = { dx: 0, dy: 0, hide: false };
       updHud();
-      await say([`${B.trainer} sends out ${nameOf(B.enemy)}!`, `It has ${FAMILY_LABEL[SPECIES[B.enemy.sp].family].toLowerCase()} puzzles!`]);
+      await say([`${B.trainer} sends out ${nameOf(B.enemy)}!`, `It loves ${FAMILY_PHRASE[SPECIES[B.enemy.sp].family]} puzzles!`]);
       return null;
     }
     if (B.trainer) {
@@ -1157,7 +1193,7 @@
     if (Math.random() < chance) {
       B.fx.e.hide = false;
       sfx('friend');
-      if (await yesNo([`${nameOf(c)} likes you!`, `It wants to be your friend. Take it along?`])) {
+      if (await yesNo([`${nameOf(c)} really likes you!`, 'It wants to come with you. Take it along?'])) {
         c.hp = maxHp(c);
         delete c.skill;
         S.caught[c.sp] = true;
@@ -1166,7 +1202,7 @@
           await say(`${nameOf(c)} joined your team!`);
         } else {
           S.box.push(c);
-          await say(['Your team is full.', `${nameOf(c)} went to Professor Pi's lab.`]);
+          await say(['Your team is full.', `${nameOf(c)} will wait for you at Professor Pi's lab.`]);
         }
       } else {
         await say(`${nameOf(c)} waves goodbye!`);
@@ -1185,7 +1221,7 @@
       c.hp = Math.min(maxHp(c), c.hp + 3);
       updHud();
       sfx('level');
-      await say(`${nameOf(c)} is now level ${c.lv}!`);
+      await say(`${nameOf(c)} grew to level ${c.lv}!`);
     }
   }
 
@@ -1231,7 +1267,7 @@
   }
 
   async function teamMenu() {
-    if (!S.party.length) { await say('You have no Legends yet.'); return; }
+    if (!S.party.length) { await say('You don\'t have any Legends yet.'); return; }
     for (;;) {
       const i = await teamPicker('Your team (★ = buddy)');
       if (i < 0) return;
@@ -1241,7 +1277,7 @@
       if (a === 1 && i > 0) {
         S.party.splice(i, 1);
         S.party.unshift(c);
-        await say(`${nameOf(c)} will go first!`);
+        await say(`${nameOf(c)} will go first next time!`);
       }
     }
   }
@@ -1261,7 +1297,7 @@
       const i = await choose(items, { cls: 'full', head: `Legendex: ${count} of ${DEX_ORDER.length} friends` });
       if (i < 0) return;
       const id = DEX_ORDER[i];
-      if (!(S.seen[id] || S.caught[id])) { await say('You have not found this one yet.'); continue; }
+      if (!(S.seen[id] || S.caught[id])) { await say('You haven\'t found this one yet.'); continue; }
       const sp = SPECIES[id];
       await panel((box) => {
         const img = el('img', 'pic');
@@ -1297,6 +1333,7 @@
       const i = await choose([
         `Grade: ${GRADES[S.grade]}`,
         `Read aloud: ${S.voice ? 'On' : 'Off'}`,
+        `Voice: ${currentVoice() ? currentVoice().name.replace(/\s*\(.*\)$/, '') : 'None'}`,
         `Sound: ${soundOn ? 'On' : 'Off'}`,
         'Back',
       ], { cls: 'start-menu' });
@@ -1305,9 +1342,11 @@
         if (g >= 0) S.grade = g;
       } else if (i === 1) {
         S.voice = !S.voice;
-        if (S.voice) speak('Read aloud is on.');
+        if (S.voice) speak('Okay! I\'ll read things out loud now.');
         else hush();
       } else if (i === 2) {
+        await voiceMenu();
+      } else if (i === 3) {
         soundOn = !soundOn;
         try { localStorage.setItem('mql:sound', soundOn ? 'on' : 'off'); } catch (e) { /* ignore */ }
       } else {
@@ -1315,6 +1354,22 @@
         return;
       }
     }
+  }
+
+  // Lists the best voices first; each one says a sample line when chosen.
+  async function voiceMenu() {
+    loadVoices();
+    if (!voices.length) { await say('This device doesn\'t have any voices to pick from.'); return; }
+    const list = voices.slice(0, 12);
+    const now = currentVoice();
+    const j = await choose(list.map((v) => ({
+      label: v.name.replace(/\s*\(.*\)$/, ''),
+      sub: (voiceScore(v) >= 30 ? 'Sounds natural · ' : '') + v.lang,
+    })), { cls: 'full', head: 'Pick a voice', start: Math.max(0, list.indexOf(now)) });
+    if (j < 0) return;
+    S.voiceName = list[j].name;
+    speak(`Hi ${S.name}! This is how I sound.`, true);
+    writeSave();
   }
 
   async function openMenu() {
@@ -1326,10 +1381,10 @@
       i = await choose(items, { cls: 'start-menu', start: Math.max(0, i) });
       if (i === 0) await teamMenu();
       else if (i === 1) await dexMenu();
-      else if (i === 2) { if (S.sidekick) await buddyTalk(); else await say('You do not have a buddy yet.'); }
+      else if (i === 2) { if (S.sidekick) await buddyTalk(); else await say('You don\'t have a buddy yet.'); }
       else if (i === 3) await progressPage();
       else if (i === 4) await settingsMenu();
-      else if (i === 5) { writeSave(); await say('Your game is saved!'); }
+      else if (i === 5) { writeSave(); await say('Game saved!'); }
       else break;
     }
     busy = false;
@@ -1355,7 +1410,7 @@
   function askName() {
     return new Promise((res) => {
       const box = el('form', 'box namebox');
-      box.append(el('label', null, 'What is your name?'));
+      box.append(el('label', null, 'What\'s your name?'));
       const input = el('input');
       input.maxLength = 10;
       input.autocomplete = 'off';
@@ -1395,7 +1450,7 @@
     }
     if (save) {
       S = save;
-      const sure = await yesNo(['Start a new game?', 'Your old game will be gone.']);
+      const sure = await yesNo(['Start a new game?', 'Your old game will be erased.']);
       S = null;
       if (!sure) return title();
     }
@@ -1405,11 +1460,11 @@
   async function newGame() {
     const name = await askName();
     S = newState(name, 0);
-    await say(['Hello, {name}!', 'Welcome to Math Quest Legends!', 'Legends are creatures that love math puzzles.', 'What grade are you in?'], { keep: true });
+    await say(['Hi, {name}!', 'Welcome to Math Quest Legends!', 'Legends are creatures who love math puzzles.', 'What grade are you in?'], { keep: true });
     const g = await choose(GRADES, { cancel: false });
     hideDialog();
     S.grade = g;
-    await say(['Great!', 'A grown-up can change this in MENU.', 'MENU can also read words out loud.', 'Now go see Professor Pi.', 'Walk out the door to start!']);
+    await say(['Got it!', 'A grown-up can change that in the MENU.', 'The MENU can also read words out loud.', 'Now head out the door and go see Professor Pi!']);
     await fade(() => { placePlayer('house', 3, 4, 'down'); mode = 'world'; });
     writeSave();
   }

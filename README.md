@@ -49,6 +49,11 @@ On top of that, wild encounters follow the player's needs: while one skill is cl
 
 - **Grade:** set at the start and changeable any time in MENU → Settings.
 - **Read aloud:** off by default. Turn it on in MENU → Settings to have the game read dialog, questions and hints out loud. The 🔊 button reads the current question at any time.
+- **Voice:** the game picks the most natural-sounding voice on the device, and MENU → Settings → Voice lets you choose another. For the best sound, install a high-quality voice:
+  - iPhone/iPad: Settings → Accessibility → Spoken Content → Voices → English, then download a voice marked "Enhanced" or "Premium" (for example Ava or Zoe).
+  - Mac: System Settings → Accessibility → Spoken Content → System Voice → Manage Voices, then download a Premium or Enhanced voice.
+  - Windows: Microsoft Edge has natural-sounding online voices built in (for example Aria or Jenny).
+  - Chrome on any computer includes Google voices, which sound better than the basic system ones.
 - **Progress:** MENU → Grown-ups shows first-try accuracy and mastery for each skill, which skill is being practiced most, and how many missed problems are waiting for review.
 - Progress is saved on the device (browser storage). Nothing is sent anywhere.
 

@@ -240,34 +240,34 @@ const MathEngine = (() => {
   function tip(p) {
     const { a, b } = p;
     if (p.story) {
-      const word = { '+': 'put together. That means add', '−': 'taken away. That means subtract', '×': 'in equal groups. That means multiply', '÷': 'split into equal groups. That means divide' }[p.op];
-      return `In this story, things are ${word}: ${p.equation}`;
+      const why = { '+': 'Things are being put together, so we add', '−': 'Some are being taken away, so we subtract', '×': 'There are equal groups, so we multiply', '÷': 'They\'re split into equal groups, so we divide' }[p.op];
+      return `${why}: ${p.equation}`;
     }
-    if (p.missing) return `Count up from ${a} to ${p.total}. How many hops?`;
+    if (p.missing) return `Count up from ${a} to ${p.total}. How many jumps did you make?`;
     switch (p.skillId) {
       case 'add-10':
-        return `Start at ${Math.max(a, b)}. Count up ${Math.min(a, b)} more.`;
+        return `Start at ${Math.max(a, b)} and count up ${Math.min(a, b)} more.`;
       case 'add-20':
-        if (a + b > 10 && Math.max(a, b) < 10) return `Make a ten! ${Math.max(a, b)} + ${10 - Math.max(a, b)} = 10. Then add the rest.`;
-        return `Start at the bigger number, ${Math.max(a, b)}. Count up ${Math.min(a, b)}.`;
+        if (a + b > 10 && Math.max(a, b) < 10) return `Try making a ten! ${Math.max(a, b)} + ${10 - Math.max(a, b)} = 10. Then add what's left.`;
+        return `Start with the bigger number, ${Math.max(a, b)}. Then count up ${Math.min(a, b)}.`;
       case 'sub-10':
-        return `Start with ${a}. Take away ${b}. Count what is left.`;
+        return `Start with ${a}, take away ${b}, then count what's left.`;
       case 'sub-20':
-        return b <= 4 ? `Start at ${a}. Count back ${b}.` : `Think addition: ${b} + ? = ${a}.`;
+        return b <= 4 ? `Start at ${a} and count back ${b}.` : `Think of it as adding: ${b} + ? = ${a}.`;
       case 'compare':
-        return a >= 10 && b >= 10 ? 'Look at the tens first. Then look at the ones.' : 'Which number do you say later when you count? That one is bigger.';
+        return a >= 10 && b >= 10 ? 'Look at the tens first, then the ones.' : 'Which number comes later when you count? That\'s the bigger one.';
       case 'add-100':
       case 'add-1000':
-        return `Add the ones first. Then the tens.${a >= 100 ? ' Then the hundreds.' : ''} Carry if a column makes 10 or more.`;
+        return `Add the ones first, then the tens${a >= 100 ? ', then the hundreds' : ''}. If a column makes 10 or more, carry the 1.`;
       case 'sub-100':
       case 'sub-1000':
         return a % 10 < b % 10
-          ? `Not enough ones! Trade 1 ten for 10 ones. Then subtract.`
-          : 'Take away the ones first. Then the tens.';
+          ? 'There aren\'t enough ones! Trade 1 ten for 10 ones, then subtract.'
+          : 'Take away the ones first, then the tens.';
       case 'equal-groups':
-        return `There are ${a} groups of ${b}. Count by ${b}s.`;
+        return `That's ${a} groups of ${b}. Try counting by ${b}s.`;
       case 'mult-facts':
-        return a <= 5 ? `Count by ${b}s, ${a} times.` : `Split it: 5 × ${b}, plus ${a - 5} × ${b}.`;
+        return a <= 5 ? `Count by ${b}s, ${a} times.` : `Split it up: 5 × ${b}, plus ${a - 5} × ${b}.`;
       case 'div-facts':
         return `Think: ${b} × ? = ${a}.`;
       default:
@@ -280,12 +280,12 @@ const MathEngine = (() => {
     if (p.missing || p.op === 'or') return null;
     const d = Math.abs(given - p.answer);
     if (d === 0) return null;
-    if (d === 1) return 'So close! Just one off. Count again carefully.';
-    if (p.op === '+' && given === p.a - p.b) return 'Careful! This one is adding, not taking away.';
-    if (p.op === '−' && given === p.a + p.b) return 'Careful! This one is taking away, not adding.';
-    if (p.op === '×' && given === p.a + p.b) return 'That is the sum. This one is multiplying!';
+    if (d === 1) return 'So close! You\'re just one off. Count again carefully.';
+    if (p.op === '+' && given === p.a - p.b) return 'Careful! This one\'s adding, not taking away.';
+    if (p.op === '−' && given === p.a + p.b) return 'Careful! This one\'s taking away, not adding.';
+    if (p.op === '×' && given === p.a + p.b) return 'That\'s what you get when you add. This one\'s multiplying!';
     if ((p.op === '+' || p.op === '−') && d % 10 === 0 && d < 100) {
-      return p.op === '+' ? 'Check the tens. Did you forget to carry?' : 'Check the tens. Did you remember to borrow?';
+      return p.op === '+' ? 'Check the tens. Did you forget to carry the 1?' : 'Check the tens. Did you remember to borrow?';
     }
     return null;
   }
@@ -321,13 +321,13 @@ const MathEngine = (() => {
           : e === 0 ? `Start with the ${place} column, on the right: ${x} + ${y} = ?` : `Now the ${place} column: ${x} + ${y} = ?`,
         answer: sum,
         hint: carry ? `Add ${x} + ${y} first. Then add 1 more for the carry.` : `Count up from ${Math.max(x, y)}.`,
-        after: big ? (last ? `${sum} is two digits. Write both.` : `${sum} is two digits! Write the ${sum % 10}. Carry the 1 to the ${PLACES[e + 1]} column.`) : `Write ${sum} in the ${place} place.`,
+        after: big ? (last ? `${sum} has two digits, so write them both.` : `${sum} has two digits! Write the ${sum % 10} and carry the 1 over to the ${PLACES[e + 1]}.`) : `Write ${sum} in the ${place} place.`,
       });
       ans.push(sum % 10);
       carry = big ? 1 : 0;
       if (big) { carries[e + 1] = true; if (last) ans.push(1); }
     }
-    steps.push({ work: addBoard(p.a, p.b, carries, ans), prompt: `All done! Read the bottom row: ${p.a} + ${p.b} = ?`, answer: p.answer, hint: 'It is on the bottom row.', after: 'Line up, add from right to left, and carry when a column makes 10 or more.' });
+    steps.push({ work: addBoard(p.a, p.b, carries, ans), prompt: `All done! Read the bottom row: ${p.a} + ${p.b} = ?`, answer: p.answer, hint: 'It\'s on the bottom row.', after: 'Line them up, add from right to left, and carry when a column makes 10 or more.' });
     return { title: 'Column adding', intro: 'Stack the numbers so the places line up. Then add one column at a time, starting on the right.', steps };
   }
 
@@ -386,7 +386,7 @@ const MathEngine = (() => {
       ans.push(now - bot);
     }
     while (ans.length > 1 && ans[ans.length - 1] === 0) ans.pop();
-    steps.push({ work: subBoard(D, B, ans), prompt: `All done! Read the bottom row: ${p.a} − ${p.b} = ?`, answer: p.answer, hint: 'It is on the bottom row.', after: anyBorrow ? 'That is borrowing! Trade 1 ten for 10 ones, and keep going.' : 'Subtract from right to left, one column at a time.' });
+    steps.push({ work: subBoard(D, B, ans), prompt: `All done! Read the bottom row: ${p.a} − ${p.b} = ?`, answer: p.answer, hint: 'It\'s on the bottom row.', after: anyBorrow ? 'That\'s borrowing! Trade 1 ten for 10 ones and keep going.' : 'Subtract from right to left, one column at a time.' });
     return { title: anyBorrow ? 'Borrowing' : 'Column taking away', intro: 'Stack the numbers. Take away one column at a time, starting on the right.', steps };
   }
 
@@ -398,9 +398,9 @@ const MathEngine = (() => {
         title: 'Make a ten',
         intro: `Ten is a friendly number. Let's fill a ten first, then add the rest.`,
         steps: [
-          { work: [`${big} + ${small}`], prompt: `How many more does ${big} need to make 10? ${big} + ? = 10`, answer: need, hint: `Count up from ${big} to 10.`, after: `${big} + ${need} = 10. Take ${need} from the ${small}.` },
-          { work: [`${big} + ${small}`, `${big} + ${need} = 10`], prompt: `${small} take away ${need} leaves how many? ${small} − ${need} = ?`, answer: rest, hint: `Count back ${need} from ${small}.`, after: `${rest} left over.` },
-          { work: [`${big} + ${small}`, `= 10 + ${rest}`], prompt: `Now it is easy: 10 + ${rest} = ?`, answer: 10 + rest, hint: `Ten and ${rest} more.`, after: `So ${p.a} + ${p.b} = ${p.answer}. Making a ten works every time!` },
+          { work: [`${big} + ${small}`], prompt: `How many more does ${big} need to make 10? ${big} + ? = 10`, answer: need, hint: `Count up from ${big} to 10.`, after: `${big} + ${need} = 10. We'll take that ${need} from the ${small}.` },
+          { work: [`${big} + ${small}`, `${big} + ${need} = 10`], prompt: `If we take ${need} from ${small}, how many are left? ${small} − ${need} = ?`, answer: rest, hint: `Count back ${need} from ${small}.`, after: `${rest} ${rest === 1 ? 'is' : 'are'} left.` },
+          { work: [`${big} + ${small}`, `= 10 + ${rest}`], prompt: `Now it's easy: 10 + ${rest} = ?`, answer: 10 + rest, hint: `Ten and ${rest} more.`, after: `So ${p.a} + ${p.b} = ${p.answer}. Making a ten works every time!` },
         ],
       };
     }
@@ -424,12 +424,12 @@ const MathEngine = (() => {
         prompt: i === 1 ? `Start at the bigger number, ${big}. Count up 1: ${big} + 1 = ?` : `Count up 1 more: ${at} + 1 = ?`,
         answer: at + 1,
         hint: `What number comes after ${at}?`,
-        after: i === small ? `You counted up ${small}!` : `That is ${i} so far.`,
+        after: i === small ? `You counted up ${small}!` : `That's ${i} so far.`,
       });
       at += 1;
       hops.push(at);
     }
-    steps.push({ work: [`${p.a} + ${p.b}`, hops.join(', ')], prompt: `So ${p.a} + ${p.b} = ?`, answer: p.answer, hint: 'It is the last number you said.', after: 'Start big and count on. That is a great trick!' });
+    steps.push({ work: [`${p.a} + ${p.b}`, hops.join(', ')], prompt: `So ${p.a} + ${p.b} = ?`, answer: p.answer, hint: 'It\'s the last number you said.', after: 'Start big and count on. Great trick!' });
     return { title: 'Count on', intro: `Start at the bigger number, ${big}. Then count up ${small}.`, steps };
   }
 
@@ -445,20 +445,20 @@ const MathEngine = (() => {
           prompt: i === 1 ? `Start at ${a}. Count back 1: ${a} − 1 = ?` : `Count back 1 more: ${at} − 1 = ?`,
           answer: at - 1,
           hint: `What number comes just before ${at}?`,
-          after: i === b ? `You counted back ${b}!` : `That is ${i} back so far.`,
+          after: i === b ? `You counted back ${b}!` : `That's ${i} back so far.`,
         });
         at -= 1;
         seen.push(at);
       }
-      steps.push({ work: [`${a} − ${b}`, seen.join(', ')], prompt: `So ${a} − ${b} = ?`, answer: p.answer, hint: 'It is the last number you said.', after: 'Counting back works for small take-aways!' });
+      steps.push({ work: [`${a} − ${b}`, seen.join(', ')], prompt: `So ${a} − ${b} = ?`, answer: p.answer, hint: 'It\'s the last number you said.', after: 'Counting back is great for small take-aways!' });
       return { title: 'Count back', intro: `Start at ${a}. Count back ${b}.`, steps };
     }
     return {
-      title: 'Think addition',
-      intro: 'Taking away is adding backwards. Find the missing part!',
+      title: 'Think adding',
+      intro: 'Taking away is like adding backwards. Let\'s find the missing part!',
       steps: [
         { work: [`${a} − ${b}`, `${b} + ? = ${a}`], prompt: `${b} + ? = ${a}. Count up from ${b} to ${a}. How many?`, answer: p.answer, hint: `Start at ${b}. Count up until you reach ${a}.`, after: `${b} + ${p.answer} = ${a}.` },
-        { work: [`${a} − ${b}`, `${b} + ${p.answer} = ${a}`], prompt: `So ${a} − ${b} = ?`, answer: p.answer, hint: 'It is the missing part you found.', after: 'Every take-away hides an adding fact!' },
+        { work: [`${a} − ${b}`, `${b} + ${p.answer} = ${a}`], prompt: `So ${a} − ${b} = ?`, answer: p.answer, hint: 'It\'s the missing part you just found.', after: 'Every take-away hides an adding fact!' },
       ],
     };
   }
@@ -469,8 +469,8 @@ const MathEngine = (() => {
       title: 'The mystery number',
       intro: `${q} is a mystery-number puzzle! We start at ${p.a} and end at ${p.total}.`,
       steps: [
-        { work: [q], prompt: `Take away the part we know: ${p.total} − ${p.a} = ?`, answer: p.total - p.a, hint: `Count up from ${p.a} to ${p.total}. How many hops?`, after: 'That is the mystery number!' },
-        { work: [q, `${p.total} − ${p.a} = ${p.answer}`], prompt: `Check it: ${p.a} + ${p.answer} = ?`, answer: p.total, hint: `Add ${p.a} and ${p.answer}.`, after: `It matches ${p.total}. The mystery number is ${p.answer}!` },
+        { work: [q], prompt: `Take away the part we know: ${p.total} − ${p.a} = ?`, answer: p.total - p.a, hint: `Count up from ${p.a} to ${p.total}. How many hops?`, after: 'That\'s the mystery number!' },
+        { work: [q, `${p.total} − ${p.a} = ${p.answer}`], prompt: `Check it: ${p.a} + ${p.answer} = ?`, answer: p.total, hint: `Add ${p.a} and ${p.answer}.`, after: `It matches! The mystery number is ${p.answer}.` },
       ],
     };
   }
@@ -484,7 +484,7 @@ const MathEngine = (() => {
         intro: 'To compare, look at the tens first.',
         steps: [
           { work: [`${a} has ${tensA} ten${tensA === 1 ? '' : 's'}`, `${b} has ${tensB} ten${tensB === 1 ? '' : 's'}`], prompt: 'Which number has more tens?', answer: tensA > tensB ? a : b, choices: [a, b], hint: `${Math.max(tensA, tensB)} tens is more than ${Math.min(tensA, tensB)}.`, after: 'More tens means a bigger number.' },
-          { work: [`${a}  or  ${b}`], prompt: 'So which number is bigger?', answer: big, choices: [a, b], hint: 'It is the one with more tens.', after: `${big} is bigger!` },
+          { work: [`${a}  or  ${b}`], prompt: 'So which number is bigger?', answer: big, choices: [a, b], hint: 'It\'s the one with more tens.', after: `${big} is bigger!` },
         ],
       };
     }
@@ -492,7 +492,7 @@ const MathEngine = (() => {
       title: 'Count to compare',
       intro: 'When you count up, bigger numbers come later.',
       steps: [
-        { work: [`${Math.min(a, b)}, ..., ${big}`], prompt: `Count up. Which do you say later, ${a} or ${b}?`, answer: big, choices: [a, b], hint: `Count: ${Math.min(a, b)}, ${Math.min(a, b) + 1}, ...`, after: `${big} comes later.` },
+        { work: [`${Math.min(a, b)}, ..., ${big}`], prompt: `When you count up, which do you say later: ${a} or ${b}?`, answer: big, choices: [a, b], hint: `Count: ${Math.min(a, b)}, ${Math.min(a, b) + 1}, ...`, after: `${big} comes later.` },
         { work: [`${a}  or  ${b}`], prompt: 'So which number is bigger?', answer: big, choices: [a, b], hint: 'The one you say later is bigger.', after: `${big} is bigger!` },
       ],
     };
@@ -506,15 +506,15 @@ const MathEngine = (() => {
       for (let i = 2; i <= t; i++) {
         steps.push({
           work: [q, seen.join(', ') + ', ?'],
-          prompt: i === 2 ? `${q} means ${t} groups of ${n}. Count by ${n}s. Start at ${n}. Add ${n} more: ${n} + ${n} = ?` : `Keep counting: ${at} + ${n} = ?`,
+          prompt: i === 2 ? `${q} means ${t} groups of ${n}. Let's count by ${n}s. We start at ${n}, then add ${n} more: ${n} + ${n} = ?` : `Keep counting: ${at} + ${n} = ?`,
           answer: at + n,
           hint: `Count up ${n} from ${at}.`,
-          after: i === t ? `You counted all ${t} groups!` : `That is ${i} groups of ${n}.`,
+          after: i === t ? `You counted all ${t} groups!` : `That's ${i} groups so far.`,
         });
         at += n;
         seen.push(at);
       }
-      steps.push({ work: [q, seen.join(', ')], prompt: `So ${t} groups of ${n} is... ${q} = ?`, answer: p.answer, hint: 'It is the last number you counted.', after: 'Skip counting always works if you forget a fact!' });
+      steps.push({ work: [q, seen.join(', ')], prompt: `So ${t} groups of ${n} is... ${q} = ?`, answer: p.answer, hint: 'It\'s the last number you counted.', after: 'If you ever forget a fact, skip counting always works!' });
       return { title: 'Skip counting', intro: 'Multiplying is counting equal groups. Skip count and you never get stuck.', steps };
     }
     const rest = t - 5, split = `= 5 × ${n}  +  ${rest} × ${n}`;
@@ -527,11 +527,11 @@ const MathEngine = (() => {
   function teachDiv(p) {
     const ans = p.answer, base5 = 5 * p.b, lines = [`${p.a} ÷ ${p.b}`, `${p.b} × ? = ${p.a}`], steps = [];
     if (ans !== 5) {
-      steps.push({ work: lines, prompt: `Division is a mystery-number puzzle: ${p.b} × ? = ${p.a}. Test 5 first: ${p.b} × 5 = ?`, answer: base5, hint: `Count by ${p.b}s, five times.`, after: base5 < p.a ? `${base5} is too small. We need more groups.` : `${base5} is too big. We need fewer groups.` });
+      steps.push({ work: lines, prompt: `Division is a mystery-number puzzle: ${p.b} × ? = ${p.a}. Let's try 5 first: ${p.b} × 5 = ?`, answer: base5, hint: `Count by ${p.b}s, five times.`, after: base5 < p.a ? `${base5} is too small. We need more groups.` : `${base5} is too big. We need fewer groups.` });
     }
     const tried = ans !== 5 ? [`${p.b} × 5 = ${base5}  ✗ ${base5 < p.a ? 'too small' : 'too big'}`] : [];
-    steps.push({ work: [...lines, ...tried], prompt: ans === 5 ? `${p.b} × ? = ${p.a}. Test 5: ${p.b} × 5 = ?` : `Try ${ans}: ${p.b} × ${ans} = ?`, answer: p.b * ans, hint: `Count by ${p.b}s.`, after: `${p.b} × ${ans} = ${p.a}. That is it!` });
-    steps.push({ work: [...lines, ...tried, `${p.b} × ${ans} = ${p.a}  ✓`], prompt: `So ${p.a} ÷ ${p.b} = ?`, answer: ans, hint: 'It is the missing number you found.', after: 'Every division fact hides a times fact you know.' });
+    steps.push({ work: [...lines, ...tried], prompt: ans === 5 ? `${p.b} × ? = ${p.a}. Let's try 5: ${p.b} × 5 = ?` : `Now try ${ans}: ${p.b} × ${ans} = ?`, answer: p.b * ans, hint: `Count by ${p.b}s.`, after: `${p.b} × ${ans} = ${p.a}. That's it!` });
+    steps.push({ work: [...lines, ...tried, `${p.b} × ${ans} = ${p.a}  ✓`], prompt: `So ${p.a} ÷ ${p.b} = ?`, answer: ans, hint: 'It\'s the number you just found.', after: 'Every division fact hides a times fact you already know.' });
     return { title: 'Think multiplication', intro: 'Division is multiplication backwards. Find the missing number.', steps };
   }
 
@@ -550,7 +550,7 @@ const MathEngine = (() => {
         default: return null;
       }
     }
-    if (p.story) lesson.intro = `This story is ${p.equation.replace(' = ?', '')}. ` + lesson.intro;
+    if (p.story) lesson.intro = `This story is really ${p.equation.replace(' = ?', '')}. ` + lesson.intro;
     lesson.steps.forEach((s) => {
       if (!s.choices) {
         const set = new Set([s.answer]);
