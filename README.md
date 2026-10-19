@@ -7,20 +7,33 @@ A pixel-art adventure for Kindergarten to Grade 3 in the style of classic handhe
 - Pick a **buddy** at Professor Pi's lab: Sproutle, Emberkit or Splashfin. Your buddy follows you everywhere and helps with every kind of math. Turn around and press A to talk to it.
 - Walk through the tall grass on Route 1. Each wild Legend asks one kind of math puzzle:
 
-  | Legend | Puzzles |
-  | --- | --- |
-  | Hootsum | Adding |
-  | Snipsnap | Taking away |
-  | Pebblit | Which number is bigger |
-  | Buzzlet | Equal groups and times tables |
-  | Shareling | Division |
+  | Puzzles | Route 1 | Sunny Shore | Dusty Canyon | Frostpeak | Glowcap Cave |
+  | --- | --- | --- | --- | --- | --- |
+  | Adding | Hootsum | Tallytoise | Cactotal | Pengplus | Batsum |
+  | Taking away | Snipsnap | Gulpgull | Minusnake | Meltling | Molemin |
+  | Which is bigger | Pebblit | Starbig | Lizardo | Yetiny | Crystling |
+  | Equal groups and times | Buzzlet | Octogroup | Arraydillo | Flurrfox | Webbit |
+  | Sharing (division) | Shareling | Jellishare | Coyshare | Harefrost | Glowsplit |
 
 - In battle, choose **SOLVE**. A right answer powers your buddy's move, and a fast first try gives extra power.
+- **Answers:** in Grades 1–3 you type answers. During a question, the D-pad and buttons turn into a big number keypad (typing an answer builds memory better than picking one). Kindergarten picks from big choices. Grown-ups can change this in MENU → Settings → Answers.
 - Solve enough puzzles and the wild Legend **calms down**. Legends you solved on the first try often want to be your friend and join your team.
-- Beat Ranger Rowan at the end of Route 1 to earn the Sum Badge. Rowan's first Legend always asks the puzzles you need most.
+- Each area has a boss guarding the way north. Beat them to earn five badges:
+
+  | Area | Boss | Badge |
+  | --- | --- | --- |
+  | Route 1 (meadow) | Ranger Rowan | Sum Badge |
+  | Sunny Shore (beach) | Captain Marina | Wave Badge |
+  | Dusty Canyon (desert) | Sheriff Sol | Mesa Badge |
+  | Frostpeak (snow) | Coach Ivy | Frost Badge |
+  | Glowcap Cave (crystal cave) | Keeper Onyx | Crystal Badge |
+
+  Every boss opens with the Legend for the skill you need most. Wild Legends get stronger in each new area.
+- **33 Legends:** 3 buddies, plus 5 wild Legends and a boss Legend in every area. Each area has its own Legend for adding, taking away, comparing, equal groups and sharing.
+- **Map:** MENU → Map shows the world and lets you quick-travel to any place you've visited.
 - The Rest Center (pink roof) heals your team. If your whole team needs a rest, you wake up there. Nothing is lost.
 
-**Controls:** on-screen D-pad, A, B and MENU buttons, or the keyboard: arrows/WASD to move, Z or Space for A, X for B, Enter for the menu. During a question, 1–4 pick an answer and B (or H) asks for a hint.
+**Controls:** on-screen D-pad, A, B and MENU buttons, or the keyboard: arrows/WASD to move, Z or Space for A, X for B, Enter for the menu. During a question, type the number and press Enter (or 1–4 to pick a choice), and press B or H for a hint.
 
 ## Hints
 
@@ -56,6 +69,8 @@ On top of that, wild encounters follow the player's needs: while one skill is cl
   - Chrome on any computer includes Google voices, which sound better than the basic system ones.
 - **Progress:** MENU → Grown-ups shows first-try accuracy and mastery for each skill, which skill is being practiced most, and how many missed problems are waiting for review.
 - Progress is saved on the device (browser storage). Nothing is sent anywhere.
+- **Save files:** MENU → Save & load → Export save file downloads (or shares) a backup. Load save file brings it back on any device, and the title screen has Load save file too.
+- **Devices:** works on phones, tablets and computers. On iPad and other tablets it scales up, and in landscape the controls sit on either side of the screen.
 
 ## Running it
 
@@ -78,4 +93,4 @@ To publish it, push to GitHub and turn on GitHub Pages for the `main` branch (Se
 - `js/game.js`: movement, the following buddy, dialog, menus, battles and saving
 - `sw.js`, `manifest.webmanifest`, `*.png`: offline support and app icons
 
-For testing, open the game with `?dev` in the address to get `MQL.ask(MQL.MathEngine.make('sub-100', 2))` in the browser console.
+For testing, open the game with `?dev` in the address to get `MQL.ask(MQL.MathEngine.make('sub-100', 2))` in the browser console, or `?dev&quiz=sub-100&grade=2` to jump straight into practice questions (handy on a phone or simulator).

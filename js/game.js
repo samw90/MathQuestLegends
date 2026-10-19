@@ -50,6 +50,10 @@
       skills: {}, // per math skill: { attempts, correct, ms, n }
       review: [], // missed problems that come back later
       voice: false,
+      visited: { town: true }, // places you can quick-travel to
+      healMap: 'town', // the last place with a Rest Center
+      lastArea: 'meadow', // the last area with wild Legends
+      ret: null, // where the Rest Center door leads back to
     };
   }
   function loadSave() {
@@ -208,6 +212,10 @@
     if (e.target instanceof HTMLInputElement) return;
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (keyInput) {
+      const code = /^[0-9]$/.test(key) ? key : key === 'Backspace' ? 'del' : key === 'Enter' ? 'ok' : null;
+      if (code) { e.preventDefault(); document.body.classList.add('kb'); keyInput(code); return; }
+    }
     const btn = key === 'Enter' ? (handler ? 'a' : 'start') : KEYS[key];
     if (!btn) return;
     e.preventDefault();
@@ -222,6 +230,52 @@
   });
   window.addEventListener('blur', () => { held.length = 0; });
   window.addEventListener('pointerdown', () => document.body.classList.remove('kb'));
+  // iPhone/iPad: two quick taps on the controls must never zoom the page.
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 400 && e.target.closest && e.target.closest('.pad, .start')) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
+
+  // ---------------------------------------------------------------- number keypad
+  // While a question wants a typed answer, the D-pad and A/B buttons swap
+  // for a big number keypad (like Math Quest's).
+  const consoleEl = document.querySelector('.console');
+  let keyInput = null;
+  const keypad = (() => {
+    const k = el('div', 'keypad');
+    k.hidden = true;
+    for (const key of ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'del', '0', 'ok']) {
+      const label = key === 'del' ? '⌫' : key === 'ok' ? '✓' : key;
+      const b = el('button', 'key' + (key === 'del' || key === 'ok' ? ' ' + key : ''), label);
+      b.type = 'button';
+      b.setAttribute('aria-label', key === 'del' ? 'Erase' : key === 'ok' ? 'Check my answer' : key);
+      b.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        b.classList.add('on');
+        if (keyInput) keyInput(key);
+      });
+      const up = () => b.classList.remove('on');
+      b.addEventListener('pointerup', up);
+      b.addEventListener('pointercancel', up);
+      b.addEventListener('pointerleave', up);
+      k.append(b);
+    }
+    document.querySelector('.pad').after(k);
+    return k;
+  })();
+  function showKeypad(fn) { keyInput = fn; keypad.hidden = false; consoleEl.classList.add('typing'); }
+  function hideKeypad() { keyInput = null; keypad.hidden = true; consoleEl.classList.remove('typing'); }
+
+  // Grades 1-3 type their answers (recall builds memory better than picking);
+  // Kindergarten picks from big choices. Grown-ups can change it in Settings.
+  function typedAnswers(p) {
+    if (p.op === 'or') return false;
+    const mode = (S && S.answerMode) || 'auto';
+    return mode === 'type' || (mode === 'auto' && S.grade > 0);
+  }
 
   document.querySelectorAll('[data-btn]').forEach((b) => {
     const btn = b.dataset.btn;
@@ -474,11 +528,15 @@
       const hintBtn = el('button', 'hintbtn', '💡 Hint');
       hintBtn.type = 'button';
       foot.append(hintBtn);
-      box.append(bubble, grid, foot);
+      const typing = typedAnswers(p);
+      const entry = el('div', 'entry empty', '?');
+      let typed = '';
+      const setEntry = () => { entry.textContent = typed || '?'; entry.classList.toggle('empty', !typed); };
+      box.append(bubble, typing ? entry : grid, foot);
 
       let sel = 0, tries = 0, hints = 0, locked = false;
       const t0 = performance.now();
-      const btns = p.choices.map((c, i) => {
+      const btns = typing ? [] : p.choices.map((c, i) => {
         const b = el('button', 'ans', String(c));
         b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); answer(i); });
         grid.append(b);
@@ -490,6 +548,7 @@
       const finish = (result) => {
         locked = true;
         handler = null;
+        hideKeypad();
         box.remove();
         res({ result, ms: performance.now() - t0 });
       };
@@ -497,6 +556,7 @@
       async function teachThenTwin() {
         locked = true;
         handler = null;
+        hideKeypad();
         box.remove();
         const lesson = MathEngine.teach(p);
         if (lesson) await teachPanel(lesson);
@@ -521,34 +581,56 @@
       }
       hintBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); hint(); });
 
-      async function answer(i) {
-        if (locked || btns[i].disabled) return;
-        const correct = p.choices[i] === p.answer;
+      // i is the chosen button for multiple choice; typed answers pass the value.
+      async function answer(i, value = p.choices[i]) {
+        if (locked || (!typing && btns[i].disabled)) return;
+        const correct = value === p.answer;
         btns.forEach((b) => b.classList.remove('sel'));
         if (correct) {
           locked = true;
           hush();
-          btns[i].classList.add('right');
+          (typing ? entry : btns[i]).classList.add('right');
           sfx('good');
           await sleep(600);
           return finish(tries === 0 && hints === 0 ? 'first' : 'helped');
         }
         tries++;
-        btns[i].classList.add('wrong');
-        btns[i].disabled = true;
         sfx('bad');
+        if (typing) {
+          entry.classList.add('wrong');
+        } else {
+          btns[i].classList.add('wrong');
+          btns[i].disabled = true;
+        }
         if (tries === 1) {
           showVisual();
-          sayBubble(MathEngine.mistakeHint(p, p.choices[i]) || (p.visual ? 'Almost! Look at the picture and give it another try.' : 'Almost! Give it another try. You\'ve got this!'));
-          sel = live()[0];
-          draw();
+          sayBubble(MathEngine.mistakeHint(p, value) || (p.visual ? 'Almost! Look at the picture and give it another try.' : 'Almost! Give it another try. You\'ve got this!'));
+          if (typing) {
+            locked = true;
+            await sleep(700);
+            locked = false;
+            entry.classList.remove('wrong');
+            typed = '';
+            setEntry();
+          } else {
+            sel = live()[0];
+            draw();
+          }
           return;
         }
         // Second miss: show the answer and offer a lesson.
         locked = true;
         hush();
-        btns[p.choices.indexOf(p.answer)].classList.add('right');
-        btns.forEach((b) => { b.disabled = true; });
+        if (typing) {
+          hideKeypad();
+          await sleep(500);
+          entry.classList.remove('wrong', 'empty');
+          entry.classList.add('right');
+          entry.textContent = String(p.answer);
+        } else {
+          btns[p.choices.indexOf(p.answer)].classList.add('right');
+          btns.forEach((b) => { b.disabled = true; });
+        }
         sayBubble(`Here's the answer: ${p.explain}`);
         foot.textContent = '';
         const okBtn = el('button', 'hintbtn', 'OK');
@@ -569,6 +651,18 @@
       ui.append(box);
       draw();
       speak(p.text);
+      if (typing) {
+        showKeypad((k) => {
+          if (locked) return;
+          if (k === 'ok') { if (typed) answer(-1, Number(typed)); return; }
+          if (k === 'del') typed = typed.slice(0, -1);
+          else if (typed.length < 5) typed = (typed === '0' ? '' : typed) + k;
+          sfx('move');
+          setEntry();
+        });
+        handler = (btn) => { if (btn === 'b') hint(); else if (btn === 'a' && typed) answer(-1, Number(typed)); };
+        return;
+      }
       handler = (btn) => {
         const ids = live(), n = btns.length;
         if (btn === 'b') return hint();
@@ -728,6 +822,9 @@
   }
   function placePlayer(mapId, x, y, dir) {
     S.map = mapId; S.x = x; S.y = y;
+    const m = MAPS[mapId];
+    if (m.heal) { S.healMap = mapId; S.visited[mapId] = true; }
+    if (m.area) S.lastArea = m.area;
     if (dir) S.dir = dir;
     Object.assign(P, { x, y, px: x * TS, py: y * TS, dir: S.dir, moving: false });
     Object.assign(F, { x, y, px: x * TS, py: y * TS, fx: x, fy: y, tx: x, ty: y, dir: S.dir, stacked: true });
@@ -776,17 +873,24 @@
     if (w) {
       busy = true;
       if (w.need && !S.flags[w.need]) {
-        await runScript(w.block);
+        await runScript(w.block, w);
         const [dx, dy] = DIRS[P.dir];
         startStep(P.x - dx, P.y - dy);
       } else {
         sfx('move');
-        await fade(() => { placePlayer(w.to, w.tx, w.ty, w.dir); writeSave(); });
+        if (w.ret) S.ret = { map: S.map, x: w.ret[0], y: w.ret[1] };
+        await fade(() => {
+          if (w.to === '@return') {
+            const r = S.ret || { map: 'town', x: 15, y: 10 };
+            placePlayer(r.map, r.x, r.y, 'down');
+          } else placePlayer(w.to, w.tx, w.ty, w.dir);
+          writeSave();
+        });
       }
       busy = false;
       return;
     }
-    if (tileAt(P.x, P.y) === ',' && m.wild && S.party.some(alive) && Math.random() < 0.13) {
+    if (ENCOUNTER.has(tileAt(P.x, P.y)) && m.wild && S.party.some(alive) && Math.random() < 0.13) {
       busy = true;
       await wildBattle();
       busy = false;
@@ -815,7 +919,7 @@
         await buddyTalk();
       } else if (n) {
         n.dir = OPPOSITE[P.dir];
-        await runScript(n.script);
+        await runScript(n.script, n.arg);
       } else if (sign) {
         await say(sign);
       } else {
@@ -832,7 +936,7 @@
     const weak = MathEngine.weakestSkill(S.grade, S.skills);
     const s = S.skills[weak];
     const fam = MathEngine.SKILLS[weak].family;
-    const legend = SPECIES[FAMILY_SPECIES[fam]].name;
+    const legend = SPECIES[speciesFor(fam)].name;
     const allMastered = MathEngine.gradeSkills(S.grade).every((id) => MathEngine.stretchLevel(S.skills[id]) === 2);
     if (allMastered) {
       await say([`${buddyName()}: You're a math star!`, 'Maybe ask a grown-up about trying the next grade.']);
@@ -878,7 +982,8 @@
     }
     // Tall grass hides feet.
     for (const [gx, gy, still] of [[P.x, P.y, !P.moving], [F.x, F.y, !P.moving && !F.stacked]]) {
-      if (still && tileAt(gx, gy) === ',') ctx.drawImage(Art.tile(','), 0, 9, 16, 7, gx * TS - camX, gy * TS - camY + 9, 16, 7);
+      const t = tileAt(gx, gy);
+      if (still && ENCOUNTER.has(t)) ctx.drawImage(Art.tile(t), 0, 9, 16, 7, gx * TS - camX, gy * TS - camY + 9, 16, 7);
     }
   }
 
@@ -897,7 +1002,9 @@
     prof: () => {
       if (!S.flags.starter) return say(['Hi, {name}! I\'m Professor Pi.', 'Wild Legends love math puzzles.', 'Go ahead and pick a buddy from my table.', 'Your buddy will help you think things through!']);
       if (!S.flags.badge1) return say(['Ranger Rowan is waiting at the end of Route 1.', 'Rowan likes to pick the puzzles you need most.', 'Win, and you\'ll earn a badge!']);
-      return say(['You earned the Sum Badge! Way to go!', 'Route 2 will open soon.']);
+      const n = badgeCount();
+      if (n < 5) return say([`You have ${n} badge${n === 1 ? '' : 's'}! Way to go!`, 'Each place up north has a new boss to beat.', 'Check the MENU map to travel fast.']);
+      return say(['All five badges! You\'re a true Math Quest Legend!', 'I\'m so proud of you and your buddy.']);
     },
 
     async starter(n) {
@@ -951,20 +1058,40 @@
 
     routeKid: () => say(['Try to solve puzzles on the first try.', 'Legends really like that. They might want to be friends!']),
 
-    ranger: async () => {
-      if (S.flags.badge1) return say(['Great job, {name}!', 'Keep training with your team!']);
-      await say(['I\'m Ranger Rowan.', 'I keep watch over Route 2.', 'Let\'s see your math power!']);
+    shoreKid: () => say(['Every place has its own Legends.', 'Out here, Octogroup loves equal groups.', 'It has eight arms to count with!']),
+    canyonHiker: () => say(['Hot out here, huh?', 'Arraydillo rolls up in neat rows.', 'Perfect for times tables!']),
+    snowKid: () => say(['Brrr! Meltling loves take-away puzzles.', 'A little bit melts away each time!']),
+    caveKid: () => say(['Crystling asks which number is bigger.', 'Look at the biggest place first!']),
+
+    // The way to the next area is closed until you beat this area's boss.
+    gate: (w) => {
+      const boss = Object.values(BOSSES).find((b) => b.flag === w.need);
+      return say(['This way is closed for now.', `Beat ${boss.name} to open it!`]);
+    },
+
+    // Each boss opens with the Legend for your weakest skill, then its own partner.
+    boss: async (areaId) => {
+      const b = BOSSES[areaId], area = AREAS[areaId];
+      if (S.flags[b.flag]) return say(b.after);
+      await say(b.intro);
       const weak = MathEngine.weakestSkill(S.grade, S.skills);
-      const first = FAMILY_SPECIES[MathEngine.SKILLS[weak].family];
-      const result = await battle([mon(first, 5, weak), mon('gridrex', 6)], { trainer: 'Ranger Rowan' });
+      const first = area.species[MathEngine.SKILLS[weak].family];
+      const result = await battle([mon(first, area.base + 3, weak), mon(area.boss, area.base + 4)], { trainer: b.name });
       if (result === 'win') {
-        S.flags.badge1 = true;
+        S.flags[b.flag] = true;
         sfx('level');
-        await say(['RANGER ROWAN: Wow, you two make a great team!', 'This Sum Badge is yours!', 'Route 2 isn\'t ready yet.', 'Come back soon for more!']);
+        await say([`${b.name.toUpperCase()}: ${b.win[0]}`, ...b.win.slice(1)]);
         writeSave();
       }
     },
   };
+
+  const badgeCount = () => BADGE_FLAGS.filter((f) => S.flags[f]).length;
+  // The Legend that asks this kind of math where you are (or where you last were).
+  function speciesFor(fam) {
+    const area = AREAS[(map() && map().area) || S.lastArea] || AREAS.meadow;
+    return area.species[fam] || AREAS.meadow.species[fam];
+  }
 
   // ---------------------------------------------------------------- battle
 
@@ -996,13 +1123,23 @@
     }
   }
 
+  // Battle colors for each area: sky, ground band, platform dark and light.
+  const BATTLE_LOOK = {
+    meadow: ['#f8f4e8', '#eef0d8', '#a8c878', '#c4dc94'],
+    shore: ['#e4f4fc', '#f6e8bc', '#e0c27a', '#f2dc9a'],
+    canyon: ['#fbe8d0', '#f0c8a0', '#c87a4a', '#e2a46e'],
+    snow: ['#eef4fc', '#dce8f6', '#aec4e2', '#f4f8ff'],
+    cave: ['#2c2440', '#3a3050', '#5a4a7a', '#7a6aa0'],
+  };
+
   function drawBattle(now) {
-    ctx.fillStyle = '#f8f4e8';
+    const [sky, band, pd, pl] = BATTLE_LOOK[S.lastArea] || BATTLE_LOOK.meadow;
+    ctx.fillStyle = sky;
     ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#eef0d8';
+    ctx.fillStyle = band;
     ctx.fillRect(0, 40, W, 60);
-    ctx.drawImage(Art.platform(32, 8), 92, 48);
-    ctx.drawImage(Art.platform(34, 8), 4, 84);
+    ctx.drawImage(Art.platform(32, 8, pd, pl), 92, 48);
+    ctx.drawImage(Art.platform(34, 8, pd, pl), 4, 84);
     const bob = Math.round(Math.sin(now / 300));
     const fe = B.fx.e, fp = B.fx.p;
     if (!fe.hide) ctx.drawImage(Art.creature(B.enemy.sp), 100 + fe.dx, 8 + fe.dy);
@@ -1082,7 +1219,12 @@
       hideDialog();
       B = null;
       mode = 'world';
-      if (result === 'lose') { healAll(); placePlayer('center', 3, 3, 'up'); }
+      if (result === 'lose') {
+        healAll();
+        const h = MAPS[S.healMap] || MAPS.town;
+        S.ret = { map: MAPS[S.healMap] ? S.healMap : 'town', x: h.heal[0], y: h.heal[1] };
+        placePlayer('center', 3, 3, 'up');
+      }
     });
     if (result === 'lose') {
       await say(['NURSE ADA: There! Your team feels great again.', 'Every puzzle helps you learn.', 'You\'ll get it next time!']);
@@ -1233,8 +1375,9 @@
     const ws = S.skills[weak];
     const focus = ws && ws.attempts >= 3 && MathEngine.stretchLevel(ws) === 0 && Math.random() < 0.4;
     const skill = focus ? weak : MathEngine.pickSkill(S.grade, S.skills);
-    const sp = FAMILY_SPECIES[MathEngine.SKILLS[skill].family];
-    const lv = 2 + 2 * MathEngine.stretchLevel(S.skills[skill]) + rnd(0, 1);
+    const area = AREAS[map().area] || AREAS.meadow;
+    const sp = area.species[MathEngine.SKILLS[skill].family];
+    const lv = area.base + 2 * MathEngine.stretchLevel(S.skills[skill]) + rnd(0, 1);
     await battle([mon(sp, lv, skill)]);
   }
 
@@ -1323,9 +1466,17 @@
       }
       const weak = MathEngine.weakestSkill(S.grade, S.skills);
       box.append(el('p', null, `Practicing most: ${MathEngine.SKILLS[weak].label}. Wild Legends that ask these puzzles show up more often.`));
+      box.append(el('p', null, `Badges: ${badgeCount()} of 5 · Legendex: ${DEX_ORDER.filter((id) => S.caught[id]).length} of ${DEX_ORDER.length} friends`));
       const due = S.review.filter((x) => x.due <= Date.now()).length;
       box.append(el('p', null, `Missed problems saved for review: ${S.review.length} (${due} ready now).`));
     });
+  }
+
+  function answerLabel() {
+    const mode = S.answerMode || 'auto';
+    if (mode === 'type') return 'Type them';
+    if (mode === 'pick') return 'Pick from choices';
+    return S.grade > 0 ? 'Auto (typing)' : 'Auto (choices)';
   }
 
   async function settingsMenu() {
@@ -1335,6 +1486,7 @@
         `Read aloud: ${S.voice ? 'On' : 'Off'}`,
         `Voice: ${currentVoice() ? currentVoice().name.replace(/\s*\(.*\)$/, '') : 'None'}`,
         `Sound: ${soundOn ? 'On' : 'Off'}`,
+        `Answers: ${answerLabel()}`,
         'Back',
       ], { cls: 'start-menu' });
       if (i === 0) {
@@ -1349,6 +1501,9 @@
       } else if (i === 3) {
         soundOn = !soundOn;
         try { localStorage.setItem('mql:sound', soundOn ? 'on' : 'off'); } catch (e) { /* ignore */ }
+      } else if (i === 4) {
+        const modes = ['auto', 'type', 'pick'];
+        S.answerMode = modes[(modes.indexOf(S.answerMode || 'auto') + 1) % modes.length];
       } else {
         writeSave();
         return;
@@ -1372,19 +1527,198 @@
     writeSave();
   }
 
+  // ---------------------------------------------------------------- world map + quick travel
+
+  // A little picture of the world: each band of tiles is one area.
+  const WORLD = [
+    'QQQqqqqQQQ',
+    'QQqq%%qqQQ',
+    'AA****^^AA',
+    '*^^**A**^*',
+    '~~__;:"":M',
+    '~_;__::KMM',
+    'T.,,..==,.',
+    '..==.f..,T',
+  ];
+  function drawWorldMap() {
+    const c = el('canvas', 'worldmap');
+    c.width = 160;
+    c.height = 128;
+    const g = c.getContext('2d');
+    g.imageSmoothingEnabled = false;
+    WORLD.forEach((row, y) => [...row].forEach((t, x) => g.drawImage(Art.tile(t), x * 16, y * 16)));
+    // the road between places
+    g.strokeStyle = '#fff6d6';
+    g.lineWidth = 3;
+    g.setLineDash([4, 3]);
+    g.beginPath();
+    TRAVEL.forEach((t, i) => (i ? g.lineTo(t.mx, t.my) : g.moveTo(t.mx, t.my)));
+    g.stroke();
+    g.setLineDash([]);
+    const here = MAPS[S.map].heal ? S.map : S.map === 'route1' ? 'town' : S.healMap;
+    for (const t of TRAVEL) {
+      const open = S.visited[t.map];
+      g.fillStyle = '#2b2840';
+      g.fillRect(t.mx - 6, t.my - 6, 12, 12);
+      g.fillStyle = open ? '#f2c84b' : '#8a84a8';
+      g.fillRect(t.mx - 4, t.my - 4, 8, 8);
+      if (t.map === here) g.drawImage(Art.person(LOOKS.hero, 'down', 0), t.mx - 8, t.my - 22);
+    }
+    return c;
+  }
+
+  async function mapMenu() {
+    const view = el('div', 'box mapview');
+    view.append(drawWorldMap());
+    ui.append(view);
+    const items = TRAVEL.map((t) => ({
+      label: S.visited[t.map] ? t.label : '???',
+      sub: S.visited[t.map] ? 'Tap to travel here' : 'Not visited yet',
+      dim: !S.visited[t.map],
+    }));
+    const i = await choose(items, { cls: 'maplist', head: `Badges: ${badgeCount()} of 5` });
+    view.remove();
+    if (i < 0) return false;
+    const t = TRAVEL[i];
+    if (!S.visited[t.map]) { await say('You haven\'t been there yet.'); return false; }
+    if (S.map === t.map) { await say('You\'re already here!'); return false; }
+    sfx('select');
+    const h = MAPS[t.map].heal;
+    await fade(() => { placePlayer(t.map, h[0], h[1], 'down'); writeSave(); });
+    await say(`Welcome to ${t.label}!`);
+    return true;
+  }
+
+  // ---------------------------------------------------------------- save files
+
+  // Checks a loaded save and fills in anything missing.
+  function cleanSave(d) {
+    if (!d || typeof d !== 'object' || d.v !== 2 || !Array.isArray(d.party) || !MAPS[d.map]) return null;
+    const s = Object.assign(newState(String(d.name || 'Hero').slice(0, 10), 0), d);
+    s.name = String(s.name).slice(0, 10) || 'Hero';
+    s.grade = Math.max(0, Math.min(3, Number(s.grade) | 0));
+    const okMon = (c) => c && SPECIES[c.sp] && Number.isFinite(c.lv) && Number.isFinite(c.hp);
+    s.party = s.party.filter(okMon);
+    s.box = (Array.isArray(s.box) ? s.box : []).filter(okMon);
+    for (const k of ['flags', 'seen', 'caught', 'skills', 'visited']) if (!s[k] || typeof s[k] !== 'object') s[k] = {};
+    if (!Array.isArray(s.review)) s.review = [];
+    s.visited.town = true;
+    const rows = MAPS[s.map].tiles;
+    if (!(s.y >= 0 && s.y < rows.length && s.x >= 0 && s.x < rows[0].length)) { s.map = 'town'; s.x = 15; s.y = 10; }
+    return s;
+  }
+
+  function saveFileName() {
+    const day = new Date().toISOString().slice(0, 10);
+    const who = S.name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'player';
+    return `math-quest-legends-${who}-${day}.json`;
+  }
+
+  // A panel with real links and buttons, so phones treat taps as genuine
+  // (needed to download a file or open the file picker).
+  function filePanel(build) {
+    return new Promise((res) => {
+      const box = el('div', 'box panel io');
+      const done = (v) => { handler = null; box.remove(); res(v); };
+      build(box, done);
+      const close = el('button', 'iobtn ghost', 'Back');
+      close.type = 'button';
+      close.addEventListener('click', () => { sfx('blip'); done(null); });
+      box.append(close);
+      ui.append(box);
+      handler = (btn) => { if (btn === 'b') done(null); };
+    });
+  }
+
+  function exportPanel() {
+    writeSave();
+    const name = saveFileName();
+    const json = JSON.stringify(S);
+    return filePanel((box, done) => {
+      box.append(el('h3', null, 'Export your game'));
+      box.append(el('p', null, 'This saves a copy of your game as a file. Keep it as a backup, or load it on another device.'));
+      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+      const a = el('a', 'iobtn', '⬇ Download save file');
+      a.href = url;
+      a.download = name;
+      a.addEventListener('click', () => { sfx('select'); setTimeout(() => done(true), 300); });
+      box.append(a);
+      // Phones can also hand the file to Files, AirDrop, email and so on.
+      try {
+        const file = new File([json], name, { type: 'application/json' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          const share = el('button', 'iobtn', '📤 Share save file');
+          share.type = 'button';
+          share.addEventListener('click', async () => {
+            try { await navigator.share({ files: [file], title: 'Math Quest Legends save' }); done(true); } catch (e) { /* cancelled */ }
+          });
+          box.append(share);
+        }
+      } catch (e) { /* no sharing */ }
+    });
+  }
+
+  // Resolves to a cleaned-up save, or null.
+  function importPanel() {
+    return filePanel((box, done) => {
+      box.append(el('h3', null, 'Load a save file'));
+      box.append(el('p', null, 'Pick a Math Quest Legends save file. It will replace the game on this device.'));
+      const label = el('label', 'iobtn', '📂 Choose save file');
+      const input = el('input');
+      input.type = 'file';
+      input.accept = '.json,application/json';
+      label.append(input);
+      const msg = el('p', 'iomsg');
+      box.append(label, msg);
+      input.addEventListener('change', async () => {
+        const f = input.files && input.files[0];
+        if (!f) return;
+        try {
+          const s = cleanSave(JSON.parse(await f.text()));
+          if (!s) throw new Error('bad save');
+          sfx('select');
+          done(s);
+        } catch (e) {
+          sfx('bad');
+          msg.textContent = 'Hmm, that file doesn\'t look like a Math Quest Legends save.';
+          input.value = '';
+        }
+      });
+    });
+  }
+
+  async function saveMenu() {
+    for (;;) {
+      const i = await choose(['Save now', 'Export save file', 'Load save file', 'Back'], { cls: 'start-menu' });
+      if (i === 0) { writeSave(); await say('Game saved!'); }
+      else if (i === 1) await exportPanel();
+      else if (i === 2) {
+        const loaded = await importPanel();
+        if (!loaded) continue;
+        if (!(await yesNo([`Load ${loaded.name}'s game?`, 'The game on this device will be replaced.']))) continue;
+        S = loaded;
+        writeSave();
+        await fade(() => placePlayer(S.map, S.x, S.y, S.dir));
+        await say(`Welcome back, ${S.name}!`);
+        return true;
+      } else return false;
+    }
+  }
+
   async function openMenu() {
     busy = true;
     sfx('select');
     let i = 0;
     for (;;) {
-      const items = ['Team', 'Legendex', 'Talk to buddy', 'Grown-ups', 'Settings', 'Save', 'Close'];
+      const items = ['Team', 'Map', 'Legendex', 'Talk to buddy', 'Grown-ups', 'Settings', 'Save & load', 'Close'];
       i = await choose(items, { cls: 'start-menu', start: Math.max(0, i) });
       if (i === 0) await teamMenu();
-      else if (i === 1) await dexMenu();
-      else if (i === 2) { if (S.sidekick) await buddyTalk(); else await say('You don\'t have a buddy yet.'); }
-      else if (i === 3) await progressPage();
-      else if (i === 4) await settingsMenu();
-      else if (i === 5) { writeSave(); await say('Game saved!'); }
+      else if (i === 1) { if (await mapMenu()) break; }
+      else if (i === 2) await dexMenu();
+      else if (i === 3) { if (S.sidekick) await buddyTalk(); else await say('You don\'t have a buddy yet.'); }
+      else if (i === 4) await progressPage();
+      else if (i === 5) await settingsMenu();
+      else if (i === 6) { if (await saveMenu()) break; }
       else break;
     }
     busy = false;
@@ -1427,7 +1761,12 @@
         res(input.value.trim().replace(/\s+/g, ' ').slice(0, 10) || 'Hero');
       });
       ui.append(box);
-      handler = (btn) => { if (btn === 'a') box.requestSubmit(); };
+      // A with an empty box opens the keyboard instead of skipping the name.
+      handler = (btn) => {
+        if (btn !== 'a') return;
+        if (input.value.trim()) box.requestSubmit();
+        else input.focus();
+      };
       // Wait for the key that opened this box to be released, so it isn't typed.
       setTimeout(() => { input.value = ''; input.focus(); }, 200);
     });
@@ -1441,8 +1780,18 @@
     big.append(el('span', null, 'LEGENDS'));
     logo.append(big);
     ui.append(logo);
-    const i = await choose(save ? ['Continue', 'New Game'] : ['New Game'], { cancel: false, cls: 'title-menu' });
+    const opts = save ? ['Continue', 'New Game', 'Load save file'] : ['New Game', 'Load save file'];
+    const i = await choose(opts, { cancel: false, cls: 'title-menu' });
     logo.remove();
+    if (opts[i] === 'Load save file') {
+      const loaded = await importPanel();
+      if (!loaded) return title();
+      S = loaded;
+      writeSave();
+      await fade(() => { placePlayer(S.map, S.x, S.y, S.dir); mode = 'world'; });
+      await say(`Welcome back, ${S.name}!`);
+      return;
+    }
     if (save && i === 0) {
       S = save;
       await fade(() => { placePlayer(S.map, S.x, S.y, S.dir); mode = 'world'; });
@@ -1489,4 +1838,16 @@
   window.MQL = { get state() { return S; }, get problem() { return currentProblem; }, MathEngine };
   // Test hook (only with ?dev in the address): show any problem, e.g. MQL.ask(MathEngine.make('sub-100', 2)).
   if (/[?&]dev\b/.test(location.search)) window.MQL.ask = ask;
+  // Device testing: ?dev&quiz=sub-100&grade=2 shows practice questions right away.
+  const qs = new URLSearchParams(location.search);
+  if (qs.has('dev') && qs.get('quiz') && MathEngine.SKILLS[qs.get('quiz')]) {
+    (async () => {
+      await sleep(300);
+      ui.textContent = '';
+      handler = null;
+      S = newState('Tester', Number(qs.get('grade')) || 0);
+      S.sidekick = 'sproutle';
+      for (;;) await ask(MathEngine.make(qs.get('quiz'), S.grade, S.skills), { head: 'Practice' });
+    })();
+  }
 })();

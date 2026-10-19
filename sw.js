@@ -1,7 +1,7 @@
 // Offline support. Same-site files are fetched from the network first (so new
 // uploads show up right away) and fall back to the cache when offline.
 // Bump CACHE (v1 -> v2 ...) when files are renamed or removed.
-const CACHE = 'mql-v2';
+const CACHE = 'mql-v3';
 const ASSETS = [
   './', './index.html', './style.css', './manifest.webmanifest',
   './js/data.js', './js/art.js', './js/math.js', './js/game.js',
@@ -33,8 +33,13 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const sameSite = new URL(req.url).origin === self.location.origin;
   if (sameSite) {
+    // cache: 'no-cache' makes the browser check the server instead of reusing
+    // its own HTTP cache, so every file comes from the same (newest) version.
+    const fresh = req.mode === 'navigate'
+      ? fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' })
+      : fetch(req, { cache: 'no-cache' });
     e.respondWith(
-      fetch(req).then((resp) => save(req, resp))
+      fresh.then((resp) => save(req, resp))
         .catch(() => caches.match(req).then((hit) => hit || (req.mode === 'navigate' ? caches.match('./index.html') : undefined)))
     );
   } else {

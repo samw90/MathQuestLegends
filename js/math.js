@@ -284,6 +284,15 @@ const MathEngine = (() => {
     if (p.op === '+' && given === p.a - p.b) return 'Careful! This one\'s adding, not taking away.';
     if (p.op === '−' && given === p.a + p.b) return 'Careful! This one\'s taking away, not adding.';
     if (p.op === '×' && given === p.a + p.b) return 'That\'s what you get when you add. This one\'s multiplying!';
+    if (p.op === '−' && p.a >= 20) {
+      // Took the smaller digit from the bigger one in each column instead of borrowing.
+      const A = String(p.a), B = String(p.b).padStart(A.length, '0');
+      const noBorrow = Number([...A].map((x, i) => Math.abs(Number(x) - Number(B[i]))).join(''));
+      if (given === noBorrow) return 'Careful! When the top digit is smaller, you need to borrow.';
+    }
+    if (p.answer >= 10 && String(given) === String(p.answer).split('').reverse().join('')) {
+      return 'So close! Check the order of your digits.';
+    }
     if ((p.op === '+' || p.op === '−') && d % 10 === 0 && d < 100) {
       return p.op === '+' ? 'Check the tens. Did you forget to carry the 1?' : 'Check the tens. Did you remember to borrow?';
     }
