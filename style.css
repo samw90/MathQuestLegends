@@ -271,30 +271,46 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .menu.start-menu { top: 1.5%; bottom: auto; max-height: 97%; min-width: 46%; }
 .menu.title-menu { left: 50%; right: auto; bottom: 4%; transform: translateX(-50%); min-width: 52%; }
 
-/* quiz */
-.quiz {
-  left: 1.5%;
-  right: 1.5%;
-  bottom: 1.5%;
-  top: 27%;
-  padding: 2.5cqw 3cqw;
+/* quiz: the whole screen, so there is room for pictures and hints */
+.quiz, .teach {
+  inset: 1.5%;
+  overflow-y: auto;
+  padding: 2cqw 3cqw;
   display: flex;
   flex-direction: column;
-  gap: 1.5cqw;
+  gap: 1.4cqw;
 }
-/* Math uses a rounded font: in the pixel font 5/S and 2/Z look alike. */
-.quiz .tag { display: flex; justify-content: center; align-items: center; gap: 2cqw; font-size: 4.2cqw; min-height: 6cqw; }
-.quiz .hear { font-size: 6cqw; line-height: 1; cursor: pointer; padding: 0 1cqw; }
-.quiz .q { font-family: 'Nunito', system-ui, sans-serif; font-size: 8.6cqw; font-weight: 900; text-align: center; line-height: 1.15; }
-.quiz .q.long { font-size: 6.6cqw; font-weight: 800; }
-.quiz.has-vis { top: 15%; }
-.quiz .vis {
-  font-size: 8cqw;
-  text-align: center;
-  white-space: pre-line;
-  line-height: 1.15;
-  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+.qhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 4cqw;
+  color: #6a6488;
 }
+.hear {
+  all: unset;
+  font-size: 5.6cqw;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 1cqw;
+}
+.quiz .q { font-size: 8.6cqw; font-weight: 900; text-align: center; line-height: 1.15; }
+.quiz .q.long { font-size: 4.8cqw; font-weight: 800; text-align: left; line-height: 1.25; }
+
+.bubble {
+  display: flex;
+  align-items: center;
+  gap: 2cqw;
+  background: #fff6d6;
+  border: .6cqw solid #f2c84b;
+  border-radius: 2cqw;
+  padding: 1cqw 2cqw;
+  font-size: 4.1cqw;
+  line-height: 1.2;
+}
+.bubble[hidden] { display: none; }
+.bubble img { width: 9cqw; height: 9cqw; image-rendering: pixelated; flex: none; }
+
 .answers {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -302,13 +318,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
   margin-top: auto;
 }
 .answers.three { grid-template-columns: 1fr 1fr 1fr; }
+.answers.four { grid-template-columns: repeat(4, 1fr); }
 .ans {
   all: unset;
   text-align: center;
-  font-family: 'Nunito', system-ui, sans-serif;
-  font-size: 7.6cqw;
+  font-size: 7.4cqw;
   font-weight: 900;
-  padding: 1.6cqw 0;
+  padding: 1.4cqw 0;
   border: .7cqw solid var(--ink);
   border-radius: 2cqw;
   background: #f1ecff;
@@ -317,7 +333,69 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* The keyboard cursor only shows once a key is used, so touch players don't see a pre-picked answer. */
 body.kb .ans.sel { outline: .9cqw solid var(--accent); outline-offset: .3cqw; }
 .ans.right { background: #98e38c; }
-.ans.wrong { background: #f6a1a1; }
+.ans.wrong { background: #f6a1a1; opacity: .7; }
+.ans:disabled { cursor: default; }
+
+.qfoot { display: flex; justify-content: center; gap: 3cqw; }
+.hintbtn {
+  border: .6cqw solid var(--ink);
+  border-radius: 999px;
+  background: var(--gold);
+  font-size: 4.6cqw;
+  font-weight: 900;
+  padding: .8cqw 4cqw;
+}
+.hintbtn.teach { background: #c9b0f4; }
+.hintbtn[hidden] { display: none; }
+
+/* pictures */
+.vis { display: flex; justify-content: center; align-items: center; gap: 2cqw; flex-wrap: wrap; }
+.vis.tenframe .frame {
+  display: grid;
+  grid-template-columns: repeat(5, 6.6cqw);
+  grid-auto-rows: 6.6cqw;
+  border: .5cqw solid var(--ink);
+  background: #fff;
+}
+.vis.tenframe .cell { border: .2cqw solid #b8b0d4; display: grid; place-items: center; position: relative; }
+.vis.tenframe .dot::after { content: ''; width: 72%; height: 72%; border-radius: 50%; }
+.vis.tenframe .dot.a::after { background: #e8506a; }
+.vis.tenframe .dot.b::after { background: #4a9ae8; }
+.vis.tenframe .gone::after { opacity: .3; }
+.vis.tenframe .gone::before { content: '✕'; position: absolute; font-size: 4.4cqw; color: var(--ink); }
+
+.vis.baseten .grp { display: flex; align-items: flex-end; gap: .7cqw; }
+.vis.baseten .rod { width: 2.4cqw; height: 15cqw; background: repeating-linear-gradient(#4a9ae8 0 1.1cqw, #2b6cb0 1.1cqw 1.3cqw); border: .25cqw solid var(--ink); }
+.vis.baseten .ones { display: grid; grid-template-columns: repeat(3, 2.8cqw); gap: .5cqw; align-content: end; }
+.vis.baseten .cube { width: 2.8cqw; height: 2.8cqw; background: #f2c84b; border: .25cqw solid var(--ink); }
+.vis.baseten .grp.x .rod, .vis.baseten .grp.x .cube { background: #f6a1a1; }
+.vis.baseten .sign { font-size: 7cqw; font-weight: 900; }
+
+.vis.array { flex-direction: column; gap: .6cqw; }
+.vis.array .row { display: flex; gap: .6cqw; }
+.vis.array .dot { width: var(--dot); height: var(--dot); border-radius: 50%; background: #e8506a; }
+
+/* Teach me */
+.teach { overflow-y: auto; gap: 1.2cqw; }
+.teach .intro { margin: 0; font-size: 4cqw; line-height: 1.25; }
+.teach .intro[hidden] { display: none; }
+.teach .work {
+  margin: 0 auto;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 5cqw;
+  font-weight: 700;
+  line-height: 1.1;
+  background: #2f4a3a;
+  color: #f4f4e8;
+  padding: 1.5cqw 4cqw;
+  border-radius: 1.5cqw;
+  white-space: pre;
+}
+.teach .prompt { margin: 0; font-size: 4.4cqw; line-height: 1.25; }
+.teach .note { margin: 0; min-height: 4.6cqw; font-size: 4cqw; color: #4a4566; }
+.teach .ans { font-size: 6.4cqw; padding: 1cqw 0; }
+.teach .answers { margin-top: 0; }
+.teach .hintbtn { align-self: center; }
 
 /* battle hud */
 .hud {

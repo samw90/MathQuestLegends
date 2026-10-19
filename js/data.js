@@ -1,77 +1,63 @@
-// Game data: creature types, species, people and maps.
+// Game data: Legends, people and maps.
 
 const GRADES = ['Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3'];
 
-const TYPES = {
-  plant: { name: 'Plant' },
-  fire: { name: 'Fire' },
-  water: { name: 'Water' },
-  rock: { name: 'Rock' },
-  bug: { name: 'Bug' },
-  sky: { name: 'Sky' },
-};
-
-// Attacks of the key type are super effective against the listed types.
-const STRONG = {
-  plant: ['water', 'rock'],
-  fire: ['plant', 'bug'],
-  water: ['fire', 'rock'],
-  rock: ['fire', 'sky'],
-  bug: ['plant'],
-  sky: ['bug', 'plant'],
-};
-
-const TOPICS = {
-  add: 'Adding',
-  sub: 'Taking away',
-  count: 'Counting',
-  compare: 'Comparing',
-  missing: 'Missing numbers',
-  skip: 'Skip counting',
-  place: 'Tens and ones',
-  double: 'Doubles',
-  mult: 'Equal groups',
-};
-
+// Every wild Legend asks one kind of math puzzle (its `family`), so kids learn
+// "Snipsnap means taking away". The game sends the Legends that match the
+// skills a player most needs to practise. Sidekicks have no family: they
+// help with every kind of math.
 const SPECIES = {
   sproutle: {
-    name: 'Sproutle', type: 'plant', hp: 22, atk: 11,
-    moves: [{ name: 'Leaf Add', topic: 'add', power: 40 }, { name: 'Vine Count', topic: 'count', power: 35 }],
-    dex: 'It grows a new leaf when it adds.',
+    name: 'Sproutle', hp: 22, atk: 11, sidekick: true,
+    moves: ['Leaf Swipe', 'Vine Whip'],
+    dex: 'A cheerful sprout. It loves to help you think.',
   },
   emberkit: {
-    name: 'Emberkit', type: 'fire', hp: 20, atk: 12,
-    moves: [{ name: 'Ember Minus', topic: 'sub', power: 40 }, { name: 'Flame Compare', topic: 'compare', power: 35 }],
-    dex: 'Its tail glows when it takes away.',
+    name: 'Emberkit', hp: 20, atk: 12, sidekick: true,
+    moves: ['Ember Pounce', 'Warm Glow'],
+    dex: 'A brave little cat. Its tail glows when it has an idea.',
   },
   splashfin: {
-    name: 'Splashfin', type: 'water', hp: 24, atk: 10,
-    moves: [{ name: 'Bubble Add', topic: 'add', power: 35 }, { name: 'Tide Fill', topic: 'missing', power: 40 }],
-    dex: 'It finds lost numbers in the waves.',
-  },
-  buzzlet: {
-    name: 'Buzzlet', type: 'bug', hp: 16, atk: 10,
-    moves: [{ name: 'Buzz Skip', topic: 'skip', power: 35 }, { name: 'Sting Minus', topic: 'sub', power: 30 }],
-    dex: 'It counts by 2s, 5s, and 10s.',
-  },
-  pebblit: {
-    name: 'Pebblit', type: 'rock', hp: 22, atk: 9,
-    moves: [{ name: 'Rock Stack', topic: 'place', power: 40 }, { name: 'Pebble Toss', topic: 'add', power: 30 }],
-    dex: 'It stacks rocks in piles of ten.',
+    name: 'Splashfin', hp: 24, atk: 10, sidekick: true,
+    moves: ['Bubble Burst', 'Tail Splash'],
+    dex: 'A calm fish. It blows a bubble when it finds the answer.',
   },
   hootsum: {
-    name: 'Hootsum', type: 'sky', hp: 20, atk: 10,
-    moves: [{ name: 'Twin Gust', topic: 'double', power: 35 }, { name: 'Wing Fill', topic: 'missing', power: 35 }],
-    dex: 'It sees doubles everywhere.',
+    name: 'Hootsum', hp: 20, atk: 10, family: 'add',
+    moves: ['Plus Gust', 'Wing Flap'],
+    dex: 'Its puzzles are about adding. See the plus on its chest?',
+  },
+  snipsnap: {
+    name: 'Snipsnap', hp: 20, atk: 10, family: 'sub',
+    moves: ['Snip Away', 'Claw Pinch'],
+    dex: 'Its puzzles are about taking away. Snip, snip!',
+  },
+  pebblit: {
+    name: 'Pebblit', hp: 22, atk: 9, family: 'compare',
+    moves: ['Rock Roll', 'Pebble Toss'],
+    dex: 'Its puzzles ask which number is bigger.',
+  },
+  buzzlet: {
+    name: 'Buzzlet', hp: 18, atk: 10, family: 'mult',
+    moves: ['Buzz Loop', 'Group Sting'],
+    dex: 'Its puzzles are about equal groups. It counts by 2s, 5s, and 10s.',
+  },
+  shareling: {
+    name: 'Shareling', hp: 22, atk: 10, family: 'div',
+    moves: ['Spore Share', 'Cap Bonk'],
+    dex: 'Its puzzles are about sharing equally. It splits its cap with friends.',
   },
   gridrex: {
-    name: 'Gridrex', type: 'rock', hp: 30, atk: 12,
-    moves: [{ name: 'Array Slam', topic: 'mult', power: 45 }, { name: 'Grid Stomp', topic: 'compare', power: 35 }],
-    dex: 'Its belly is made of squares.',
+    name: 'Gridrex', hp: 30, atk: 12, family: 'mixed',
+    moves: ['Grid Stomp', 'Array Slam'],
+    dex: 'Ranger Rowan\'s partner. Its puzzles mix every kind of math.',
   },
 };
 
-const DEX_ORDER = ['sproutle', 'emberkit', 'splashfin', 'buzzlet', 'pebblit', 'hootsum', 'gridrex'];
+// Which wild Legend asks each kind of math.
+const FAMILY_SPECIES = { add: 'hootsum', sub: 'snipsnap', compare: 'pebblit', mult: 'buzzlet', div: 'shareling' };
+
+const DEX_ORDER = ['sproutle', 'emberkit', 'splashfin', 'hootsum', 'snipsnap', 'pebblit', 'buzzlet', 'shareling', 'gridrex'];
 const STARTERS = ['sproutle', 'emberkit', 'splashfin'];
 
 const LOOKS = {
@@ -87,7 +73,7 @@ const LOOKS = {
 
 // Tiles: . grass  , tall grass  f flowers  = path  T tree  ~ water  s sign  g gate
 // r/R/C roofs  w wall  W window  d door  x inside wall  o floor  b shelf  t table
-// 1/2/3 starter orbs  c counter  m exit mat
+// 1/2/3 sidekick beds  c counter  m exit mat
 const SOLID = new Set('T~sgrRCwWxbt123c '.split(''));
 
 const MAPS = {
@@ -164,11 +150,7 @@ const MAPS = {
       '9,0': ['Route 2 is not ready yet.', 'Come back soon!'],
       '10,0': ['Route 2 is not ready yet.', 'Come back soon!'],
     },
-    wild: [
-      { sp: 'buzzlet', p: 0.4, min: 2, max: 4 },
-      { sp: 'pebblit', p: 0.35, min: 2, max: 4 },
-      { sp: 'hootsum', p: 0.25, min: 3, max: 5 },
-    ],
+    wild: true,
   },
 
   house: {

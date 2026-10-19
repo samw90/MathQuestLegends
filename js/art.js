@@ -381,6 +381,39 @@ const Art = (() => {
       k.px(11, 12, '#fff'); k.px(19, 12, '#fff');
       k.tri(14.5, 16, 17.5, 16, 16, 19.5, '#f2a23c');
     },
+    snipsnap(k) {
+      // legs
+      for (const x of [6, 9, 23, 26]) k.rect(x, 24, 1.5, 5, '#b8402a');
+      // claws, open like scissors
+      k.ell(5, 12, 4.5, 4, '#e8604a');
+      k.tri(2, 8, 5, 12, 0, 13, '#fbeee8');
+      k.ell(27, 12, 4.5, 4, '#e8604a');
+      k.tri(30, 8, 27, 12, 32, 13, '#fbeee8');
+      k.rect(7, 15, 2, 5, '#e8604a'); k.rect(23, 15, 2, 5, '#e8604a');
+      // eye stalks
+      k.rect(12, 9, 1.5, 6, '#b8402a'); k.rect(19, 9, 1.5, 6, '#b8402a');
+      k.ell(12.7, 8.5, 2.6, 2.6, '#fff'); k.ell(19.7, 8.5, 2.6, 2.6, '#fff');
+      k.ell(13.2, 9, 1.3, 1.5, INK); k.ell(20.2, 9, 1.3, 1.5, INK);
+      // shell
+      k.ell(16, 21, 11, 7, '#e8604a');
+      k.ell(16, 19, 8, 3.5, '#f59a7a');
+      k.rect(13, 23, 6, 1, INK);
+      k.px(12, 22, INK); k.px(19, 22, INK);
+    },
+    shareling(k) {
+      // stem with a face
+      k.ell(16, 24, 7, 7, '#f6ead2');
+      k.ell(16, 27, 5, 3, '#e6d4b0');
+      eyes(k, 11.5, 20); eyes(k, 17.5, 20);
+      k.rect(15, 26, 2, 1, INK);
+      // cap, split down the middle for sharing
+      k.ell(16, 12, 14, 9, '#a060d8', (x, y) => y < 17);
+      k.ell(16, 12, 14, 9, '#7a40b8', (x, y) => y >= 15 && y < 17);
+      k.rect(15.5, 3, 1, 12, '#f6ead2');
+      k.ell(9, 9, 2.4, 2, '#f6ead2'); k.ell(23, 9, 2.4, 2, '#f6ead2');
+      k.ell(12, 5, 1.6, 1.3, '#f6ead2'); k.ell(20.5, 5.5, 1.6, 1.3, '#f6ead2');
+      k.ell(5, 13, 1.4, 1.2, '#f6ead2'); k.ell(27, 13, 1.4, 1.2, '#f6ead2');
+    },
     gridrex(k) {
       k.tri(24, 21, 32, 27, 24, 28, '#7a4ab8');
       k.tri(7, 11, 10, 3, 14, 10, '#5a3a94');
@@ -408,23 +441,24 @@ const Art = (() => {
     return creatureCache[id];
   }
 
+  // A small 20px version for walking around the map, with a hop frame.
+  const smallCache = {};
+  function creatureSmall(id, frame) {
+    const key = id + frame;
+    if (!smallCache[key]) {
+      const c = canvas(20, 20);
+      const inner = canvas(20, 20);
+      CREATURES[id](kit(inner, 18 / 32));
+      outline(inner);
+      c.getContext('2d').drawImage(inner, 0, frame ? 0 : 1);
+      smallCache[key] = c;
+    }
+    return smallCache[key];
+  }
+
   const urlCache = {};
   function creatureURL(id) {
     return urlCache[id] || (urlCache[id] = creature(id).toDataURL());
-  }
-
-  let orbCanvas = null;
-  function questOrb() {
-    if (!orbCanvas) {
-      orbCanvas = canvas(12, 12);
-      const k = kit(orbCanvas);
-      k.ell(6, 6, 5, 5, '#f2c84b');
-      k.ell(6, 6, 5, 5, '#e09a2a', (x, y) => y > 7);
-      k.rect(5, 3, 2, 6, '#fff');
-      k.rect(3, 5, 6, 2, '#fff');
-      outline(orbCanvas);
-    }
-    return orbCanvas;
   }
 
   const platformCache = {};
@@ -439,5 +473,5 @@ const Art = (() => {
     return platformCache[key];
   }
 
-  return { tile, person, creature, creatureURL, questOrb, platform };
+  return { tile, person, creature, creatureSmall, creatureURL, platform };
 })();

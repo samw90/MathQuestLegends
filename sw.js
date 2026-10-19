@@ -1,7 +1,7 @@
 // Offline support. Same-site files are fetched from the network first (so new
 // uploads show up right away) and fall back to the cache when offline.
 // Bump CACHE (v1 -> v2 ...) when files are renamed or removed.
-const CACHE = 'mql-v1';
+const CACHE = 'mql-v2';
 const ASSETS = [
   './', './index.html', './style.css', './manifest.webmanifest',
   './js/data.js', './js/art.js', './js/math.js', './js/game.js',
