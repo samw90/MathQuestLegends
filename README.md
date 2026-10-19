@@ -92,5 +92,6 @@ To publish it, push to GitHub and turn on GitHub Pages for the `main` branch (Se
 - `js/math.js`: the math engine: skills per grade, adapting, hints and Teach me lessons
 - `js/game.js`: movement, the following buddy, dialog, menus, battles and saving
 - `sw.js`, `manifest.webmanifest`, `*.png`: offline support and app icons
+- `tools/icons.html`: draws the home screen icon options from the game's art
 
 For testing, open the game with `?dev` in the address to get `MQL.ask(MQL.MathEngine.make('sub-100', 2))` in the browser console, or `?dev&quiz=sub-100&grade=2` to jump straight into practice questions (handy on a phone or simulator).
