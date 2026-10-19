@@ -1847,7 +1847,14 @@
       handler = null;
       S = newState('Tester', Number(qs.get('grade')) || 0);
       S.sidekick = 'sproutle';
-      for (;;) await ask(MathEngine.make(qs.get('quiz'), S.grade, S.skills), { head: 'Practice' });
+      // Sets of 5, then a choice so testers are never stuck practicing.
+      for (;;) {
+        for (let i = 0; i < 5; i++) await ask(MathEngine.make(qs.get('quiz'), S.grade, S.skills), { head: 'Practice ' + (i + 1) + '/5' });
+        await say('Nice practice!', { keep: true });
+        const c = await choose(['More practice', 'Play the game'], { cancel: false });
+        hideDialog();
+        if (c === 1) { location.href = location.pathname; return; }
+      }
     })();
   }
 })();
