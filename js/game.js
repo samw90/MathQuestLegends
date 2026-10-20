@@ -200,10 +200,41 @@
   }
   const currentVoice = () => (S && S.voiceName && voices.find((v) => v.name === S.voiceName)) || voices[0] || null;
 
+  // iPhone and iPad keep speech and sound locked until a tap *ends* (touchend or
+  // click; pointerdown doesn't count), so unlock both on the first one and say
+  // whatever was missed while locked.
+  let unlocked = false, missed = null;
+  function unlockAudio() {
+    if (unlocked) return;
+    unlocked = true;
+    try {
+      if (soundOn) {
+        actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+        const src = actx.createBufferSource();
+        src.buffer = actx.createBuffer(1, 1, 22050);
+        src.connect(actx.destination);
+        src.start(0);
+        actx.resume();
+      }
+    } catch (e) { /* no audio */ }
+    if (!window.speechSynthesis) return;
+    if (missed) { speak(missed.text, missed.force); return; }
+    try {
+      const u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      speechSynthesis.speak(u);
+    } catch (e) { /* no voice */ }
+  }
+  for (const ev of ['touchend', 'click', 'keydown']) window.addEventListener(ev, unlockAudio, { capture: true, passive: true });
+
   function speak(text, force) {
     if (!(force || (S && S.voice)) || !window.speechSynthesis) return;
+    if (!unlocked) missed = { text, force };
     try {
-      speechSynthesis.cancel();
+      // Safari can drop an utterance spoken right after cancel(), so only cancel
+      // when something is actually playing.
+      if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
+      speechSynthesis.resume();
       const u = new SpeechSynthesisUtterance(spoken(text));
       const v = currentVoice();
       if (v) { u.voice = v; u.lang = v.lang; }
