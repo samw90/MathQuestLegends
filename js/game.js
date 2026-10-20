@@ -1311,6 +1311,11 @@
     riverKid: () => say(['Beaverbite chews logs smaller and smaller.', 'That\'s taking away, one bite at a time!']),
     swampKid: () => say(['Lilysplit\'s pad is cut into equal parts.', 'Equal parts are the secret to fractions!']),
     treetopsKid: () => say(['Toucount keeps tally marks on its beak.', 'Count by fives: each bundle of marks is 5!']),
+    parkKid: () => say(['Sprinklet sprays water in equal groups.', '3 groups of 4 drops is 12 drops!']),
+    rooftopsKid: () => say(['Bricklet stacks bricks in rows.', 'Rows times columns tells you how many!']),
+    subwayKid: () => say(['Traintrio has cars in groups of three.', 'Count by 3s to count the cars!']),
+    harborKid: () => say(['Lighthousey shines on the bigger number.', 'Look at the biggest place first!']),
+    clocktowerKid: () => say(['Balloonsplit splits into equal balloons.', 'Sharing equally is dividing!']),
     waterfallKid: () => say(['The falls are loud, so think quietly.', 'Mistsplit splits into drops that are all the same size.']),
 
     // The way to the next area is closed until you beat this area's boss.
@@ -1463,6 +1468,11 @@
     swamp: ['#e6eadc', '#c4cca8', '#6a8a4a', '#8aaa6a'],
     treetops: ['#e8f6ff', '#cfe8b8', '#a0703a', '#c89a5a'],
     waterfall: ['#e6f2fa', '#cfdce6', '#7a8a98', '#a8b8c4'],
+    park: ['#f2f8ea', '#d8ecc4', '#7cc060', '#a0d884'],
+    rooftops: ['#e8f0fa', '#c8ccd8', '#8a8a9a', '#a8a8b8'],
+    subway: ['#e4e4ec', '#c8c8d4', '#6a6a7a', '#8a8a9a'],
+    harbor: ['#e4f2fc', '#d8e4ec', '#a07a4a', '#c89a6a'],
+    clocktower: ['#f6ecdc', '#e2d4bc', '#a8957a', '#c8b89a'],
   };
 
   function drawBattle(now) {
@@ -1947,6 +1957,16 @@
       '---BB-LvLL',
       'FneeBBnken',
       'FnekennenF',
+    ],
+    3: [
+      'ΔΓΓΛΓΓΞΓΓΔ',
+      'ΓΓΛΛαΓΓΓΓΓ',
+      'φφυυαυυψυφ',
+      'φυψυαυυυφφ',
+      'ιξξτσξτξξι',
+      'οοοοσοοοοο',
+      'ιλλναλμλλι',
+      'ζδεεαδηδδζ',
     ],
   };
   function drawWorldMap(world) {

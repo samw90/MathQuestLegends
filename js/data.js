@@ -75,6 +75,29 @@ const SPECIES = {
   owlgebra: { name: 'Owlgebra', hp: 36, atk: 13, family: 'mixed', moves: ['Hoot Storm', 'Glasses Glint'], dex: 'Scout Wren\'s partner. Its glasses help it spot every pattern.' },
   cascoi: { name: 'Cascoi', hp: 42, atk: 13, family: 'mixed', moves: ['Waterfall', 'Koi Dance'], dex: 'Elder Brook\'s partner. It swam up the falls and became a dragon.' },
 
+
+  // ---------- World 3: Brightport City
+  pigeonplus: { name: 'Pigeonplus', hp: 22, atk: 11, family: 'add', moves: ['Coo Call', 'Crumb Peck'], dex: 'It counts every crumb. One more crumb, one more friend!' },
+  taxicub: { name: 'Taxicub', hp: 26, atk: 11, family: 'add', moves: ['Honk', 'Zoom'], dex: 'A bear cub that picks up riders and adds them up.' },
+  crabplus: { name: 'Crabplus', hp: 26, atk: 10, family: 'add', moves: ['Pinch', 'Side Step'], dex: 'It collects shells in its claws: two here, three there!' },
+  raccminus: { name: 'Raccminus', hp: 24, atk: 11, family: 'sub', moves: ['Sneak', 'Snack Grab'], dex: 'It takes snacks away, one by one. Count what\'s left!' },
+  mouseless: { name: 'Mouseless', hp: 20, atk: 12, family: 'sub', moves: ['Nibble', 'Scurry'], dex: 'It nibbles cheese until there\'s less and less.' },
+  seaslurp: { name: 'Seaslurp', hp: 26, atk: 10, family: 'sub', moves: ['Slurp', 'Splash'], dex: 'A sea lion that slurps up fish. How many are left?' },
+  lampling: { name: 'Lampling', hp: 22, atk: 11, family: 'compare', moves: ['Glow Up', 'Flicker'], dex: 'A little lamp that glows brighter on the bigger number.' },
+  neonewt: { name: 'Neonewt', hp: 22, atk: 11, family: 'compare', moves: ['Neon Flash', 'Tail Whip'], dex: 'Its neon stripes light up to show which is more.' },
+  lighthousey: { name: 'Lighthousey', hp: 28, atk: 10, family: 'compare', moves: ['Beam', 'Fog Horn'], dex: 'It shines its light on the biggest number in the harbor.' },
+  sprinklet: { name: 'Sprinklet', hp: 22, atk: 11, family: 'mult', moves: ['Spray', 'Drip Drop'], dex: 'It sprays water in equal groups of drops.' },
+  bricklet: { name: 'Bricklet', hp: 28, atk: 10, family: 'mult', moves: ['Stack', 'Brick Bonk'], dex: 'It stacks bricks in rows and columns.' },
+  traintrio: { name: 'Traintrio', hp: 26, atk: 11, family: 'mult', moves: ['Choo Choo', 'Track Dash'], dex: 'A tiny train with cars in groups of three.' },
+  pelishare: { name: 'Pelishare', hp: 24, atk: 11, family: 'div', moves: ['Pouch Scoop', 'Dive'], dex: 'A pelican that shares the fish in its pouch fairly.' },
+  slicerat: { name: 'Slicerat', hp: 22, atk: 12, family: 'div', moves: ['Slice', 'Crust Toss'], dex: 'It cuts pizza into equal slices for its friends.' },
+  balloonsplit: { name: 'Balloonsplit', hp: 22, atk: 11, family: 'div', moves: ['Pop', 'Float'], dex: 'One big balloon splits into equal little balloons.' },
+  fountitan: { name: 'Fountitan', hp: 42, atk: 13, family: 'mixed', moves: ['Geyser', 'Statue Stomp'], dex: 'Gardener Rose\'s partner. A fountain that came to life.' },
+  towerex: { name: 'Towerex', hp: 42, atk: 14, family: 'mixed', moves: ['Skyscraper Stomp', 'Window Roar'], dex: 'Courier Kai\'s partner. A dinosaur shaped like a tall building.' },
+  metrodrake: { name: 'Metrodrake', hp: 44, atk: 14, family: 'mixed', moves: ['Rail Rush', 'Headlight'], dex: 'Conductor Lou\'s partner. It zooms through tunnels.' },
+  anchorca: { name: 'Anchorca', hp: 46, atk: 14, family: 'mixed', moves: ['Anchor Drop', 'Wave'], dex: 'Skipper Jo\'s partner. An orca with an anchor tattoo.' },
+  gearadon: { name: 'Gearadon', hp: 46, atk: 15, family: 'mixed', moves: ['Gear Grind', 'Tick Tock'], dex: 'Mayor Bell\'s partner. Made of gears that turn just right.' },
+  brightwing: { name: 'Brightwing', hp: 50, atk: 15, family: 'mixed', rarity: 'world', moves: ['Neon Blaze', 'City Lights'], dex: 'The Legend of Brightport City. It lights up the whole skyline.' },
   // ---------- Grade ultra rares: 3 per grade. Each waits in one spot and wakes up
   // when you're getting strong at its skill (see SPECIALS below).
   glimmerdot: { name: 'Glimmerdot', hp: 30, atk: 11, family: 'compare', rarity: 'ultra', moves: ['Dot Dazzle', 'Glow Flutter'], dex: 'A rare ladybug with exactly ten dots. It glows when you count them all.' },
@@ -119,10 +142,16 @@ const AREAS = {
   swamp: { name: 'Bogwater Swamp', world: 2, base: 34, boss: 'crocalc', species: { add: 'toadtotal', sub: 'snailess', compare: 'heronmore', mult: 'dragonfleet', div: 'lilysplit' } },
   treetops: { name: 'Treetop Trail', world: 2, base: 38, boss: 'owlgebra', species: { add: 'plusquirrel', sub: 'mothaway', compare: 'toucount', mult: 'chimpairs', div: 'hedgeshare' } },
   waterfall: { name: 'Thunder Falls', world: 2, base: 42, boss: 'cascoi', species: { add: 'otteradd', sub: 'snailess', compare: 'mossbig', mult: 'chimpairs', div: 'mistsplit' } },
+  park: { name: 'Sunny Park', world: 3, base: 46, boss: 'fountitan', species: { add: 'pigeonplus', sub: 'raccminus', compare: 'lampling', mult: 'sprinklet', div: 'pelishare' } },
+  rooftops: { name: 'Rooftop Run', world: 3, base: 50, boss: 'towerex', species: { add: 'pigeonplus', sub: 'mouseless', compare: 'neonewt', mult: 'bricklet', div: 'balloonsplit' } },
+  subway: { name: 'Subway Station', world: 3, base: 54, boss: 'metrodrake', species: { add: 'taxicub', sub: 'mouseless', compare: 'neonewt', mult: 'traintrio', div: 'slicerat' } },
+  harbor: { name: 'Harbor Docks', world: 3, base: 58, boss: 'anchorca', species: { add: 'crabplus', sub: 'seaslurp', compare: 'lighthousey', mult: 'traintrio', div: 'pelishare' } },
+  clocktower: { name: 'Clock Tower Square', world: 3, base: 62, boss: 'gearadon', species: { add: 'taxicub', sub: 'raccminus', compare: 'lampling', mult: 'bricklet', div: 'balloonsplit' } },
 };
 const WORLD1_AREAS = ['meadow', 'shore', 'canyon', 'snow', 'cave'];
 const WORLD2_AREAS = ['forest', 'river', 'swamp', 'treetops', 'waterfall'];
-const AREA_ORDER = [...WORLD1_AREAS, ...WORLD2_AREAS];
+const WORLD3_AREAS = ['park', 'rooftops', 'subway', 'harbor', 'clocktower'];
+const AREA_ORDER = [...WORLD1_AREAS, ...WORLD2_AREAS, ...WORLD3_AREAS];
 
 // Every Legend once, in the order you meet them.
 // Every Legend once, in the order you meet them, with the rare ones at the end.
@@ -192,6 +221,36 @@ const BOSSES = {
     win: ['Splendid! The Cascade Badge is yours.', 'You\'ve mastered all of Whisperwood!'],
     after: ['Whisperwood is proud of you, {name}!', 'The portal behind me leads onward.'],
   },
+  park: {
+    name: 'Gardener Rose', badge: 'Blossom Badge', flag: 'badge11',
+    intro: ['Welcome to my park! I\'m Gardener Rose.', 'I plant flowers in neat rows.', 'Let\'s see your puzzle power!'],
+    win: ['Lovely! The Blossom Badge is yours.', 'The stairs up to Rooftop Run are open.'],
+    after: ['Stop and smell the flowers, {name}!', 'Rooftop Run is just north.'],
+  },
+  rooftops: {
+    name: 'Courier Kai', badge: 'Skyline Badge', flag: 'badge12',
+    intro: ['Whoa, you made it up here!', 'I\'m Courier Kai. I deliver fast.', 'Can you solve puzzles just as fast?'],
+    win: ['Delivered! The Skyline Badge is yours.', 'The subway stairs are open now.'],
+    after: ['Keep moving, {name}!', 'The Subway Station is north.'],
+  },
+  subway: {
+    name: 'Conductor Lou', badge: 'Ticket Badge', flag: 'badge13',
+    intro: ['All aboard! I\'m Conductor Lou.', 'My trains run on time and in equal groups.', 'Tickets, please!'],
+    win: ['Next stop: a badge! Here\'s the Ticket Badge.', 'The way out to Harbor Docks is open.'],
+    after: ['Mind the gap, {name}!', 'Harbor Docks is north.'],
+  },
+  harbor: {
+    name: 'Skipper Jo', badge: 'Anchor Badge', flag: 'badge14',
+    intro: ['Ahoy there! I\'m Skipper Jo.', 'Every boat here carries puzzles.', 'Ready to set sail?'],
+    win: ['Shipshape! The Anchor Badge is yours.', 'The road to Clock Tower Square is open.'],
+    after: ['Smooth sailing, {name}!', 'Clock Tower Square is north.'],
+  },
+  clocktower: {
+    name: 'Mayor Bell', badge: 'Clockwork Badge', flag: 'badge15',
+    intro: ['Tick, tock! I\'m Mayor Bell.', 'This whole city runs like clockwork.', 'Let\'s see if your math does too!'],
+    win: ['Right on time! The Clockwork Badge is yours.', 'You\'ve beaten all of Brightport City!'],
+    after: ['The city is proud of you, {name}!', 'A portal glows by the tower.'],
+  },
 };
 const BADGE_FLAGS = AREA_ORDER.map((a) => BOSSES[a].flag);
 
@@ -208,7 +267,7 @@ const BADGE_TIERS = [
 const WORLDS = [
   { id: 1, name: 'Pinecrest Valley', color: '#5fb84a', areas: WORLD1_AREAS, start: { map: 'route1', x: 9, y: 16, dir: 'up' }, done: 'badge5' },
   { id: 2, name: 'Whisperwood', color: '#2f8f5a', areas: WORLD2_AREAS, start: { map: 'forest', x: 9, y: 16, dir: 'up' }, done: 'badge10' },
-  { id: 3, name: 'Brightport City', color: '#e0a030', areas: [], start: null, done: null },
+  { id: 3, name: 'Brightport City', color: '#e0a030', areas: WORLD3_AREAS, start: { map: 'park', x: 9, y: 16, dir: 'up' }, done: 'badge15' },
   { id: 4, name: 'Coral Deep', color: '#3ac4c8', areas: [], start: null, done: null },
   { id: 5, name: 'Sky Isles', color: '#a07ae8', areas: [], start: null, done: null },
 ];
@@ -229,6 +288,11 @@ const LOOKS = {
   sheriff: { id: 'sheriff', hat: '#a0703a', hair: '#5a3418', shirt: '#d8b070', pants: '#5a4a3a' },
   coach: { id: 'coach', hair: '#e0a030', shirt: '#4a9ae8', pants: '#2b2840', long: true },
   keeper: { id: 'keeper', hat: '#5a3a94', hair: '#c8c8d4', shirt: '#7a4ab8', pants: '#3a2a5a' },
+  gardener: { id: 'gardener', hat: '#e8a040', hair: '#7a4a2a', shirt: '#e86a8a', pants: '#3a6a3a', long: true },
+  courier: { id: 'courier', hat: '#e8502a', hair: '#2b2840', shirt: '#f2c84b', pants: '#2a3a5a' },
+  conductor: { id: 'conductor', hat: '#2a3a6a', hair: '#c8c8d4', shirt: '#2a3a6a', pants: '#2a3a6a' },
+  skipper: { id: 'skipper', hat: '#f4f4f8', hair: '#a8582a', shirt: '#3a78c4', pants: '#f4f4f8', long: true },
+  mayor: { id: 'mayor', hat: '#2b2840', hair: '#8a8a9a', shirt: '#7a3a5a', pants: '#2b2840' },
   sage: { id: 'sage', hair: '#f4f4f8', shirt: '#3ac4c8', pants: '#2a5a7a', long: true },
   warden: { id: 'warden', hat: '#2f6b3a', hair: '#7a4a2a', shirt: '#5a8a3a', pants: '#4a3a2a', long: true },
   fisher: { id: 'fisher', hat: '#f2c84b', hair: '#3a2a1a', shirt: '#3a78c4', pants: '#5a4a3a' },
@@ -250,13 +314,17 @@ const LOOKS = {
 //   swamp   z bog water  v bog grass  p boardwalk  J dead tree
 //   trees   Z leafy canopy  H deck  l leaf piles  I rope bridge
 //   falls   U waterfall  O wet stone  & wet moss  | cliff
+//   city    α sidewalk  δ lawn  ε flower bushes  ζ planter tree  η fountain  θ bench
+//           ι brick  κ windows  λ roof  μ air vent  ν roof garden  ξ subway tiles  ο rails
+//           σ platform  τ puddles  υ dock  φ harbor water  χ crates  ψ nets  Γ cobbles
+//           Δ tower wall  Λ ivy  Ξ lamppost
 //   shrine  j stone floor  Y standing stone  (portals are drawn on top from each map's `portals` list)
 //   bosses  four house styles, each roof / roof with emblem / wall / door:
 //           cabin D E N S   tent < > ? /   tower # ! [ ]   dome a y $ +
 //   inside  x wall  o floor  b shelf  t table  1/2/3 buddy beds  c counter  m exit mat
-const SOLID = new Set('T~srRCVwWxbt123c PKMAQXF-zJZU|45678Y#![]DENS<>?/ay$+'.split(''));
+const SOLID = new Set('T~srRCVwWxbt123c PKMAQXF-zJZU|45678Y#![]DENS<>?/ay$+ζηθικμοφχΔΞ'.split(''));
 // Legends hide in these.
-const ENCOUNTER = new Set([',', ';', '"', '^', '%', 'e', 'L', 'v', 'l', '&']);
+const ENCOUNTER = new Set([',', ';', '"', '^', '%', 'e', 'L', 'v', 'l', '&', 'ε', 'ν', 'τ', 'ψ', 'Λ']);
 
 // Rest Center doors take you to the shared Rest Center and bring you back.
 const centerDoor = (x, y) => ({ x, y, to: 'center', tx: 4, ty: 5, dir: 'up', ret: [x, y + 1] });
@@ -732,6 +800,205 @@ const MAPS = {
     signs: { '2,11': ['THUNDER FALLS', 'Listen to the roar of the water!'] },
   },
 
+  // ---------- World 3: Brightport City
+  park: {
+    name: 'Sunny Park',
+    area: 'park',
+    border: 'ζ',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      'ζζζζζζζζζgGζζζζζζζζζ',
+      'ζδδδδayaδααδδδδδδδδζ',
+      'ζδδδδ$+$δααδCC4CCδδζ',
+      'ζδδδδδδδδααδwWdWwδδζ',
+      'ζδδδδδδδδααδδδαδδθδζ',
+      'ζδδδδδδδθααααααδδδδζ',
+      'ζδεεεεεεδααδεεεεεεδζ',
+      'ζδεεεεεεδααδεεεεεεδζ',
+      'ζδεεεεεεδααδεεεεεεδζ',
+      'ζδδδδδδsδααηδδδδδδδζ',
+      'ζδδθδδδδδααδδδδδηδδζ',
+      'ζδεεεεεδδααδδεεεεεδζ',
+      'ζδεεεεεδδααδδεεεεεδζ',
+      'ζδεεεεεδδααδδεεεεεδζ',
+      'ζεεεδδδδδααδδδδδδδδζ',
+      'ζεεεδδδδδααδδδδδδδδζ',
+      'ζδδδδδηδδααδδθδδδδδζ',
+      'ζζζζζζζζζζζζζζζζζζζζ',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'gardener', script: 'boss', arg: 'park' },
+      { x: 15, y: 9, dir: 'left', look: 'kid', script: 'parkKid' },
+    ],
+    warps: [
+      gate(9, 0, 'rooftops', 9, 16, 'badge11'),
+      gate(10, 0, 'rooftops', 10, 16, 'badge11'),
+      centerDoor(14, 3),
+    ],
+    portals: [{ x: 12, y: 16, world: 1, home: true }],
+    signs: { '7,9': ['SUNNY PARK', 'Pigeons gather in groups here.'] },
+  },
+
+  rooftops: {
+    name: 'Rooftop Run',
+    area: 'rooftops',
+    border: 'ι',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      'ιιιιιιιιιgGιιιιιιιιι',
+      'ιλλλλ#!#λααλλλλλλλλι',
+      'ιλλλλ[][λααλCC4CCλλι',
+      'ιλλλλλλλλααλwWdWwλλι',
+      'ιλλλλλλλλααλλλαλμλλι',
+      'ιλλλλλμλλααααααλλλλι',
+      'ιννννλλλλααλλλλννννι',
+      'ιννννλλλλααμλλλννννι',
+      'ιννννλλλλααλλλλλλλλι',
+      'ιννννλλλλααλλλνννννι',
+      'ιλλλλλλλμααsλλνννννι',
+      'ιλμλλλλλλααλλλνννννι',
+      'ιλλνννννλααλλλνννννι',
+      'ιλλνννννλααλνννννλλι',
+      'ιλλνννννλααλνννννλλι',
+      'ιλλνννννλααλνννννμλι',
+      'ιλλλλλλμλααλλλλλλλλι',
+      'ιιιιιιιιιααιιιιιιιιι',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'courier', script: 'boss', arg: 'rooftops' },
+      { x: 5, y: 10, dir: 'left', look: 'girl', script: 'rooftopsKid' },
+    ],
+    warps: [
+      back(9, 17, 'park', 9, 1),
+      back(10, 17, 'park', 10, 1),
+      gate(9, 0, 'subway', 9, 16, 'badge12'),
+      gate(10, 0, 'subway', 10, 16, 'badge12'),
+      centerDoor(14, 3),
+    ],
+    signs: { '11,10': ['ROOFTOP RUN', 'Mind the edges! The view is great.'] },
+  },
+
+  subway: {
+    name: 'Subway Station',
+    area: 'subway',
+    border: 'ι',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      'ιιιιιιιιιgGιιιιιιιιι',
+      'ιξξξξayaξσσξξξξξξξξι',
+      'ιξξξξ$+$ξσσξCC4CCξξι',
+      'ιξξξξξξξξσσξwWdWwξξι',
+      'ιξξξξξξξξσσξξξσξξθξι',
+      'ιξξξξθξsξσσσσσσξξξξι',
+      'ιοοοοοοοοσσοοοοοοοοι',
+      'ιοοοοοοοοσσοοοοοοοοι',
+      'ιττττξξξξσσξξξθττττι',
+      'ιξξξξξξξξσσξξξξξξξξι',
+      'ιξτττττττσστττττττξι',
+      'ιξτττττττσστττττττξι',
+      'ιξτττττττσστττττττξι',
+      'ιξτττττττσστττττττξι',
+      'ιξτττττττσστττττττξι',
+      'ιξθξξξξξθσσθξξξξξξξι',
+      'ιξξξξξξξξσσξξξξξξθξι',
+      'ιιιιιιιιισσιιιιιιιιι',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'conductor', script: 'boss', arg: 'subway' },
+      { x: 13, y: 8, dir: 'left', look: 'hiker', script: 'subwayKid' },
+    ],
+    warps: [
+      back(9, 17, 'rooftops', 9, 1),
+      back(10, 17, 'rooftops', 10, 1),
+      gate(9, 0, 'harbor', 9, 16, 'badge13'),
+      gate(10, 0, 'harbor', 10, 16, 'badge13'),
+      centerDoor(14, 3),
+    ],
+    signs: { '7,5': ['SUBWAY STATION', 'Stand behind the yellow line.'] },
+  },
+
+  harbor: {
+    name: 'Harbor Docks',
+    area: 'harbor',
+    border: 'φ',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      'φφφφφφφφφgGφφφφφφφφφ',
+      'φυυυυ<><υααυυυυυυυυφ',
+      'φυυυυ?/?υααυCC4CCυυφ',
+      'φυυυυυυυυααυwWdWwυυφ',
+      'φυυυυυυυυααυυυαυυχυφ',
+      'φυυυυυυυχααααααυυυυφ',
+      'φυψψψψψψυααυψψψψψψυφ',
+      'φυψψψψψψυααυψψψψψψυφ',
+      'φυψψψψψψυααυψψψψψψυφ',
+      'φυυυυυυsυααχυυυυυυυφ',
+      'φφφφφφφφφααφφφφφφφφφ',
+      'φυψψψψψυυααυυψψψψψυφ',
+      'φυψψψψψυυααυυψψψψψυφ',
+      'φυψψψψψυυααυυψψψψψυφ',
+      'φψψψυυυυυααυυυυυυυυφ',
+      'φψψψυυυυυααυυυυυυυυφ',
+      'φυυυυυχυυααυυχυυυυυφ',
+      'φφφφφφφφφααφφφφφφφφφ',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'skipper', script: 'boss', arg: 'harbor' },
+      { x: 15, y: 9, dir: 'left', look: 'swimmer', script: 'harborKid' },
+    ],
+    warps: [
+      back(9, 17, 'subway', 9, 1),
+      back(10, 17, 'subway', 10, 1),
+      gate(9, 0, 'clocktower', 9, 16, 'badge14'),
+      gate(10, 0, 'clocktower', 10, 16, 'badge14'),
+      centerDoor(14, 3),
+    ],
+    signs: { '7,9': ['HARBOR DOCKS', 'Fresh fish and fresh puzzles!'] },
+  },
+
+  clocktower: {
+    name: 'Clock Tower Square',
+    area: 'clocktower',
+    border: 'Δ',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      'ΔΔΔΔΔΔΔΔΔΔΔΔΔΔΔΔΔΔΔΔ',
+      'ΔΓΓΓΓ#!#ΓααΓΓΓΓΓΓΓΓΔ',
+      'ΔΓΓΓΓ[][ΓααΓCC4CCΓΓΔ',
+      'ΔΓΓΓΓΓΓΓΓααΓwWdWwΓΓΔ',
+      'ΔΓΓΓΓΓΓΓΓααΓΓΓαΓΞΓΓΔ',
+      'ΔΓΓΓΓΓΞΓΓααααααΓΓΓΓΔ',
+      'ΔΛΛΛΛΓΓΓΓααΓΓΓΓΛΛΛΛΔ',
+      'ΔΛΛΛΛΓΓΓΓααΞΓΓΓΛΛΛΛΔ',
+      'ΔΛΛΛΛΓΓΓΓααΓΓΓΓΓΓΓΓΔ',
+      'ΔΛΛΛΛΓΓΓΓααΓΓΓΛΛΛΛΛΔ',
+      'ΔΓΓΓΓΓΓΓΞααsΓΓΛΛΛΛΛΔ',
+      'ΔΓΞΓΓΓΓΓΓααΓΓΓΛΛΛΛΛΔ',
+      'ΔΓΓΛΛΛΛΛΓααΓΓΓΛΛΛΛΛΔ',
+      'ΔΓΓΛΛΛΛΛΓααΓΛΛΛΛΛΓΓΔ',
+      'ΔΓΓΛΛΛΛΛΓααΓΛΛΛΛΛΓΓΔ',
+      'ΔΓΓΛΛΛΛΛΓααΓΛΛΛΛΛΞΓΔ',
+      'ΔΓΓΓΓΓΓΞΓααΓΓΓΓΓΓΓΓΔ',
+      'ΔΔΔΔΔΔΔΔΔααΔΔΔΔΔΔΔΔΔ',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'mayor', script: 'boss', arg: 'clocktower' },
+      { x: 5, y: 10, dir: 'left', look: 'kid', script: 'clocktowerKid' },
+    ],
+    warps: [
+      back(9, 17, 'harbor', 9, 1),
+      back(10, 17, 'harbor', 10, 1),
+      centerDoor(14, 3),
+    ],
+    portals: [{ x: 12, y: 1, world: 4, show: 'badge15' }],
+    signs: { '11,10': ['CLOCK TOWER SQUARE', 'The clock strikes every hour.'] },
+  },
+
   // An open clearing west of town: standing stones in a ring around five portals.
   shrine: {
     name: 'Portal Shrine',
@@ -801,6 +1068,7 @@ const SPECIALS = [
   { id: 'piewyvern', kind: 'ultra', grade: 5, skill: 'frac-add', map: 'swamp', x: 18, y: 11 },
   { id: 'equalion', kind: 'world', world: 1, need: 'badge5', map: 'cave', x: 18, y: 3 },
   { id: 'whisperstag', kind: 'world', world: 2, need: 'badge10', map: 'waterfall', x: 18, y: 15 },
+  { id: 'brightwing', kind: 'world', world: 3, need: 'badge15', map: 'clocktower', x: 2, y: 16 },
   { id: 'infinix', kind: 'mythical', map: 'shrine', x: 6, y: 3 },
 ];
 
@@ -816,4 +1084,9 @@ const TRAVEL = [
   { world: 2, map: 'swamp', label: 'Bogwater Swamp', mx: 116, my: 72 },
   { world: 2, map: 'treetops', label: 'Treetop Trail', mx: 52, my: 42 },
   { world: 2, map: 'waterfall', label: 'Thunder Falls', mx: 96, my: 14 },
+  { world: 3, map: 'park', label: 'Sunny Park', mx: 80, my: 116 },
+  { world: 3, map: 'rooftops', label: 'Rooftop Run', mx: 44, my: 96 },
+  { world: 3, map: 'subway', label: 'Subway Station', mx: 116, my: 80 },
+  { world: 3, map: 'harbor', label: 'Harbor Docks', mx: 52, my: 44 },
+  { world: 3, map: 'clocktower', label: 'Clock Tower Square', mx: 96, my: 14 },
 ];
