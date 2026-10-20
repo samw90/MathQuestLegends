@@ -295,14 +295,16 @@
   });
   window.addEventListener('blur', () => { held.length = 0; });
   window.addEventListener('pointerdown', () => document.body.classList.remove('kb'));
-  // iPhone/iPad: two quick taps on the controls must never zoom the page.
+  // iPhone/iPad: no zooming anywhere. Safari ignores user-scalable=no in the
+  // browser, so block quick double taps and pinches here (typing boxes excepted).
   let lastTouchEnd = 0;
   document.addEventListener('touchend', (e) => {
     const now = Date.now();
-    if (now - lastTouchEnd < 400 && e.target.closest && e.target.closest('.pad, .start')) e.preventDefault();
+    if (now - lastTouchEnd < 400 && !(e.target.closest && e.target.closest('input, textarea'))) e.preventDefault();
     lastTouchEnd = now;
   }, { passive: false });
-  document.addEventListener('gesturestart', (e) => e.preventDefault());
+  document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+  for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
 
   // ---------------------------------------------------------------- number keypad
   // While a question wants a typed answer, the D-pad and A/B buttons swap
