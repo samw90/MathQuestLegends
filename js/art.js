@@ -129,6 +129,21 @@ const Art = (() => {
     k.rect(0, 0, 16, 16, '#f4f8ff');
     for (const [x, y] of [[3, 4], [11, 2], [7, 11], [13, 13], [2, 13]]) k.px(x, y, '#d0dcef');
   }
+  function forestFloor(k) {
+    k.rect(0, 0, 16, 16, '#5a9a48');
+    k.px(3, 4, '#4a8a3c'); k.px(11, 2, '#4a8a3c'); k.px(7, 10, '#4a8a3c'); k.px(13, 13, '#4a8a3c');
+    k.rect(9, 6, 2, 1, '#a8783a'); k.px(2, 12, '#c8a050');
+  }
+  function deck(k) {
+    k.rect(0, 0, 16, 16, '#c89a5a');
+    for (const y of [3, 7, 11, 15]) k.rect(0, y, 16, 1, '#a0703a');
+    k.px(5, 1, '#dcb070'); k.px(12, 9, '#dcb070');
+  }
+  function wetStone(k) {
+    k.rect(0, 0, 16, 16, '#8a9aa8');
+    k.rect(0, 8, 16, 1, '#7a8a98'); k.rect(6, 0, 1, 8, '#7a8a98'); k.rect(12, 8, 1, 8, '#7a8a98');
+    k.px(2, 3, '#a8b8c4'); k.px(10, 12, '#a8b8c4');
+  }
   function caveFloor(k) {
     k.rect(0, 0, 16, 16, '#4a3e5e');
     for (const [x, y] of [[3, 4], [11, 2], [7, 11], [13, 13], [2, 13]]) k.rect(x, y, 2, 1, '#3a3050');
@@ -345,6 +360,97 @@ const Art = (() => {
     },
 
     // ---- Glowcap Cave
+    // ---------- Whisperwood
+    n: forestFloor,
+    F: (k) => {
+      forestFloor(k);
+      k.rect(7, 12, 2, 4, '#5a3418');
+      k.tri(1, 13, 8, 0, 15, 13, '#1f5a32');
+      k.tri(3, 9, 8, 1, 13, 9, '#2a7a42');
+      k.tri(5, 5, 8, 1, 11, 5, '#3f8f4a');
+    },
+    e: (k) => {
+      forestFloor(k);
+      for (const [x, h] of [[2, 9], [6, 12], [10, 10], [13, 8]]) {
+        k.rect(x, 16 - h, 1, h, '#2f7a32');
+        for (let y = 16 - h + 1; y < 15; y += 2) { k.px(x - 1, y, '#4fa84a'); k.px(x + 1, y, '#4fa84a'); }
+      }
+    },
+    k: (k) => {
+      forestFloor(k);
+      k.rect(4, 10, 2, 4, '#f6ecd8'); k.ell(5, 9.5, 3, 2, '#e8506a'); k.px(4, 8, '#fff');
+      k.rect(11, 6, 2, 4, '#f6ecd8'); k.ell(12, 5.5, 2.5, 1.8, '#e8506a'); k.px(13, 5, '#fff');
+    },
+    '-': (k) => {
+      k.rect(0, 0, 16, 16, '#3a8ad8');
+      k.rect(1, 3, 6, 1, '#6ab0f0'); k.rect(9, 8, 5, 1, '#6ab0f0'); k.rect(3, 12, 6, 1, '#6ab0f0');
+    },
+    B: (k) => {
+      k.rect(0, 0, 16, 16, '#b07a42');
+      for (const y of [3, 7, 11, 15]) k.rect(0, y, 16, 1, '#7a4a22');
+      k.rect(0, 0, 1, 16, '#5a3418'); k.rect(15, 0, 1, 16, '#5a3418');
+    },
+    L: (k) => {
+      k.rect(0, 0, 16, 16, '#8ac070');
+      for (const [x, h] of [[2, 11], [5, 14], [9, 12], [12, 13], [14, 9]]) {
+        k.rect(x, 16 - h, 1, h, '#4f8a3a');
+        k.rect(x, 16 - h, 1, 3, '#7a4a22');
+      }
+    },
+    z: (k) => {
+      k.rect(0, 0, 16, 16, '#4a6a4a');
+      k.ell(5, 5, 3, 1.5, '#5a7a4a'); k.ell(11, 11, 3.5, 1.5, '#5a7a4a');
+      k.px(10, 4, '#8aaa7a'); k.px(4, 12, '#8aaa7a');
+    },
+    v: (k) => {
+      k.rect(0, 0, 16, 16, '#6a8a4a');
+      for (const x of [1, 4, 7, 10, 13]) { k.rect(x, 6 + (x % 3), 1, 10 - (x % 3), '#3a5a2a'); k.px(x + 1, 5 + (x % 3), '#8aaa5a'); }
+    },
+    p: (k) => {
+      k.rect(0, 0, 16, 16, '#9a7048');
+      for (const x of [3, 7, 11, 15]) k.rect(x, 0, 1, 16, '#6a4828');
+      k.px(1, 4, '#b88a5a'); k.px(9, 11, '#b88a5a');
+    },
+    J: (k) => {
+      k.rect(0, 0, 16, 16, '#4a6a4a');
+      k.rect(7, 4, 3, 12, '#6a5a4a');
+      k.rect(3, 6, 4, 1, '#6a5a4a'); k.rect(3, 4, 1, 2, '#6a5a4a');
+      k.rect(10, 8, 4, 1, '#6a5a4a'); k.rect(13, 5, 1, 3, '#6a5a4a');
+      k.ell(8.5, 3, 3, 1.5, '#5a7a3a');
+    },
+    Z: (k) => {
+      k.rect(0, 0, 16, 16, '#2f7a3a');
+      k.ell(4, 4, 4, 3, '#3f9a4a'); k.ell(12, 9, 4, 3, '#3f9a4a'); k.ell(5, 13, 3, 2, '#3f9a4a');
+      k.px(3, 3, '#6ac85a'); k.px(11, 8, '#6ac85a'); k.ell(10, 2, 2, 1, '#1f5a2a');
+    },
+    H: deck,
+    l: (k) => {
+      deck(k);
+      k.ell(5, 9, 4, 3, '#5fb84a'); k.ell(11, 11, 4, 3, '#3f8f3a'); k.ell(8, 6, 3, 2.5, '#7ccf5a');
+      k.px(4, 7, '#9be07a'); k.px(12, 9, '#9be07a');
+    },
+    I: (k) => {
+      k.rect(0, 0, 16, 16, '#2f7a3a');
+      for (let y = 1; y < 16; y += 3) k.rect(2, y, 12, 2, '#c89a5a');
+      k.rect(1, 0, 1, 16, '#e8d8a8'); k.rect(14, 0, 1, 16, '#e8d8a8');
+    },
+    U: (k) => {
+      k.rect(0, 0, 16, 16, '#6ab8f0');
+      for (const [x, y] of [[2, 0], [6, 5], [11, 1], [13, 9], [4, 11]]) k.rect(x, y, 1, 6, '#e8f6ff');
+      k.rect(8, 2, 1, 4, '#4a98d8'); k.rect(10, 10, 1, 5, '#4a98d8');
+    },
+    O: wetStone,
+    '&': (k) => {
+      wetStone(k);
+      k.ell(4, 10, 3.5, 3, '#4fa86a'); k.ell(11, 7, 3.5, 3, '#3a8a54'); k.ell(9, 13, 3, 2.5, '#4fa86a');
+      k.px(3, 9, '#7ad88a'); k.px(11, 6, '#7ad88a');
+    },
+    '|': (k) => {
+      k.rect(0, 0, 16, 16, '#5a6470');
+      k.rect(0, 5, 16, 1, '#4a525c'); k.rect(0, 11, 16, 1, '#4a525c');
+      k.rect(5, 0, 1, 5, '#4a525c'); k.rect(11, 6, 1, 5, '#4a525c'); k.rect(3, 12, 1, 4, '#4a525c');
+      k.rect(1, 1, 3, 1, '#7a8490'); k.rect(8, 7, 3, 1, '#7a8490'); k.rect(6, 13, 4, 1, '#7a8490');
+    },
     q: caveFloor,
     '%': (k) => {
       k.rect(0, 0, 16, 16, '#2e4e48');
@@ -444,10 +550,15 @@ const Art = (() => {
 
   // ---------------- creatures (designed on 32 units, drawn at 48px) ----------------
 
+  // Every Legend faces left (toward your side of a battle), so pupils sit on the
+  // left of each eye. In battle your Legend is drawn mirrored, so the two look at
+  // each other. While `blinking`, eyes are drawn shut.
+  let blinking = false;
   function eyes(k, x, y) {
+    if (blinking) { k.rect(x, y + 2, 3, 1, INK); return; }
     k.rect(x, y, 3, 4, '#fff');
-    k.rect(x + 1, y + 1, 2, 3, INK);
-    k.px(x + 1, y + 1, '#fff');
+    k.rect(x, y + 1, 2, 3, INK);
+    k.px(x, y + 1, '#fff');
   }
 
   const CREATURES = {
@@ -520,8 +631,8 @@ const Art = (() => {
       k.ell(16, 24, 6.5, 5.5, '#ecd6ae');
       k.rect(15, 21, 2, 6, '#a87850'); k.rect(13, 23, 6, 2, '#a87850');
       k.ell(11.5, 13, 4, 4, '#fff'); k.ell(20.5, 13, 4, 4, '#fff');
-      k.ell(12, 13.5, 2, 2.2, INK); k.ell(20, 13.5, 2, 2.2, INK);
-      k.px(11, 12, '#fff'); k.px(19, 12, '#fff');
+      k.ell(10.8, 13.5, 2, 2.2, INK); k.ell(19.8, 13.5, 2, 2.2, INK);
+      k.px(10, 12, '#fff'); k.px(19, 12, '#fff');
       k.tri(14.5, 16, 17.5, 16, 16, 19.5, '#f2a23c');
     },
     snipsnap(k) {
@@ -536,7 +647,7 @@ const Art = (() => {
       // eye stalks
       k.rect(12, 9, 1.5, 6, '#b8402a'); k.rect(19, 9, 1.5, 6, '#b8402a');
       k.ell(12.7, 8.5, 2.6, 2.6, '#fff'); k.ell(19.7, 8.5, 2.6, 2.6, '#fff');
-      k.ell(13.2, 9, 1.3, 1.5, INK); k.ell(20.2, 9, 1.3, 1.5, INK);
+      k.ell(12, 9, 1.3, 1.5, INK); k.ell(19, 9, 1.3, 1.5, INK);
       // shell
       k.ell(16, 21, 11, 7, '#e8604a');
       k.ell(16, 19, 8, 3.5, '#f59a7a');
@@ -834,16 +945,248 @@ const Art = (() => {
       k.rect(10, 19, 8, 1, INK);
       k.px(11, 20, '#fff'); k.px(16, 20, '#fff');
     },
+
+    // ---------- Whisperwood
+    plusquirrel(k) {
+      k.ell(24, 13, 7, 10, '#d8823a');
+      k.ell(24, 11, 4, 6, '#f0a050');
+      k.rect(23, 8, 2, 7, '#fff'); k.rect(20.5, 10.5, 7, 2, '#fff');
+      k.tri(6, 11, 7, 3, 11, 9, '#c8702a'); k.tri(14, 9, 17, 3, 18, 11, '#c8702a');
+      k.ell(9, 29, 3, 1.6, '#8a4a1a'); k.ell(17, 29, 3, 1.6, '#8a4a1a');
+      k.ell(13, 22, 8, 7.5, '#c8702a');
+      k.ell(12, 14, 7, 6, '#c8702a');
+      k.ell(13, 24, 4.5, 4.5, '#f6d8b0');
+      eyes(k, 8, 11); eyes(k, 13, 11);
+      k.px(11, 16, INK);
+    },
+    otteradd(k) {
+      k.tri(25, 23, 32, 29, 25, 29, '#6a4028');
+      k.ell(16, 21, 11, 8, '#8a5a3a');
+      k.ell(16, 14, 9, 7, '#8a5a3a');
+      k.ell(8, 9, 2.2, 2.2, '#6a4028'); k.ell(24, 9, 2.2, 2.2, '#6a4028');
+      k.ell(16, 16, 6, 4, '#c89a70');
+      k.ell(16, 23, 7, 5, '#e8c8a0');
+      eyes(k, 10, 11); eyes(k, 19, 11);
+      k.ell(16, 15, 1.6, 1.2, INK);
+      k.rect(9, 16, 3, 1, '#5a3a24'); k.rect(20, 16, 3, 1, '#5a3a24');
+      k.ell(16, 24, 4, 3, '#f2c84b');
+      k.rect(15.5, 22, 1, 4, '#fff'); k.rect(14, 23.5, 4, 1, '#fff');
+    },
+    toadtotal(k) {
+      k.ell(6, 28, 4, 2, '#4f8a3a'); k.ell(26, 28, 4, 2, '#4f8a3a');
+      k.ell(16, 21, 12, 8, '#6aa848');
+      k.ell(10, 12, 4, 3.5, '#6aa848'); k.ell(22, 12, 4, 3.5, '#6aa848');
+      k.ell(16, 24, 8, 4.5, '#d8e8a0');
+      eyes(k, 8, 10); eyes(k, 20, 10);
+      k.rect(10, 18, 12, 1, INK);
+      k.rect(15, 13, 2, 4, '#3f7a2a'); k.rect(14, 14, 4, 2, '#3f7a2a');
+      k.ell(7, 18, 1.5, 1, '#f59aa0'); k.ell(25, 18, 1.5, 1, '#f59aa0');
+    },
+    mothaway(k) {
+      k.ell(8, 15, 7, 9, '#c8b8e8'); k.ell(24, 15, 7, 9, '#c8b8e8');
+      k.ell(8, 16, 4, 5, '#e0d4f4'); k.ell(24, 16, 4, 5, '#e0d4f4');
+      k.rect(5, 15, 6, 2, '#7a5ab8'); k.rect(21, 15, 6, 2, '#7a5ab8');
+      k.rect(13, 2, 1, 7, '#7a5ab8'); k.rect(18, 2, 1, 7, '#7a5ab8');
+      k.ell(12.5, 2.5, 2, 1.4, '#7a5ab8'); k.ell(18.5, 2.5, 2, 1.4, '#7a5ab8');
+      k.ell(16, 19, 5, 9, '#f4ecd8');
+      k.ell(16, 12, 5.5, 3.5, '#fff');
+      eyes(k, 12, 13); eyes(k, 17, 13);
+      k.rect(15, 19, 2, 1, INK);
+    },
+    beaverbite(k) {
+      k.ell(26, 27, 5.5, 3, '#5a3a24');
+      k.ell(26, 27, 5.5, 3, '#3e2614', (x, y) => Math.floor(x) % 3 === 0);
+      k.ell(15, 21, 10, 9, '#9a6a3a');
+      k.ell(8, 11, 2.4, 2.4, '#7a4a24'); k.ell(22, 11, 2.4, 2.4, '#7a4a24');
+      k.ell(15, 24, 6, 5, '#d8b07a');
+      eyes(k, 9, 13); eyes(k, 17, 13);
+      k.ell(15, 18, 2, 1.4, INK);
+      k.rect(13, 20, 5, 3, '#fff'); k.rect(15, 20, 1, 3, '#c8c0b0');
+    },
+    snailess(k) {
+      k.ell(14, 27, 13, 3.5, '#a8d8c8');
+      k.ell(6, 21, 4, 6.5, '#a8d8c8');
+      k.rect(3, 9, 1, 8, '#a8d8c8'); k.rect(8, 9, 1, 8, '#a8d8c8');
+      k.ell(3.5, 9, 2, 2, '#fff'); k.ell(8.5, 9, 2, 2, '#fff');
+      k.px(2, 9, INK); k.px(7, 9, INK);
+      k.ell(20, 17, 9, 9, '#c8834a');
+      k.ell(20, 17, 6, 6, '#e8a868');
+      k.ell(20, 17, 3, 3, '#c8834a');
+      k.rect(16, 16, 8, 2, '#fff');
+      k.rect(4, 22, 3, 1, INK);
+    },
+    mossbig(k) {
+      k.ell(16, 21, 12.5, 9.5, '#7a8a7a');
+      k.ell(12, 18, 6, 3, '#9aa89a');
+      k.ell(16, 12, 11, 4, '#4fa84a');
+      k.ell(8, 15, 2, 3, '#4fa84a'); k.ell(23, 15, 2, 3.5, '#4fa84a');
+      k.px(12, 10, '#f2c84b'); k.px(19, 9, '#fff');
+      eyes(k, 10, 17); eyes(k, 18, 17);
+      k.rect(13, 24, 6, 1, INK);
+    },
+    heronmore(k) {
+      k.rect(14, 22, 1, 9, '#e8a040'); k.rect(19, 22, 1, 9, '#e8a040');
+      k.rect(12, 30, 4, 1, '#e8a040'); k.rect(17, 30, 4, 1, '#e8a040');
+      k.ell(15, 18, 8, 6, '#a8c4e0');
+      k.ell(18, 18, 6, 4, '#7a98c4');
+      k.rect(20, 8, 3, 10, '#c8dcf0');
+      k.ell(21, 7, 4, 3, '#c8dcf0');
+      k.tri(28, 3, 23, 4, 24, 6, '#7a98c4');
+      k.tri(18, 6.5, 8, 7.5, 18, 9, '#f2c84b');
+      k.rect(20, 5, 2, 3, '#fff'); k.rect(20, 6, 1, 2, INK);
+    },
+    toucount(k) {
+      k.rect(9, 28, 3, 2, '#4ac8e8'); k.rect(14, 28, 3, 2, '#4ac8e8');
+      k.ell(12, 19, 8, 10, '#2b2840');
+      k.ell(12, 22, 5, 6, '#fff3c4');
+      k.ell(13, 10, 3.5, 3.5, '#4ac8e8');
+      k.ell(22, 12, 9, 4.5, '#f28a2a');
+      k.ell(28, 13, 3, 3, '#e8506a');
+      for (const x of [18, 20, 22, 24]) k.rect(x, 10, 1, 4, '#2b2840');
+      k.rect(17, 11.5, 9, 1, '#2b2840');
+      k.rect(12, 9, 3, 3, '#fff'); k.rect(13, 10, 2, 2, INK);
+    },
+    mushgroup(k) {
+      k.rect(3, 22, 5, 7, '#f6ecd8'); k.ell(5.5, 21, 5, 3, '#e8506a');
+      k.rect(24, 22, 5, 7, '#f6ecd8'); k.ell(26.5, 21, 5, 3, '#e8506a');
+      k.rect(11, 14, 10, 15, '#f6ecd8');
+      k.ell(16, 12, 11, 6.5, '#e8506a');
+      k.ell(11, 10, 1.8, 1.6, '#fff'); k.ell(18, 8, 1.6, 1.4, '#fff'); k.ell(22, 12, 1.5, 1.3, '#fff');
+      k.px(4, 20, '#fff'); k.px(27, 20, '#fff');
+      eyes(k, 12, 18); eyes(k, 17, 18);
+      k.rect(14, 24, 4, 1, INK);
+    },
+    dragonfleet(k) {
+      k.ell(8, 9, 7.5, 3, '#c8f0ff'); k.ell(24, 9, 7.5, 3, '#c8f0ff');
+      k.ell(8, 15, 6.5, 2.5, '#c8f0ff'); k.ell(24, 15, 6.5, 2.5, '#c8f0ff');
+      k.rect(3, 9, 9, 1, '#8ad0e8'); k.rect(20, 9, 9, 1, '#8ad0e8');
+      k.ell(16, 23, 2.2, 8, '#2a9a88');
+      k.ell(16, 23, 2.2, 8, '#1a6a5a', (x, y) => Math.floor(y) % 3 === 0);
+      k.ell(16, 12, 4, 4.5, '#3ac4a8');
+      k.ell(13, 8, 3, 3, '#3ac4a8'); k.ell(19, 8, 3, 3, '#3ac4a8');
+      eyes(k, 11, 6); eyes(k, 18, 6);
+      k.rect(15, 14, 2, 1, INK);
+    },
+    chimpairs(k) {
+      k.rect(22, 25, 6, 2, '#8a5a3a'); k.ell(28, 21, 2, 4.5, '#8a5a3a');
+      k.ell(6, 13, 3, 3, '#e8b88a'); k.ell(26, 13, 3, 3, '#e8b88a');
+      k.ell(16, 24, 6.5, 6, '#8a5a3a');
+      k.ell(16, 13, 8.5, 7.5, '#8a5a3a');
+      k.ell(16, 15, 6.5, 5, '#e8c8a0');
+      eyes(k, 12, 11); eyes(k, 17, 11);
+      k.rect(14, 18, 4, 1, INK);
+      k.tri(5, 22, 10, 19, 9, 24, '#f2d84b'); k.tri(7, 25, 12, 22, 11, 27, '#f2d84b');
+    },
+    hedgeshare(k) {
+      k.ell(18, 17, 12, 10, '#5a3a1a');
+      k.ell(18, 17, 12, 10, '#8a6a4a', (x, y) => (Math.floor(x + y) % 4) === 0);
+      k.ell(16, 22, 11, 7, '#a88a6a');
+      k.ell(8, 22, 6, 5, '#e8c8a0');
+      k.ell(3, 23, 1.6, 1.4, INK);
+      eyes(k, 6, 19);
+      k.ell(19, 9, 2.2, 2.2, '#e8506a'); k.ell(25, 11, 2.2, 2.2, '#e8506a'); k.ell(28, 16, 2.2, 2.2, '#e8506a');
+      k.ell(10, 29, 2.5, 1.5, '#5a3a1a'); k.ell(22, 29, 2.5, 1.5, '#5a3a1a');
+    },
+    lilysplit(k) {
+      k.ell(16, 22, 13.5, 7, '#4fa84a');
+      k.rect(15.5, 15, 1, 14, '#3a8a3a'); k.rect(3, 21.5, 26, 1, '#3a8a3a');
+      k.ell(16, 11, 5.5, 4, '#f6a1c8');
+      k.tri(11, 9, 13, 3, 16, 9, '#f6a1c8'); k.tri(16, 9, 19, 3, 21, 9, '#f6a1c8');
+      k.ell(16, 11, 2, 2, '#f2c84b');
+      eyes(k, 8, 19); eyes(k, 21, 19);
+      k.rect(11, 25, 3, 1, INK); k.rect(18, 25, 3, 1, INK);
+    },
+    mistsplit(k) {
+      k.ell(9, 18, 6, 5, '#e8f4ff'); k.ell(23, 18, 6, 5, '#e8f4ff');
+      k.ell(16, 15, 10.5, 8, '#e8f4ff');
+      k.ell(16, 20, 9, 3.5, '#c8e0f4');
+      eyes(k, 11, 13); eyes(k, 18, 13);
+      k.rect(15, 19, 2, 1, INK);
+      k.ell(8, 28, 1.8, 2.4, '#6ab0f0'); k.ell(16, 29, 1.8, 2.4, '#6ab0f0'); k.ell(24, 28, 1.8, 2.4, '#6ab0f0');
+    },
+    oakulus(k) {
+      k.rect(7, 28, 5, 3, '#6a4020'); k.rect(20, 28, 5, 3, '#6a4020');
+      k.rect(2, 16, 8, 2, '#8a5a32'); k.rect(22, 15, 8, 2, '#8a5a32');
+      k.ell(3, 14, 2.5, 2, '#4fa84a'); k.ell(29, 13, 2.5, 2, '#4fa84a');
+      k.rect(9, 11, 14, 18, '#8a5a32');
+      k.rect(11, 13, 1, 14, '#6a4020'); k.rect(20, 13, 1, 14, '#6a4020');
+      k.ell(16, 7, 14, 7, '#3f8f3a');
+      k.ell(8, 9, 6, 5, '#4fa84a'); k.ell(24, 9, 6, 5, '#4fa84a'); k.ell(16, 4, 7, 4, '#5fb84a');
+      eyes(k, 11, 16); eyes(k, 18, 16);
+      k.rect(13, 23, 6, 1, INK);
+    },
+    hippomath(k) {
+      k.ell(9, 29, 3.5, 2, '#7a6aa8'); k.ell(23, 29, 3.5, 2, '#7a6aa8');
+      k.ell(16, 21, 13, 9, '#9a8ac8');
+      k.ell(7, 9, 2.5, 2, '#7a6aa8'); k.ell(25, 9, 2.5, 2, '#7a6aa8');
+      k.ell(16, 14, 10, 7, '#9a8ac8');
+      k.ell(16, 22, 9, 5.5, '#b8aade');
+      eyes(k, 9, 10); eyes(k, 20, 10);
+      k.px(13, 20, INK); k.px(19, 20, INK);
+      k.rect(12, 25, 8, 1, INK);
+      k.rect(12, 26, 2, 2, '#fff'); k.rect(18, 26, 2, 2, '#fff');
+    },
+    crocalc(k) {
+      k.tri(27, 17, 32, 26, 26, 25, '#4f8a3a');
+      k.ell(21, 21, 10, 8, '#5f9a48');
+      k.ell(21, 15, 8, 3.5, '#3f7a2a', (x, y) => (Math.floor(x) % 3) !== 0);
+      k.ell(21, 25, 7, 3, '#d8e8a0');
+      k.ell(10, 19, 10, 4.5, '#5f9a48');
+      k.ell(13, 13, 3.5, 3, '#5f9a48');
+      eyes(k, 11, 11);
+      k.px(2, 17, INK);
+      k.rect(2, 20.5, 16, 1, INK);
+      k.tri(5, 21, 6.5, 23.5, 8, 21, '#fff'); k.tri(10, 21, 11.5, 23.5, 13, 21, '#fff');
+      k.ell(12, 29, 3, 1.5, '#4f8a3a'); k.ell(26, 29, 3, 1.5, '#4f8a3a');
+    },
+    owlgebra(k) {
+      k.tri(5, 11, 7, 1, 12, 8, '#5a4a7a'); k.tri(27, 11, 25, 1, 20, 8, '#5a4a7a');
+      k.rect(11, 29, 3, 2, '#f2a23c'); k.rect(18, 29, 3, 2, '#f2a23c');
+      k.ell(16, 19, 11, 11, '#6a5a94');
+      k.ell(16, 23, 7, 6, '#d8d0f0');
+      for (const y of [20, 23, 26]) { k.rect(13, y, 2, 1, '#8a7ab4'); k.rect(17, y, 2, 1, '#8a7ab4'); }
+      k.ell(11, 13, 4.5, 4.5, '#f2c84b'); k.ell(21, 13, 4.5, 4.5, '#f2c84b');
+      k.ell(11, 13, 3.2, 3.2, '#fff'); k.ell(21, 13, 3.2, 3.2, '#fff');
+      k.ell(10, 13.5, 1.6, 1.8, INK); k.ell(20, 13.5, 1.6, 1.8, INK);
+      k.rect(15, 12, 2, 1, '#f2c84b');
+      k.tri(15, 16, 17, 16, 16, 19, '#f2a23c');
+    },
+    cascoi(k) {
+      k.tri(27, 19, 32, 11, 32, 27, '#e8702a');
+      k.tri(16, 25, 20, 31, 23, 25, '#e8506a');
+      k.ell(19, 20, 11, 7, '#f6f0e8');
+      k.ell(15, 18, 3, 2.5, '#e8702a'); k.ell(23, 22, 3, 2, '#e8702a'); k.ell(21, 16, 2, 1.6, '#e8506a');
+      k.ell(13, 10, 3.5, 3, '#6ab0f0');
+      k.tri(7, 9, 5, 2, 10, 8, '#f2c84b'); k.tri(11, 9, 12, 2, 14, 9, '#f2c84b');
+      k.ell(9, 14, 6, 5, '#f6f0e8');
+      eyes(k, 5, 12);
+      k.rect(1, 17, 5, 1, '#f2c84b'); k.rect(2, 19, 4, 1, '#f2c84b');
+      k.rect(4, 15, 3, 1, INK);
+    },
   };
 
+  // These were drawn facing right; they're mirrored so every Legend faces left.
+  const FACES_RIGHT = new Set(['tallytoise', 'toucount']);
+  function mirrored(c) {
+    if (!FACES_RIGHT.has(c.id)) return c.img;
+    const m = canvas(c.img.width, c.img.height), g = m.getContext('2d');
+    g.translate(m.width, 0);
+    g.scale(-1, 1);
+    g.drawImage(c.img, 0, 0);
+    return m;
+  }
+
   const creatureCache = {};
-  function creature(id) {
-    if (!creatureCache[id]) {
+  function creature(id, blink = false) {
+    const key = blink ? id + ':blink' : id;
+    if (!creatureCache[key]) {
       const c = canvas(48, 48);
+      blinking = blink;
       CREATURES[id](kit(c, 1.5));
-      creatureCache[id] = outline(c);
+      blinking = false;
+      creatureCache[key] = mirrored({ id, img: outline(c) });
     }
-    return creatureCache[id];
+    return creatureCache[key];
   }
 
   // A small 20px version for walking around the map, with a hop frame.
@@ -855,7 +1198,7 @@ const Art = (() => {
       const inner = canvas(20, 20);
       CREATURES[id](kit(inner, 18 / 32));
       outline(inner);
-      c.getContext('2d').drawImage(inner, 0, frame ? 0 : 1);
+      c.getContext('2d').drawImage(mirrored({ id, img: inner }), 0, frame ? 0 : 1);
       smallCache[key] = c;
     }
     return smallCache[key];

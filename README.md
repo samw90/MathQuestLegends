@@ -31,9 +31,20 @@ A pixel-art adventure for Kindergarten to Grade 5 in the style of classic handhe
   | Glowcap Cave (crystal cave) | Keeper Onyx | Crystal Badge |
 
   Every boss opens with the Legend for the skill you need most. Wild Legends get stronger in each new area.
-- **33 Legends:** 3 buddies, plus 5 wild Legends and a boss Legend in every area. Each area has its own Legend for adding, taking away, comparing, equal groups and sharing.
+- **53 Legends:** 3 buddies, 30 in Pinecrest Valley and 20 in Whisperwood. Every area has a Legend for adding, taking away, numbers, groups and sharing, plus a boss partner.
 - **Map:** MENU → Map shows the world and lets you quick-travel to any place you've visited.
-- **Worlds and the Portal Shrine:** Pinecrest Valley is World 1 (Route 1 to Glowcap Cave). Beating Keeper Onyx wakes a portal to the next world, and the Portal Shrine in Pinecrest Town (purple roof) has a portal to all five worlds. Sleeping portals are dark until the world before them is beaten. Worlds 2–5 (Whisperwood, Brightport City, Coral Deep, Sky Isles: working names) are still being built.
+- **Worlds and the Portal Shrine:** Pinecrest Valley is World 1 (Route 1 to Glowcap Cave). Beating Keeper Onyx wakes a portal to World 2, and the Portal Shrine in Pinecrest Town (purple roof) has a portal to all five worlds. Sleeping portals are dark until the world before them is beaten. Worlds 3–5 (Brightport City, Coral Deep, Sky Isles: working names) are still being built.
+- **World 2, Whisperwood:** Whisper Forest, Mirror River, Bogwater Swamp, Treetop Trail and Thunder Falls, with 20 new Legends and five bosses (Warden Fern, Fisher Finn, Marsh Mae, Scout Wren, Elder Brook). A portal by the forest entrance goes back to the shrine.
+
+  | Puzzles | Whisper Forest | Mirror River | Bogwater Swamp | Treetop Trail | Thunder Falls |
+  | --- | --- | --- | --- | --- | --- |
+  | Adding | Plusquirrel | Otteradd | Toadtotal | Plusquirrel | Otteradd |
+  | Taking away | Mothaway | Beaverbite | Snailess | Mothaway | Snailess |
+  | Numbers | Mossbig | Heronmore | Heronmore | Toucount | Mossbig |
+  | Groups | Mushgroup | Dragonfleet | Dragonfleet | Chimpairs | Chimpairs |
+  | Sharing | Hedgeshare | Lilysplit | Lilysplit | Hedgeshare | Mistsplit |
+  | Boss partner | Oakulus | Hippomath | Crocalc | Owlgebra | Cascoi |
+- **Battles:** the two Legends face each other, bounce on their toes and blink now and then.
 - **Badge colors:** each badge's color shows the grade it was won at: Bronze (K), Silver (1), Gold (2), Emerald (3), Sapphire (4), Crystal (5). Start a harder grade and every boss offers a rematch to upgrade its badge.
 - The Rest Center (pink roof) heals your team. If your whole team needs a rest, you wake up there. Nothing is lost.
 

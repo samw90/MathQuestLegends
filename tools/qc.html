@@ -155,6 +155,11 @@ function mapSuite() {
     while (q.length) {
       const id = q.shift();
       for (const v of MAPS[id].warps) if (v.to !== '@return' && !seen.has(v.to)) { seen.add(v.to); q.push(v.to); }
+      // Portals lead to a world's first area (or home to the shrine).
+      for (const pt of MAPS[id].portals || []) {
+        const to = pt.home ? 'shrine' : WORLDS[pt.world - 1].start && WORLDS[pt.world - 1].start.map;
+        if (to && !seen.has(to)) { seen.add(to); q.push(to); }
+      }
       if (MAPS[id].warps.some((v) => v.to === 'center')) seen.add('center');
     }
     for (const id of Object.keys(MAPS)) check(seen.has(id), `${id}: can't be reached from town`);
@@ -310,14 +315,15 @@ function wordSuite(gameSrc) {
       if (/^[A-Z{$]/.test(s) && / /.test(s) && /[.!?]$/.test(s) && !/[<>=;]|=>|\(\)/.test(s)) lines.push(s.replace(/\$\{[^}]*\}/g, 'X'));
     }
     // Words young readers may stumble on. Names and math words kids are taught are fine.
-    const allowed = new Set(['legendex', 'pinecrest', 'professor', 'multiplication', 'subtraction', 'everything', 'everywhere', 'kindergarten', 'remembering', 'blueberries', 'practicing', 'beautiful', 'sometimes', 'something', 'buddies', 'snowflakes']);
+    const places = new Set(WORLDS.map((w) => w.name.toLowerCase()).flatMap((n) => n.split(' ')));
+    const allowed = new Set([...places, 'legendex', 'pinecrest', 'professor', 'multiplication', 'subtraction', 'everything', 'everywhere', 'kindergarten', 'remembering', 'blueberries', 'practicing', 'beautiful', 'sometimes', 'something', 'buddies', 'snowflakes']);
     const speciesNames = new Set(Object.values(SPECIES).map((s) => s.name.toLowerCase()));
     for (const line of new Set(lines)) {
       for (const sentence of line.split(/(?<=[.!?])\s+/)) {
         const words = sentence.split(/\s+/).filter((w) => /[a-z]/i.test(w));
         check(words.length <= 14, `Long sentence (${words.length} words): "${sentence}"`, 'warn');
         for (const w of words) {
-          const bare = w.toLowerCase().replace(/[^a-z]/g, '');
+          const bare = w.toLowerCase().replace(/['’]s\b/g, '').replace(/[^a-z]/g, '');
           if (bare.length >= 10 && !allowed.has(bare) && !speciesNames.has(bare)) check(false, `Hard word "${bare}" in: "${sentence}"`, 'warn');
         }
       }

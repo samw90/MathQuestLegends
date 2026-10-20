@@ -1011,7 +1011,7 @@
     if (pt && !buddyHere && !n) {
       const w = WORLDS[pt.world - 1];
       busy = true;
-      await say(worldOpen(w) ? [`A portal to ${w.name}.`, w.start ? 'Step in to go there!' : 'That world is still being built.'] : [`A sleeping portal to ${w.name}.`, `Beat ${WORLDS[w.id - 2].name} to wake it up.`]);
+      await say(pt.home ? ['A portal home to the Portal Shrine.'] : worldOpen(w) ? [`A portal to ${w.name}.`, w.start ? 'Step in to go there!' : 'That world is still being built.'] : [`A sleeping portal to ${w.name}.`, `Beat ${WORLDS[w.id - 2].name} to wake it up.`]);
       busy = false;
       return;
     }
@@ -1112,7 +1112,7 @@
     prof: () => {
       if (!S.flags.starter) return say(['Hi, {name}! I\'m Professor Pi.', 'Wild Legends love math puzzles.', 'Go ahead and pick a buddy from my table.', 'Your buddy will help you think things through!']);
       if (!S.flags.badge1) return say(['Ranger Rowan is waiting at the end of Route 1.', 'Rowan likes to pick the puzzles you need most.', 'Win, and you\'ll earn a badge!']);
-      const n = badgeCount();
+      const n = badgeCount(1);
       if (n < 5) return say([`You have ${n} badge${n === 1 ? '' : 's'}! Way to go!`, 'Each place up north has a new boss to beat.', 'Check the MENU map to travel fast.']);
       return say(['All five badges! You\'re a true Math Quest Legend!', 'The Portal Shrine by the town gate can take you to new worlds.', 'And if you start a harder grade, the bosses will want a rematch!']);
     },
@@ -1172,6 +1172,11 @@
     canyonHiker: () => say(['Hot out here, huh?', 'Arraydillo rolls up in neat rows.', 'Perfect for times tables!']),
     snowKid: () => say(['Brrr! Meltling loves take-away puzzles.', 'A little bit melts away each time!']),
     caveKid: () => say(['Crystling asks which number is bigger.', 'Look at the biggest place first!']),
+    forestKid: () => say(['Mushgroup grows in rings.', 'Count the groups, then count how many in each!']),
+    riverKid: () => say(['Beaverbite chews logs smaller and smaller.', 'That\'s taking away, one bite at a time!']),
+    swampKid: () => say(['Lilysplit\'s pad is cut into equal parts.', 'Equal parts are the secret to fractions!']),
+    treetopsKid: () => say(['Toucount keeps tally marks on its beak.', 'Count by fives: each bundle of marks is 5!']),
+    waterfallKid: () => say(['The falls are loud, so think quietly.', 'Mistsplit splits into drops that are all the same size.']),
 
     // The way to the next area is closed until you beat this area's boss.
     gate: (w) => {
@@ -1211,13 +1216,19 @@
         sfx('level');
         if (won) await say([`${b.name.toUpperCase()}: Amazing! Your ${b.badge} is ${tier.name} now!`]);
         else await say([`${b.name.toUpperCase()}: ${b.win[0]}`, ...b.win.slice(1), `It's a ${tier.name} badge, for ${GRADES[S.grade]} math.`]);
-        if (areaId === AREA_ORDER[AREA_ORDER.length - 1] && !won) await say(['A portal hums to life nearby!', 'It leads to the next world. The Portal Shrine in town has one too.']);
+        if (WORLDS.some((w) => w.areas[w.areas.length - 1] === areaId) && !won) await say(['A portal hums to life nearby!', 'It leads to the next world. The Portal Shrine in town has one too.']);
         writeSave();
       }
     },
   };
 
-  const badgeCount = () => BADGE_FLAGS.filter((f) => S.flags[f]).length;
+  // Badges won in one world (default: all of them).
+  const badgeCount = (world) => (world ? WORLDS[world - 1].areas.map((a) => BOSSES[a].flag) : BADGE_FLAGS).filter((f) => S.flags[f]).length;
+  // Which world a map belongs to. Town, houses and the shrine count as World 1.
+  const worldOf = (id) => {
+    const m = MAPS[id === 'center' ? S.healMap : id];
+    return (m && m.area && AREAS[m.area].world) || 1;
+  };
   const tierOf = (flag) => BADGE_TIERS[S.badgeGrade[flag] ?? 0];
   // World 1 is always open. Each later world opens when the one before it is beaten.
   const worldOpen = (w) => w.id === 1 || !!S.flags.devAll || !!(WORLDS[w.id - 2].done && S.flags[WORLDS[w.id - 2].done]);
@@ -1236,6 +1247,10 @@
       return back();
     }
     sfx('level');
+    if (pt.home) {
+      await fade(() => { placePlayer('shrine', 5, 7, 'down'); writeSave(); });
+      return say('Back at the Portal Shrine!');
+    }
     await fade(() => { placePlayer(w.start.map, w.start.x, w.start.y, w.start.dir); writeSave(); });
     await say(`Welcome to ${w.name}!`);
   }
@@ -1282,6 +1297,11 @@
     canyon: ['#fbe8d0', '#f0c8a0', '#c87a4a', '#e2a46e'],
     snow: ['#eef4fc', '#dce8f6', '#aec4e2', '#f4f8ff'],
     cave: ['#2c2440', '#3a3050', '#5a4a7a', '#7a6aa0'],
+    forest: ['#eef6e4', '#d4e8c0', '#5a9a48', '#7cb868'],
+    river: ['#e4f2fc', '#cfe6c4', '#8ac070', '#a8d88c'],
+    swamp: ['#e6eadc', '#c4cca8', '#6a8a4a', '#8aaa6a'],
+    treetops: ['#e8f6ff', '#cfe8b8', '#a0703a', '#c89a5a'],
+    waterfall: ['#e6f2fa', '#cfdce6', '#7a8a98', '#a8b8c4'],
   };
 
   function drawBattle(now) {
@@ -1292,14 +1312,17 @@
     ctx.fillRect(0, 40, W, 60);
     ctx.drawImage(Art.platform(32, 8, pd, pl), 92, 48);
     ctx.drawImage(Art.platform(34, 8, pd, pl), 4, 84);
-    const bob = Math.round(Math.sin(now / 300));
+    // Both Legends face each other, hop on their toes like they're squaring off,
+    // and blink now and then (each on its own rhythm).
+    const hop = (phase) => -Math.round(Math.abs(Math.sin(now / 260 + phase)) * 3);
+    const blink = (offset) => (now + offset) % 3400 < 140;
     const fe = B.fx.e, fp = B.fx.p;
-    if (!fe.hide) ctx.drawImage(Art.creature(B.enemy.sp), 100 + fe.dx, 8 + fe.dy);
+    if (!fe.hide) ctx.drawImage(Art.creature(B.enemy.sp, blink(1700)), 100 + fe.dx, 8 + fe.dy + hop(1.3));
     if (!fp.hide) {
       ctx.save();
-      ctx.translate(14 + 48 + fp.dx, 44 + fp.dy + (B.idle ? bob : 0));
+      ctx.translate(14 + 48 + fp.dx, 44 + fp.dy + hop(0));
       ctx.scale(-1, 1);
-      ctx.drawImage(Art.creature(B.me.sp), 0, 0);
+      ctx.drawImage(Art.creature(B.me.sp, blink(0)), 0, 0);
       ctx.restore();
     }
   }
@@ -1628,7 +1651,7 @@
       }
       const weak = MathEngine.weakestSkill(S.grade, S.skills);
       box.append(el('p', null, `Practicing most: ${MathEngine.SKILLS[weak].label}. Wild Legends that ask these puzzles show up more often.`));
-      box.append(el('p', null, `Badges: ${badgeCount()} of 5 · Legendex: ${DEX_ORDER.filter((id) => S.caught[id]).length} of ${DEX_ORDER.length} friends`));
+      box.append(el('p', null, `Badges: ${badgeCount()} of ${BADGE_FLAGS.length} · Legendex: ${DEX_ORDER.filter((id) => S.caught[id]).length} of ${DEX_ORDER.length} friends`));
       const won = AREA_ORDER.filter((a) => S.flags[BOSSES[a].flag]);
       if (won.length) box.append(el('p', null, 'Badge colors show the grade they were won at: ' + won.map((a) => `${BOSSES[a].badge} (${tierOf(BOSSES[a].flag).name}, ${GRADES[S.badgeGrade[BOSSES[a].flag] ?? 0]})`).join(', ') + '.'));
       box.append(el('p', null, `Worlds open: ${WORLDS.filter(worldOpen).map((w) => w.name).join(', ')}.`));
@@ -1725,34 +1748,47 @@
 
   // ---------------------------------------------------------------- world map + quick travel
 
-  // A little picture of the world: each band of tiles is one area.
-  const WORLD = [
-    'QQQqqqqQQQ',
-    'QQqq%%qqQQ',
-    'AA****^^AA',
-    '*^^**A**^*',
-    '~~__;:"":M',
-    '~_;__::KMM',
-    'T.,,..==,.',
-    '..==.f..,T',
-  ];
-  function drawWorldMap() {
+  // A little picture of each world: each band of tiles is one area.
+  const WORLD_PICS = {
+    1: [
+      'QQQqqqqQQQ',
+      'QQqq%%qqQQ',
+      'AA****^^AA',
+      '*^^**A**^*',
+      '~~__;:"":M',
+      '~_;__::KMM',
+      'T.,,..==,.',
+      '..==.f..,T',
+    ],
+    2: [
+      '|UU&OO&UU|',
+      '|--OOOO--|',
+      'ZHllHHllHZ',
+      'ZIZHHHHZIZ',
+      'JvzzvppzvJ',
+      '---BB-LvLL',
+      'FneeBBnken',
+      'FnekennenF',
+    ],
+  };
+  function drawWorldMap(world) {
     const c = el('canvas', 'worldmap');
     c.width = 160;
     c.height = 128;
     const g = c.getContext('2d');
     g.imageSmoothingEnabled = false;
-    WORLD.forEach((row, y) => [...row].forEach((t, x) => g.drawImage(Art.tile(t), x * 16, y * 16)));
+    WORLD_PICS[world].forEach((row, y) => [...row].forEach((t, x) => g.drawImage(Art.tile(t), x * 16, y * 16)));
+    const stops = TRAVEL.filter((t) => t.world === world);
     // the road between places
     g.strokeStyle = '#fff6d6';
     g.lineWidth = 3;
     g.setLineDash([4, 3]);
     g.beginPath();
-    TRAVEL.forEach((t, i) => (i ? g.lineTo(t.mx, t.my) : g.moveTo(t.mx, t.my)));
+    stops.forEach((t, i) => (i ? g.lineTo(t.mx, t.my) : g.moveTo(t.mx, t.my)));
     g.stroke();
     g.setLineDash([]);
     const here = MAPS[S.map].heal ? S.map : S.map === 'route1' ? 'town' : S.healMap;
-    for (const t of TRAVEL) {
+    for (const t of stops) {
       const open = S.visited[t.map];
       g.fillStyle = '#2b2840';
       g.fillRect(t.mx - 6, t.my - 6, 12, 12);
@@ -1763,26 +1799,35 @@
     return c;
   }
 
+  // One page per world you've opened; quick travel works to any Rest Center you've visited.
   async function mapMenu() {
-    const view = el('div', 'box mapview');
-    view.append(drawWorldMap());
-    ui.append(view);
-    const items = TRAVEL.map((t) => ({
-      label: S.visited[t.map] ? t.label : '???',
-      sub: S.visited[t.map] ? 'Tap to travel here' : 'Not visited yet',
-      dim: !S.visited[t.map],
-    }));
-    const i = await choose(items, { cls: 'maplist', head: `${WORLDS[0].name} · Badges: ${badgeCount()} of 5` });
-    view.remove();
-    if (i < 0) return false;
-    const t = TRAVEL[i];
-    if (!S.visited[t.map]) { await say('You haven\'t been there yet.'); return false; }
-    if (S.map === t.map) { await say('You\'re already here!'); return false; }
-    sfx('select');
-    const h = MAPS[t.map].heal;
-    await fade(() => { placePlayer(t.map, h[0], h[1], 'down'); writeSave(); });
-    await say(`Welcome to ${t.label}!`);
-    return true;
+    const worlds = WORLDS.filter((w) => worldOpen(w) && WORLD_PICS[w.id] && (w.id === 1 || TRAVEL.some((t) => t.world === w.id && S.visited[t.map])));
+    let page = Math.max(0, worlds.findIndex((w) => w.id === worldOf(S.map)));
+    for (;;) {
+      const w = worlds[page];
+      const view = el('div', 'box mapview');
+      view.append(drawWorldMap(w.id));
+      ui.append(view);
+      const stops = TRAVEL.filter((t) => t.world === w.id);
+      const items = stops.map((t) => ({
+        label: S.visited[t.map] ? t.label : '???',
+        sub: S.visited[t.map] ? 'Tap to travel here' : 'Not visited yet',
+        dim: !S.visited[t.map],
+      }));
+      if (worlds.length > 1) items.push({ label: `▶ ${worlds[(page + 1) % worlds.length].name} map`, sub: 'See the next world' });
+      const i = await choose(items, { cls: 'maplist', head: `${w.name} · Badges: ${badgeCount(w.id)} of ${w.areas.length}` });
+      view.remove();
+      if (i < 0) return false;
+      if (i === stops.length) { page = (page + 1) % worlds.length; continue; }
+      const t = stops[i];
+      if (!S.visited[t.map]) { await say('You haven\'t been there yet.'); return false; }
+      if (S.map === t.map) { await say('You\'re already here!'); return false; }
+      sfx('select');
+      const h = MAPS[t.map].heal;
+      await fade(() => { placePlayer(t.map, h[0], h[1], 'down'); writeSave(); });
+      await say(`Welcome to ${t.label}!`);
+      return true;
+    }
   }
 
   // ---------------------------------------------------------------- save files
