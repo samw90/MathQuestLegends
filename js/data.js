@@ -97,7 +97,7 @@ const BOSSES = {
   cave: {
     name: 'Keeper Onyx', badge: 'Crystal Badge', flag: 'badge5',
     intro: ['So, you made it to the heart of the cave.', 'I\'m Keeper Onyx.', 'Only true Math Legends get past me. Show me!'],
-    win: ['Incredible! You earned the Crystal Badge!', 'You are a true Math Quest Legend!'],
+    win: ['Wow! You earned the Crystal Badge!', 'You are a true Math Quest Legend!'],
     after: ['You\'re a true Math Quest Legend, {name}!', 'Keep practicing. Your team will keep growing!'],
   },
 };

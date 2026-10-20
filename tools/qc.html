@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QC Checks</title>
+<style>
+  :root { --bg: #2d2a4a; --card: #3a3660; --ink: #f4f1ff; --muted: #b9b2d8; --ok: #7ee08a; --warn: #f2c84b; --bad: #ff7a7a; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 500 15px/1.45 system-ui, sans-serif; padding: 24px 16px; }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  .sum { margin: 0 0 18px; color: var(--muted); }
+  section { background: var(--card); border-radius: 14px; padding: 12px 16px; margin-bottom: 12px; }
+  h2 { margin: 0 0 6px; font-size: 16px; display: flex; gap: 8px; align-items: center; }
+  .pill { font-size: 12px; padding: 1px 8px; border-radius: 99px; color: #1d1b2e; font-weight: 700; }
+  .pill.ok { background: var(--ok); } .pill.warn { background: var(--warn); } .pill.bad { background: var(--bad); }
+  ul { margin: 4px 0 0; padding-left: 20px; }
+  li { overflow-wrap: anywhere; }
+  li.bad { color: var(--bad); } li.warn { color: var(--warn); }
+</style>
+</head>
+<body>
+<h1>Math Quest Legends QC</h1>
+<p class="sum" id="sum">Running…</p>
+<div id="out"></div>
+
+<script src="../js/data.js"></script>
+<script src="../js/art.js"></script>
+<script src="../js/math.js"></script>
+<script>
+// Automated checks for game data, maps, math and wording.
+// Open tools/qc.html (served over http) and read the report; window.QC has the results.
+const results = [];
+function suite(name, fn) {
+  const issues = [];
+  const bad = (msg) => issues.push({ level: 'bad', msg });
+  const warn = (msg) => issues.push({ level: 'warn', msg });
+  let checks = 0;
+  const check = (cond, msg, level = 'bad') => { checks++; if (!cond) issues.push({ level, msg }); return cond; };
+  try { fn({ check, bad, warn }); } catch (e) { bad('Crashed: ' + e.message); }
+  results.push({ name, checks, issues });
+}
+
+// ------------------------------------------------------------- Legends
+suite('Legends', ({ check }) => {
+  const FAMS = ['add', 'sub', 'compare', 'mult', 'div', 'mixed'];
+  for (const [id, sp] of Object.entries(SPECIES)) {
+    check(sp.name && sp.hp > 0 && sp.atk > 0, `${id}: missing name, hp or atk`);
+    check(Array.isArray(sp.moves) && sp.moves.length === 2, `${id}: needs 2 moves`);
+    check(sp.dex && sp.dex.length <= 80, `${id}: dex text missing or too long (${sp.dex && sp.dex.length})`);
+    check(sp.sidekick || FAMS.includes(sp.family), `${id}: unknown family ${sp.family}`);
+    let big = null, small = null;
+    try { big = Art.creature(id); small = Art.creatureSmall(id, 0); } catch (e) { /* reported below */ }
+    check(big && big.width === 48, `${id}: no 48px art`);
+    check(small && small.width === 20, `${id}: no map-size art`);
+    if (big) {
+      const d = big.getContext('2d').getImageData(0, 0, 48, 48).data;
+      let filled = 0;
+      for (let i = 3; i < d.length; i += 4) if (d[i]) filled++;
+      check(filled > 300, `${id}: art looks empty (${filled} px)`);
+    }
+  }
+  const names = Object.values(SPECIES).map((s) => s.name);
+  check(new Set(names).size === names.length, 'Two Legends share a name');
+  check(new Set(DEX_ORDER).size === DEX_ORDER.length, 'Legendex lists a Legend twice');
+  check(DEX_ORDER.length === Object.keys(SPECIES).length, `Legendex has ${DEX_ORDER.length} of ${Object.keys(SPECIES).length} Legends`);
+  check(Object.keys(SPECIES).length >= 30, 'Fewer than 30 Legends');
+  for (const [aid, a] of Object.entries(AREAS)) {
+    for (const [fam, id] of Object.entries(a.species)) {
+      check(SPECIES[id], `${aid}: unknown Legend ${id}`);
+      check(SPECIES[id] && SPECIES[id].family === fam, `${aid}: ${id} is in the ${fam} slot but asks ${SPECIES[id] && SPECIES[id].family}`);
+    }
+    check(SPECIES[a.boss] && SPECIES[a.boss].family === 'mixed', `${aid}: boss Legend ${a.boss} should be "mixed"`);
+    check(BOSSES[aid], `${aid}: no boss trainer`);
+  }
+});
+
+// ------------------------------------------------------------- Maps
+let SCRIPT_NAMES = null;
+async function loadScriptNames() {
+  const src = await (await fetch('../js/game.js')).text();
+  const start = src.indexOf('const SCRIPTS = {');
+  const block = src.slice(start, src.indexOf('\n  };', start));
+  SCRIPT_NAMES = new Set([...block.matchAll(/^ {4}(?:async )?([a-zA-Z]+)(?:\(|: )/gm)].map((m) => m[1]));
+  return src;
+}
+
+function mapSuite() {
+  suite('Maps and travel', ({ check, warn }) => {
+    const walk = (m, x, y) => {
+      const row = m.tiles[y];
+      return row !== undefined && x >= 0 && x < row.length && !SOLID.has(row[x]) && !m.npcs.some((n) => n.x === x && n.y === y);
+    };
+    for (const [id, m] of Object.entries(MAPS)) {
+      const w = m.tiles[0].length;
+      m.tiles.forEach((row, y) => check(row.length === w, `${id}: row ${y} is ${row.length} wide, not ${w}`));
+      const unknown = new Set();
+      m.tiles.join('').split('').forEach((ch) => { try { if (!Art.tile(ch)) unknown.add(ch); } catch (e) { unknown.add(ch); } });
+      check(!unknown.size, `${id}: tiles with no art: ${[...unknown].join(' ')}`);
+      check(m.wild ? AREAS[m.area] : true, `${id}: wild map without a valid area`);
+      if (m.heal) check(walk(m, ...m.heal), `${id}: heal spot ${m.heal} is not walkable`);
+      for (const n of m.npcs) {
+        check(m.tiles[n.y] && m.tiles[n.y][n.x] && !SOLID.has(m.tiles[n.y][n.x]), `${id}: ${n.script} stands on a solid tile at ${n.x},${n.y}`);
+        check(LOOKS[n.look], `${id}: ${n.script} has unknown look ${n.look}`);
+        if (SCRIPT_NAMES) check(SCRIPT_NAMES.has(n.script), `${id}: unknown script ${n.script}`);
+        if (n.script === 'boss') check(BOSSES[n.arg], `${id}: boss with unknown area ${n.arg}`);
+        // Someone must be able to stand next to them (or across a counter) to talk.
+        const talk = [[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) =>
+          walk(m, n.x + dx, n.y + dy) || (m.tiles[n.y + dy] && m.tiles[n.y + dy][n.x + dx] === 'c' && walk(m, n.x + 2 * dx, n.y + 2 * dy)));
+        check(talk, `${id}: nobody can reach ${n.script} at ${n.x},${n.y} to talk`);
+        check(!m.warps.some((v) => v.x === n.x && v.y === n.y), `${id}: ${n.script} stands on a warp`);
+      }
+      for (const key of Object.keys(m.signs)) {
+        const [x, y] = key.split(',').map(Number);
+        check(m.tiles[y] && m.tiles[y][x] === 's', `${id}: sign text at ${key} but no sign tile there`);
+      }
+      m.tiles.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === 's') check(m.signs[`${x},${y}`], `${id}: sign at ${x},${y} has no text`); }));
+      for (const v of m.warps) {
+        check(m.tiles[v.y] && m.tiles[v.y][v.x] && !SOLID.has(m.tiles[v.y][v.x]), `${id}: warp at ${v.x},${v.y} sits on a solid tile`);
+        if (v.to === '@return') continue;
+        const t = MAPS[v.to];
+        if (!check(t, `${id}: warp to unknown map ${v.to}`)) continue;
+        check(walk(t, v.tx, v.ty), `${id} → ${v.to}: lands on a blocked tile ${v.tx},${v.ty}`);
+        check(!t.warps.some((u) => u.x === v.tx && u.y === v.ty), `${id} → ${v.to}: lands right on another warp`);
+        if (v.ret) check(walk(m, ...v.ret), `${id}: Rest Center return spot ${v.ret} is blocked`);
+        if (v.need) check(v.block && (!SCRIPT_NAMES || SCRIPT_NAMES.has(v.block)), `${id}: locked warp needs a block script`);
+        if (v.need && v.need.startsWith('badge')) check(BADGE_FLAGS.includes(v.need), `${id}: unknown badge ${v.need}`);
+      }
+      // From every arrival spot you can walk to at least one way out.
+      const arrivals = Object.entries(MAPS).flatMap(([, o]) => o.warps.filter((v) => v.to === id).map((v) => [v.tx, v.ty]));
+      if (id === 'center') arrivals.push([4, 5]);
+      for (const [sx, sy] of arrivals) {
+        const seen = new Set([sx + ',' + sy]), q = [[sx, sy]];
+        let exit = false;
+        while (q.length) {
+          const [x, y] = q.shift();
+          for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+            const nx = x + dx, ny = y + dy, k = nx + ',' + ny;
+            if (seen.has(k) || !walk(m, nx, ny)) continue;
+            seen.add(k);
+            if (m.warps.some((v) => v.x === nx && v.y === ny)) exit = true;
+            q.push([nx, ny]);
+          }
+        }
+        check(exit, `${id}: arriving at ${sx},${sy} leaves you stuck`);
+      }
+    }
+    // Every map can be reached from town.
+    const seen = new Set(['town']), q = ['town'];
+    while (q.length) {
+      const id = q.shift();
+      for (const v of MAPS[id].warps) if (v.to !== '@return' && !seen.has(v.to)) { seen.add(v.to); q.push(v.to); }
+      if (MAPS[id].warps.some((v) => v.to === 'center')) seen.add('center');
+    }
+    for (const id of Object.keys(MAPS)) check(seen.has(id), `${id}: can't be reached from town`);
+    // Area order matches the gates.
+    for (const t of TRAVEL) {
+      check(MAPS[t.map] && MAPS[t.map].heal, `Quick travel to ${t.map}, which has no Rest Center`);
+      check(t.mx >= 0 && t.mx <= 160 && t.my >= 0 && t.my <= 144, `Quick travel ${t.map} is off the map picture`);
+    }
+    for (const a of AREA_ORDER) check(Object.values(MAPS).some((m) => m.area === a && m.wild), `${a}: no wild map`);
+    for (const a of AREA_ORDER) check(Object.values(MAPS).some((m) => m.npcs.some((n) => n.script === 'boss' && n.arg === a)), `${a}: boss is not on any map`);
+    // Each wild area should have tall grass to find Legends in.
+    for (const [id, m] of Object.entries(MAPS)) if (m.wild) {
+      const n = m.tiles.join('').split('').filter((c) => ENCOUNTER.has(c)).length;
+      check(n >= 20, `${id}: only ${n} tall-grass tiles`, 'warn');
+    }
+  });
+}
+
+// ------------------------------------------------------------- Math
+suite('Math problems', ({ check, bad }) => {
+  const E = MathEngine;
+  const opFn = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a * b, '÷': (a, b) => a / b };
+  const statsFor = (lvl) => lvl === 0 ? undefined : lvl === 1 ? { attempts: 10, correct: 9, ms: 50000, n: 10 } : { attempts: 20, correct: 20, ms: 60000, n: 20 };
+  const seenFail = new Set();
+  const fail = (key, msg) => { if (!seenFail.has(key)) { seenFail.add(key); bad(msg); } };
+  const renderable = (v) => {
+    if (!v) return true;
+    if (v.kind === 'tenframe') return (v.mode === 'add' ? v.a + v.b : v.a) <= 20;
+    if (v.kind === 'baseten') return v.a < 100 && v.b < 100;
+    if (v.kind === 'array') return v.rows <= 10 && v.cols <= 10;
+    return false;
+  };
+  for (let grade = 0; grade < 4; grade++) {
+    const skills = [...new Set([...E.gradeSkills(grade), ...E.LEVELS.slice(0, grade).flatMap((_, g) => E.gradeSkills(g))])];
+    for (const skill of skills) for (let lvl = 0; lvl < 3; lvl++) {
+      const st = statsFor(lvl);
+      for (let i = 0; i < 400; i++) {
+        const p = E.make(skill, grade, st ? { [skill]: st } : {});
+        const tag = `${skill} G${grade} lvl${lvl}`;
+        check(p.skillId === skill, `${tag}: made a ${p.skillId} problem`);
+        if (!Number.isInteger(p.answer) || p.answer < 0) fail(tag + 'ans', `${tag}: bad answer ${p.answer} for ${p.text}`);
+        if (p.op !== 'or') {
+          const real = p.missing ? p.total - p.a : opFn[p.op](p.a, p.b);
+          if (real !== p.answer) fail(tag + 'eq', `${tag}: ${p.equation} says ${p.answer}, really ${real}`);
+        } else if (p.answer !== Math.max(p.a, p.b) || p.a === p.b) fail(tag + 'cmp', `${tag}: compare problem is wrong`);
+        const want = p.op === 'or' ? 2 : 4;
+        if (p.choices.length !== want) fail(tag + 'n', `${tag}: ${p.choices.length} choices`);
+        if (!p.choices.includes(p.answer)) fail(tag + 'in', `${tag}: answer missing from choices`);
+        if (new Set(p.choices).size !== p.choices.length) fail(tag + 'dup', `${tag}: repeated choices ${p.choices}`);
+        if (p.choices.some((c) => !Number.isInteger(c) || c < 0)) fail(tag + 'neg', `${tag}: bad choice in ${p.choices}`);
+        if (p.visual && !renderable(p.visual)) fail(tag + 'vis', `${tag}: picture can't be drawn (${JSON.stringify(p.visual)}) for ${p.text}`);
+        if (p.visualMode === 'always' && !p.visual) fail(tag + 'always', `${tag}: should always show a picture but has none`);
+        if (p.text.length > 120) fail(tag + 'len', `${tag}: question is ${p.text.length} characters`);
+        if (!lvl) {
+          const cap = [10, 20, 99, 999][E.LEVELS.indexOf(E.SKILLS[skill].level)];
+          if (p.op !== '×' && p.op !== '÷' && Math.max(p.a, p.b, p.answer, p.total || 0) > cap) fail(tag + 'cap', `${tag}: ${p.text} goes past ${cap}`);
+        }
+        const tip = E.tip(p);
+        if (typeof tip !== 'string' || !tip) fail(tag + 'tip', `${tag}: no tip for ${p.text}`);
+        if (/picture/i.test(tip) && !p.visual) fail(tag + 'tippic', `${tag}: tip mentions a picture but there is none (${p.text})`);
+        for (const c of p.choices) if (c !== p.answer) {
+          const h = E.mistakeHint(p, c);
+          if (h !== null && typeof h !== 'string') fail(tag + 'mh', `${tag}: mistake hint isn't text`);
+          if (h && /picture/i.test(h) && !p.visual) fail(tag + 'mhpic', `${tag}: mistake hint mentions a picture but there is none`);
+        }
+        const L = E.teach(p);
+        if (!L) { fail(tag + 'teach', `${tag}: no Teach me lesson`); continue; }
+        if (!L.title || !L.intro || !L.steps.length) fail(tag + 'lesson', `${tag}: lesson is missing parts`);
+        for (const s of L.steps) {
+          if (!Number.isInteger(s.answer) || s.answer < 0) fail(tag + 'sans', `${tag}: lesson step answer ${s.answer} (${s.prompt})`);
+          if (!s.choices.includes(s.answer)) fail(tag + 'sin', `${tag}: lesson step answer not in choices (${s.prompt})`);
+          if (new Set(s.choices).size !== s.choices.length) fail(tag + 'sdup', `${tag}: lesson step repeats choices`);
+          if (s.choices.some((c) => c < 0)) fail(tag + 'sneg', `${tag}: lesson step has a negative choice`);
+        }
+        const t = E.twin(p);
+        if (t.skillId !== p.skillId || t.story || !!t.missing !== !!p.missing) fail(tag + 'twin', `${tag}: twin problem doesn't match`);
+      }
+    }
+    // The adaptive picker stays in range.
+    const counts = {};
+    for (let i = 0; i < 3000; i++) { const s = E.pickSkill(grade, {}); counts[s] = (counts[s] || 0) + 1; }
+    for (const s of E.gradeSkills(grade)) check(counts[s] > 0, `G${grade}: pickSkill never picks ${s}`);
+    const weak = { ...Object.fromEntries(E.gradeSkills(grade).map((s) => [s, { attempts: 10, correct: 10, ms: 1, n: 1 }])) };
+    const target = E.gradeSkills(grade).slice(-1)[0];
+    weak[target] = { attempts: 10, correct: 2, ms: 1, n: 1 };
+    check(E.weakestSkill(grade, weak) === target, `G${grade}: weakestSkill misses ${target}`);
+  }
+});
+
+// ------------------------------------------------------------- Words
+function wordSuite(gameSrc) {
+  suite('Reading level (K–3)', ({ check }) => {
+    const lines = [];
+    for (const b of Object.values(BOSSES)) lines.push(...b.intro, ...b.win, ...b.after);
+    for (const m of Object.values(MAPS)) for (const s of Object.values(m.signs)) lines.push(...s);
+    for (const sp of Object.values(SPECIES)) lines.push(sp.dex);
+    // Kid-facing strings in the game script: quoted text with a space that reads like a sentence.
+    const lit = /(['`])((?:\\.|(?!\1).){12,}?)\1/g;
+    for (const m of gameSrc.matchAll(lit)) {
+      const s = m[2].replace(/\\'/g, '\'');
+      if (/^[A-Z{$]/.test(s) && / /.test(s) && /[.!?]$/.test(s) && !/[<>=;]|=>|\(\)/.test(s)) lines.push(s.replace(/\$\{[^}]*\}/g, 'X'));
+    }
+    // Words young readers may stumble on. Names and math words kids are taught are fine.
+    const allowed = new Set(['legendex', 'pinecrest', 'professor', 'multiplication', 'subtraction', 'everything', 'everywhere', 'kindergarten', 'remembering', 'blueberries', 'practicing', 'beautiful', 'sometimes', 'something', 'buddies', 'snowflakes']);
+    const speciesNames = new Set(Object.values(SPECIES).map((s) => s.name.toLowerCase()));
+    for (const line of new Set(lines)) {
+      for (const sentence of line.split(/(?<=[.!?])\s+/)) {
+        const words = sentence.split(/\s+/).filter((w) => /[a-z]/i.test(w));
+        check(words.length <= 14, `Long sentence (${words.length} words): "${sentence}"`, 'warn');
+        for (const w of words) {
+          const bare = w.toLowerCase().replace(/[^a-z]/g, '');
+          if (bare.length >= 10 && !allowed.has(bare) && !speciesNames.has(bare)) check(false, `Hard word "${bare}" in: "${sentence}"`, 'warn');
+        }
+      }
+    }
+  });
+}
+
+// ------------------------------------------------------------- Files
+async function fileSuite() {
+  const sw = await (await fetch('../sw.js')).text();
+  const assets = [...sw.matchAll(/'\.\/([^']*)'/g)].map((m) => m[1]).filter(Boolean);
+  const manifest = await (await fetch('../manifest.webmanifest')).json();
+  const html = await (await fetch('../index.html')).text();
+  const linked = [...html.matchAll(/(?:src|href)="(?!https?:)([^"]+)"/g)].map((m) => m[1]);
+  const all = [...new Set([...assets, ...manifest.icons.map((i) => i.src), ...linked])];
+  const status = await Promise.all(all.map(async (f) => [f, (await fetch('../' + f, { cache: 'no-store' })).status]));
+  suite('Files and install', ({ check }) => {
+    for (const [f, s] of status) check(s === 200, `${f} is missing (${s})`);
+    for (const f of linked.filter((f) => /\.(js|css|png|webmanifest)$/.test(f))) check(assets.includes(f), `${f} isn't saved for offline play`);
+    check(manifest.orientation !== 'portrait', 'Install file locks the game upright');
+    check(manifest.icons.some((i) => i.purpose === 'maskable'), 'No maskable icon');
+  });
+}
+
+(async () => {
+  let src = '';
+  try { src = await loadScriptNames(); } catch (e) { /* maps suite skips script checks */ }
+  mapSuite();
+  wordSuite(src);
+  await fileSuite();
+  window.QC = results;
+  const out = document.getElementById('out');
+  let bads = 0, warns = 0, checks = 0;
+  for (const r of results) {
+    checks += r.checks;
+    const b = r.issues.filter((i) => i.level === 'bad').length, w = r.issues.length - b;
+    bads += b; warns += w;
+    const sec = document.createElement('section');
+    const h = document.createElement('h2');
+    h.textContent = r.name;
+    const pill = document.createElement('span');
+    pill.className = 'pill ' + (b ? 'bad' : w ? 'warn' : 'ok');
+    pill.textContent = b ? `${b} problem${b > 1 ? 's' : ''}` : w ? `${w} to review` : 'pass';
+    h.append(pill);
+    sec.append(h);
+    if (r.issues.length) {
+      const ul = document.createElement('ul');
+      for (const i of r.issues.slice(0, 60)) {
+        const li = document.createElement('li');
+        li.className = i.level;
+        li.textContent = i.msg;
+        ul.append(li);
+      }
+      sec.append(ul);
+    }
+    out.append(sec);
+  }
+  document.getElementById('sum').textContent = `${results.length} suites, ${checks.toLocaleString()} checks: ${bads} problems, ${warns} to review.`;
+})();
+</script>
+</body>
+</html>

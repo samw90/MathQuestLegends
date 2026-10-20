@@ -114,6 +114,13 @@ const MathEngine = (() => {
   }
   const MASTERY = ['Learning', 'Getting strong', 'Mastered'];
 
+  // Pictures only work for small numbers: ten-frames up to 20, blocks under 100.
+  function fitVisual(p) {
+    const v = p.visual;
+    const fits = !v || (v.kind === 'tenframe' ? (v.mode === 'add' ? v.a + v.b : v.a) <= 20 : v.kind === 'baseten' ? v.a < 100 && v.b < 100 : true);
+    return fits ? p : { ...p, visual: null, visualMode: 'none' };
+  }
+
   // Strong skills sometimes get bigger numbers.
   function stretch(p, level, grade) {
     if (!level || p.story || p.missing) return p;
@@ -125,12 +132,12 @@ const MathEngine = (() => {
     if (p.op === '+') {
       const a = r(Math.max(2, Math.round(0.6 * cap)), Math.max(3, M - 1));
       const b = r(1, Math.max(1, M - a));
-      return { ...p, a, b, answer: a + b, visual: p.visual ? { ...p.visual, a, b } : null, stretched: true };
+      return fitVisual({ ...p, a, b, answer: a + b, visual: p.visual ? { ...p.visual, a, b } : null, stretched: true });
     }
     if (p.op === '−') {
       const a = r(Math.max(3, Math.round(0.7 * cap)), Math.max(4, M));
       const b = r(1, a - 1);
-      return { ...p, a, b, answer: a - b, visual: p.visual ? { ...p.visual, a, b } : null, stretched: true };
+      return fitVisual({ ...p, a, b, answer: a - b, visual: p.visual ? { ...p.visual, a, b } : null, stretched: true });
     }
     if (p.op === '×') {
       const big = Math.round(Math.max(p.a, p.b) * (level === 2 ? 1.8 : 1.4)) + 1;
@@ -223,7 +230,7 @@ const MathEngine = (() => {
   // A fresh problem just like `p` (same skill, no story), used after "Teach me".
   function twin(p) {
     const t = templateFor(p.skillId);
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 200; i++) {
       const q = t.gen();
       if (!q.story && !!q.missing === !!p.missing && !(q.a === p.a && q.b === p.b)) return finish(q);
     }
@@ -231,7 +238,7 @@ const MathEngine = (() => {
   }
 
   function fromReview(item) {
-    return finish({ ...item, story: null });
+    return finish(fitVisual({ ...item, story: null }));
   }
 
   // ---------------------------------------------------------------- hints

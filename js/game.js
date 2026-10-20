@@ -1761,12 +1761,18 @@
 
   // ---------------------------------------------------------------- title + new game
 
+  // The grass drifts slowly and seamlessly: each tile keeps its pattern as it
+  // moves, so the scroll never visibly jumps back.
   function drawTitle(now) {
-    const off = Math.floor(now / 70) % TS;
+    const sx = now / 90, sy = sx / 2;
+    const kx = Math.floor(sx / TS), ky = Math.floor(sy / TS);
+    const ox = Math.floor(sx - kx * TS), oy = Math.floor(sy - ky * TS);
+    const mod = (n, m) => ((n % m) + m) % m;
     for (let ty = -1; ty < 10; ty++) {
       for (let tx = -1; tx < 11; tx++) {
-        const ch = (tx + ty) % 4 === 0 ? ',' : (tx * 7 + ty * 3) % 11 === 0 ? 'f' : '.';
-        ctx.drawImage(Art.tile(ch), tx * TS + off, ty * TS + (off >> 1));
+        const wx = tx - kx, wy = ty - ky;
+        const ch = mod(wx + wy, 4) === 0 ? ',' : mod(wx * 7 + wy * 3, 11) === 0 ? 'f' : '.';
+        ctx.drawImage(Art.tile(ch), tx * TS + ox, ty * TS + oy);
       }
     }
     STARTERS.forEach((id, i) => {
@@ -1872,7 +1878,17 @@
   // Exposed for debugging in the browser console.
   window.MQL = { get state() { return S; }, get problem() { return currentProblem; }, MathEngine };
   // Test hook (only with ?dev in the address): show any problem, e.g. MQL.ask(MathEngine.make('sub-100', 2)).
-  if (/[?&]dev\b/.test(location.search)) window.MQL.ask = ask;
+  if (/[?&]dev\b/.test(location.search)) {
+    window.MQL.ask = ask;
+    // Test hook: a throwaway game state so questions can be shown from the title screen.
+    window.MQL.testState = (grade = 0) => {
+      S = newState('Tester', grade);
+      S.sidekick = 'sproutle';
+      ui.textContent = '';
+      handler = null;
+      return S;
+    };
+  }
   // Device testing: ?dev&quiz=sub-100&grade=2 shows practice questions right away.
   const qs = new URLSearchParams(location.search);
   if (qs.has('dev') && qs.get('quiz') && MathEngine.SKILLS[qs.get('quiz')]) {

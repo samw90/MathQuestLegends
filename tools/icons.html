@@ -24,7 +24,7 @@
 </head>
 <body>
 <h1>Math Quest Legends: icon drafts</h1>
-<p>Each one is drawn from the game's own pixel art. Big, home-screen size, and tiny (browser tab).</p>
+<p>Full-bleed drafts: each icon is the object itself, filling the square. Big, home-screen size, and tiny (browser tab).</p>
 <div class="grid" id="grid"></div>
 <div class="home" id="home"></div>
 
@@ -59,23 +59,23 @@ function grass(ctx, n, tall) {
 }
 
 // Each draft draws on a small pixel canvas (size = logical pixels), then is scaled up crisply.
+// Rounded box drawn pixel by pixel (keeps the pixel-art look).
+function rrect(ctx, x, y, w, h, r, c) {
+  ctx.fillStyle = c;
+  for (let yy = 0; yy < h; yy++) {
+    const dy = yy < r ? r - yy - 0.5 : yy >= h - r ? yy - (h - r) + 0.5 : 0;
+    const inset = dy ? Math.round(r - Math.sqrt(Math.max(0, r * r - dy * dy))) : 0;
+    ctx.fillRect(x + inset, y + yy, w - 2 * inset, 1);
+  }
+}
+function big(ctx, id, x, y, scale = 2) { ctx.drawImage(Art.creature(id), x, y, 48 * scale, 48 * scale); }
+function dpad(ctx, x, y, s, c) { rect(ctx, x + s, y, s, s * 3, c); rect(ctx, x, y + s, s * 3, s, c); }
+
+// Full-bleed drafts: the whole icon is the object, cropped to fill the square (like DeckDex).
 const DRAFTS = [
   {
-    name: 'Buddy in the grass', size: 64,
-    note: 'Sproutle front and center, with a gold plus coin. Friendly and simple.',
-    draw(c) {
-      grass(c, 4, true);
-      c.drawImage(Art.platform(20, 5), 12, 49);
-      c.drawImage(Art.creature('sproutle'), 8, 10);
-      disc(c, 52, 11, 9, '#2b2840');
-      disc(c, 52, 11, 8, '#f2c84b');
-      rect(c, 46, 14, 13, 4, '#e0a030');
-      rect(c, 51, 6, 3, 11, '#fff'); rect(c, 47, 10, 11, 3, '#fff');
-    },
-  },
-  {
-    name: 'The three buddies', size: 128,
-    note: 'All three starters, so every kid sees the one they picked.',
+    name: 'Current: the three buddies', size: 128,
+    note: 'Today\'s icon, for comparison: art floating on a dark square.',
     draw(c) {
       rect(c, 0, 0, 128, 128, '#2d2a4a');
       disc(c, 64, 70, 54, '#4a4566');
@@ -89,53 +89,85 @@ const DRAFTS = [
     },
   },
   {
-    name: 'Math bubble', size: 64,
-    note: 'A buddy thinking about a sum. Says "math" at a glance.',
+    name: 'The handheld', size: 128,
+    note: 'The game\'s console fills the icon: screen with your buddy, D-pad and A/B running off the edges.',
     draw(c) {
-      for (let y = 0; y < 64; y++) rect(c, 0, y, 64, 1, y < 40 ? (y < 20 ? '#7cc4f0' : '#9ad4f4') : '#8cc860');
-      rect(c, 0, 40, 64, 2, '#6aa848');
-      c.drawImage(Art.platform(17, 4), 2, 54);
-      c.drawImage(Art.creature('sproutle'), -6, 18);
-      rect(c, 27, 3, 35, 17, '#2b2840');
-      rect(c, 28, 4, 33, 15, '#fff');
-      rect(c, 31, 19, 4, 3, '#2b2840'); rect(c, 32, 19, 2, 2, '#fff');
-      text(c, '2+3', 31, 7, '#2b2840', 2);
-    },
-  },
-  {
-    name: 'Little handheld', size: 64,
-    note: 'Matches the game\'s console look, with a buddy on the screen.',
-    draw(c) {
-      rect(c, 0, 0, 64, 64, '#2d2a4a');
-      rect(c, 10, 3, 44, 58, '#e6e1f0');
-      rect(c, 10, 52, 44, 9, '#c9c1dc');
-      rect(c, 14, 7, 36, 30, '#4a4566');
-      const s = document.createElement('canvas'); s.width = 32; s.height = 26;
+      rect(c, 0, 0, 128, 128, '#e6e1f0');
+      rect(c, 0, 100, 128, 28, '#d9d3e8');
+      rrect(c, 8, -24, 112, 104, 22, '#4a4566');
+      rect(c, 8, -24, 90, 40, '#4a4566');
+      // screen
+      const s = document.createElement('canvas'); s.width = 88; s.height = 66;
       const sc = s.getContext('2d');
-      for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) sc.drawImage(Art.tile(y === 1 ? ',' : '.'), x * 16, y * 16);
-      sc.drawImage(Art.creatureSmall('sproutle', 0), 6, 4);
-      sc.drawImage(Art.person ? Art.creatureSmall('hootsum', 1) : s, 15, 2);
-      c.drawImage(s, 16, 9);
-      rect(c, 18, 42, 3, 9, '#2b2840'); rect(c, 15, 45, 9, 3, '#2b2840');
-      disc(c, 46, 43, 3, '#e8506a'); disc(c, 39, 47, 3, '#e8506a');
+      for (let y = 0; y < 5; y++) for (let x = 0; x < 6; x++) sc.drawImage(Art.tile(y === 4 ? ',' : (x + y) % 3 === 0 ? 'f' : '.'), x * 16, y * 16 - 14);
+      sc.drawImage(Art.platform(26, 6), 18, 50);
+      sc.drawImage(Art.creature('sproutle'), 20, 6);
+      c.drawImage(s, 20, 0);
+      text(c, 'MQ', 50, 70, '#c9c1dc', 2);
+      dpad(c, 10, 90, 12, '#2b2840');
+      disc(c, 112, 96, 13, '#a8324a'); disc(c, 112, 94, 13, '#e8506a');
+      disc(c, 82, 114, 13, '#a8324a'); disc(c, 82, 112, 13, '#e8506a');
     },
   },
   {
-    name: 'Legend badge', size: 64,
-    note: 'A gold badge like the ones bosses give out, with Emberkit.',
+    name: 'Switch grips', size: 128,
+    note: 'Blue and red grips on the sides, the screen in the middle, like the new sideways layout.',
     draw(c) {
-      rect(c, 0, 0, 64, 64, '#2d2a4a');
-      for (let i = 0; i < 16; i++) {
-        const a = i * Math.PI / 8;
-        for (let r = 22; r < 34; r++) rect(c, Math.round(32 + Math.cos(a) * r), Math.round(33 + Math.sin(a) * r), 2, 2, '#3c3864');
-      }
-      disc(c, 32, 33, 27, '#2b2840');
-      disc(c, 32, 33, 26, '#e0a030');
-      disc(c, 32, 32, 23, '#f2c84b');
-      disc(c, 32, 33, 19, '#fff3c4');
-      c.drawImage(Art.creature('emberkit'), 8, 8);
-      text(c, '+', 6, 4, '#f2c84b', 2); text(c, '-', 50, 4, '#f2c84b', 2);
-      text(c, 'x', 6, 50, '#f2c84b', 2); text(c, '=', 50, 50, '#f2c84b', 2);
+      rect(c, 0, 0, 128, 128, '#2b2840');
+      rrect(c, -20, 0, 50, 128, 0, '#1fb4e3');
+      rrect(c, 98, 0, 50, 128, 0, '#ff5b4f');
+      rect(c, 26, 0, 4, 128, '#178fb8'); rect(c, 98, 0, 4, 128, '#d8443a');
+      rrect(c, 34, 14, 60, 100, 8, '#1c1a2b');
+      const s = document.createElement('canvas'); s.width = 52; s.height = 84;
+      const sc = s.getContext('2d');
+      for (let y = 0; y < 6; y++) for (let x = 0; x < 4; x++) sc.drawImage(Art.tile(y >= 5 ? ',' : (x + y) % 3 === 0 ? 'f' : '.'), x * 16, y * 16 - 8);
+      sc.drawImage(Art.platform(22, 5), 4, 62);
+      sc.drawImage(Art.creature('emberkit'), 2, 20);
+      c.drawImage(s, 38, 22);
+      dpad(c, 2, 48, 8, '#20202a');
+      disc(c, 116, 52, 8, '#2b2840'); disc(c, 108, 70, 8, '#2b2840');
+    },
+  },
+  {
+    name: 'Battle screen', size: 128,
+    note: 'The icon is a moment from the game: a wild Legend, your buddy, and the math puzzle.',
+    draw(c) {
+      for (let y = 0; y < 128; y++) rect(c, 0, y, 128, 1, y < 60 ? '#cfeec0' : '#b8e0a0');
+      c.drawImage(Art.platform(28, 6), 66, 50);
+      c.drawImage(Art.creature('hootsum'), 70, 10);
+      c.drawImage(Art.platform(30, 7), 2, 84);
+      c.drawImage(Art.creature('sproutle'), 6, 44);
+      rrect(c, 4, 6, 54, 16, 3, '#2b2840'); rrect(c, 5, 7, 52, 14, 2, '#fffdf6');
+      rect(c, 9, 15, 44, 3, '#c9c1dc'); rect(c, 9, 15, 30, 3, '#5fb84a');
+      rect(c, -4, 96, 136, 36, '#2b2840'); rect(c, -4, 99, 136, 33, '#fffdf6');
+      text(c, '3+4=?', 20, 104, '#2b2840', 4);
+    },
+  },
+  {
+    name: 'Buddy close-up', size: 128,
+    note: 'Sproutle so close it fills the icon, leaves poking off the top. Bold and readable at small sizes.',
+    draw(c) {
+      for (let y = 0; y < 128; y++) rect(c, 0, y, 128, 1, y < 90 ? '#8fd0f0' : '#7cc060');
+      for (let i = 0; i < 128; i += 8) rect(c, i, 90, 4, 3, '#6aa848');
+      big(c, 'sproutle', -32, -14, 4);
+      disc(c, 108, 22, 14, '#2b2840'); disc(c, 108, 22, 12, '#f2c84b');
+      rect(c, 105, 13, 6, 18, '#fff'); rect(c, 99, 19, 18, 6, '#fff');
+    },
+  },
+  {
+    name: 'Number keypad', size: 128,
+    note: 'The in-game keypad up close, with your buddy peeking over the top. Says "math" right away.',
+    draw(c) {
+      rect(c, 0, 0, 128, 128, '#e8506a');
+      rect(c, 0, 0, 128, 44, '#ff8a6a');
+      const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+      keys.forEach((k, i) => {
+        const x = -10 + (i % 3) * 52, y = 48 + Math.floor(i / 3) * 34;
+        rrect(c, x, y + 4, 44, 28, 7, '#14121f');
+        rrect(c, x, y, 44, 28, 7, i === 8 ? '#3fae5a' : '#2b2840');
+        text(c, k, x + 16, y + 6, '#fff', 4);
+      });
+      c.drawImage(Art.creature('sproutle'), 40, 2);
     },
   },
 ];

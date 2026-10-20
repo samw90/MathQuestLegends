@@ -93,5 +93,9 @@ To publish it, push to GitHub and turn on GitHub Pages for the `main` branch (Se
 - `js/game.js`: movement, the following buddy, dialog, menus, battles and saving
 - `sw.js`, `manifest.webmanifest`, `*.png`: offline support and app icons
 - `tools/icons.html`: draws the home screen icon options from the game's art
+- `tools/qc.html`: quality checks for Legends, maps, math problems, hints, reading level and offline files
+- `tools/layout-qc.js`, `tools/flow-qc.js`: in-game checks for question layout and the hint / Teach me path
+
+**Quality checks:** serve the folder, open `tools/qc.html` and read the report (it runs about 33,000 checks). For the in-game checks, open the game with `?dev`, then in the browser console run `await import('./tools/layout-qc.js'); await layoutQC()` (try phone and tablet sizes) or `await import('./tools/flow-qc.js'); await flowQC()`.
 
 For testing, open the game with `?dev` in the address to get `MQL.ask(MQL.MathEngine.make('sub-100', 2))` in the browser console, or `?dev&quiz=sub-100&grade=2` to jump straight into practice questions (handy on a phone or simulator).
