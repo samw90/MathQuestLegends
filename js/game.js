@@ -408,10 +408,6 @@
       let i = 0;
       box.classList.remove('done', 'split');
       box.dataset.wait = '1';
-      // Long lines shrink to fit the box instead of spilling out of it.
-      box.style.fontSize = '';
-      txt.textContent = full;
-      for (let fs = 5.2; box.scrollHeight > box.clientHeight + 1 && fs >= 3.6; fs -= 0.4) box.style.fontSize = fs + 'cqw';
       txt.textContent = '';
       speak(full);
       const finish = () => { i = full.length; txt.textContent = full; clearInterval(tm); box.classList.add('done'); };
@@ -430,8 +426,26 @@
       };
     });
   }
+  // Splits a line into pages that each fit the dialog box, breaking between words.
+  function pages(text) {
+    const box = showDialog(), txt = box.querySelector('.txt');
+    box.classList.remove('split');
+    const fits = (t) => { txt.textContent = t; return box.scrollHeight <= box.clientHeight + 1; };
+    const out = [];
+    let words = fill(text).split(' ');
+    while (words.length) {
+      let n = words.length;
+      while (n > 1 && !fits(words.slice(0, n).join(' '))) n -= 1;
+      // Prefer ending a page at the end of a sentence.
+      if (n < words.length) for (let k = n; k > 1; k -= 1) if (/[.!?]$/.test(words[k - 1])) { n = k; break; }
+      out.push(words.slice(0, n).join(' '));
+      words = words.slice(n);
+    }
+    txt.textContent = '';
+    return out;
+  }
   async function say(lines, opts = {}) {
-    for (const line of [].concat(lines)) await sayLine(line);
+    for (const line of [].concat(lines)) for (const page of pages(line)) await sayLine(page);
     if (!opts.keep) hideDialog();
   }
 
