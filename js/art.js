@@ -235,6 +235,50 @@ const Art = (() => {
       k.rect(7, 4, 1, 6, '#5a4030');
       k.rect(4, 7, 8, 1, '#5a4030');
     },
+    // Rest Center emblem: a heart on the pink roof.
+    4: (k) => {
+      roof(k, '#e86a8a', '#b8405e');
+      k.rect(3, 1, 10, 10, '#b8405e');
+      k.rect(4, 2, 8, 8, '#fff');
+      k.ell(6.4, 5, 1.9, 1.9, '#e8506a'); k.ell(9.6, 5, 1.9, 1.9, '#e8506a');
+      k.tri(4.6, 5.6, 11.4, 5.6, 8, 9.4, '#e8506a');
+      k.px(6, 4, '#ffb0c0');
+    },
+    // Professor Pi's lab emblem: a gold π badge on the blue roof.
+    5: (k) => {
+      roof(k, '#5a7bbf', '#3e5b94');
+      k.ell(8, 6.5, 5.5, 5.5, '#c89a2a');
+      k.ell(8, 6.5, 4.5, 4.5, '#f2c84b');
+      k.rect(5, 4, 6, 1, '#2b2840');
+      k.rect(6, 5, 1, 4, '#2b2840');
+      k.rect(9, 5, 1, 4, '#2b2840'); k.px(10, 8, '#2b2840');
+    },
+    // Your home: a teal roof with a brick chimney, a flower-box window and a green door.
+    6: (k) => roof(k, '#3aa88a', '#26745e'),
+    7: (k) => {
+      roof(k, '#3aa88a', '#26745e');
+      k.rect(5, 0, 6, 9, '#a8584a');
+      k.rect(4, 0, 8, 2, '#7a3a32');
+      for (const [x, y] of [[5, 4], [8, 4], [6, 7], [9, 7]]) k.rect(x, y, 2, 1, '#7a3a32');
+    },
+    8: (k) => {
+      wall(k);
+      k.rect(3, 2, 10, 8, '#5a4030');
+      k.rect(4, 3, 8, 6, '#8fd3f7');
+      k.rect(4, 3, 3, 2, '#d4f1ff');
+      k.rect(7, 3, 1, 6, '#5a4030');
+      k.rect(2, 11, 12, 3, '#8a5a32');
+      for (const [x, c] of [[3, '#e8506a'], [5, '#f2c84b'], [7, '#e86a8a'], [9, '#f2c84b'], [11, '#e8506a']]) { k.px(x, 10, c); k.px(x + 1, 10, '#4fa84a'); }
+    },
+    9: (k) => {
+      wall(k);
+      k.rect(4, 3, 8, 13, '#26745e');
+      k.ell(8, 4, 4, 2.5, '#26745e');
+      k.rect(5, 4, 6, 12, '#3f8f4a');
+      k.ell(8, 4.5, 3, 1.8, '#3f8f4a');
+      k.ell(8, 8, 2, 2, '#e8506a'); k.ell(8, 8, 1, 1, '#3f8f4a');
+      k.px(10, 11, '#ffd23c');
+    },
     d: (k) => {
       wall(k);
       k.rect(4, 2, 8, 14, '#5a3418');

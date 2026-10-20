@@ -213,6 +213,7 @@ const LOOKS = {
 //   snow    * snow   ^ snow drift  A pine  i ice
 //   cave    q cave floor  % glow moss  Q cave wall  X crystal  u glow mushrooms
 //   houses  r/R/C/V roofs (V = Portal Shrine)  w wall  W window  d door
+//           4 Rest Center heart  5 lab π badge  6/7 your roof and chimney  8 flower-box window  9 your door
 //   forest  F big tree  n forest floor  e ferns  k mushrooms
 //   river   - river  B bridge  L reeds  (sand _ from the shore)
 //   swamp   z bog water  v bog grass  p boardwalk  J dead tree
@@ -220,7 +221,7 @@ const LOOKS = {
 //   falls   U waterfall  O wet stone  & wet moss  | cliff
 //   shrine  j stone floor  (portals are drawn on top from each map's `portals` list)
 //   inside  x wall  o floor  b shelf  t table  1/2/3 buddy beds  c counter  m exit mat
-const SOLID = new Set('T~srRCVwWxbt123c PKMAQXF-zJZU|'.split(''));
+const SOLID = new Set('T~srRCVwWxbt123c PKMAQXF-zJZU|45678'.split(''));
 // Legends hide in these.
 const ENCOUNTER = new Set([',', ';', '"', '^', '%', 'e', 'L', 'v', 'l', '&']);
 
@@ -237,13 +238,13 @@ const MAPS = {
     tiles: [
       'TTTTTTTTT==TTTTTTTTT',
       'T.......f==f.......T',
-      'T.rrrr...==..RRRRR.T',
-      'T.wdWw...==..wWdWw.T',
-      'T..=.....==....=...T',
+      'T.6676...==..RR5RR.T',
+      'T.w98w...==..wWdWw.T',
+      'T.f=f....==....=...T',
       'T..=============...T',
       'T........==........T',
       'T.f..s...==...f....T',
-      'T........==..CCCCC.T',
+      'T........==..CC4CC.T',
       'T........==..wWdWw.T',
       'TVVV.....==....=...T',
       'TwdW.....=========.T',
@@ -314,7 +315,7 @@ const MAPS = {
     tiles: [
       'PPPPPPPPPgGPPPPPPPPP',
       'P~~~_____________h_P',
-      'P~~~__;;;;____CCCCCP',
+      'P~~~__;;;;____CC4CCP',
       'P~~~__;;;;____wWdWwP',
       'P~~~_______________P',
       'P~~_____P_____P____P',
@@ -354,7 +355,7 @@ const MAPS = {
     tiles: [
       'MMMMMMMMMgGMMMMMMMMM',
       'M::::::::::::::::::M',
-      'M::KK::""""::CCCCC:M',
+      'M::KK::""""::CC4CC:M',
       'M::::::""""::wWdWw:M',
       'M:::::::::::::::K::M',
       'M:MMM::::::::MMM:::M',
@@ -394,7 +395,7 @@ const MAPS = {
     tiles: [
       'AAAAAAAAAgGAAAAAAAAA',
       'A******************A',
-      'A*CCCCC***^^^^****iA',
+      'A*CC4CC***^^^^****iA',
       'A*wWdWw***^^^^****iA',
       'A******************A',
       'A**AA*****ii****AA*A',
@@ -434,7 +435,7 @@ const MAPS = {
     tiles: [
       'QQQQQQQQQQQQQQQQQQQQ',
       'QXqqqqqqqqqqqqqqqqXQ',
-      'QqqqqqqXXqqqCCCCCqqQ',
+      'QqqqqqqXXqqqCC4CCqqQ',
       'Qq%%%%qqqqqqwWdWwqqQ',
       'Qq%%%%qqquqqqqqqqqqQ',
       'QqqqqqqQQQQqqqqqqXqQ',
@@ -509,7 +510,7 @@ const MAPS = {
     tiles: [
       'FFFFFFFFFgGFFFFFFFFF',
       'Fnnnnnnnn==nnnnnnnnF',
-      'Fneeeennn==nCCCCCnnF',
+      'Fneeeennn==nCC4CCnnF',
       'Fneeeenkn==nwWdWwnnF',
       'Fnnnnnnnn==nnn=nnnnF',
       'FFFnnFnnn======nnFFF',
@@ -548,7 +549,7 @@ const MAPS = {
     tiles: [
       'FFFFFFFFFgGFFFFFFFFF',
       'Fnnnnnnnn==nnnnnnnnF',
-      'FnLLLLnnn==nCCCCCnnF',
+      'FnLLLLnnn==nCC4CCnnF',
       'FnLLLLnnn==nwWdWwnnF',
       'Fnnnnnnnn==nnn=nnnnF',
       '---------BB---------',
@@ -588,7 +589,7 @@ const MAPS = {
     tiles: [
       'JJJJJJJJJgGJJJJJJJJJ',
       'JvvvvvvvvppvvvvvvvvJ',
-      'JvzzzvvvvppvCCCCCvvJ',
+      'JvzzzvvvvppvCC4CCvvJ',
       'JvzzzvvvvppvwWdWwvvJ',
       'JvvvvvvvvppvvvpvvvvJ',
       'JzzzzzzzzppzzzzzzzzJ',
@@ -628,7 +629,7 @@ const MAPS = {
     tiles: [
       'ZZZZZZZZZgGZZZZZZZZZ',
       'ZHHHHHHHHHHHHHHHHHHZ',
-      'ZHllllHHHHHCCCCCHHHZ',
+      'ZHllllHHHHHCC4CCHHHZ',
       'ZHllllHHHHHwWdWwHHHZ',
       'ZHHHHHHHHHHHHHHHHHHZ',
       'ZZZZIZZZZIIZZZZZIZZZ',
@@ -672,7 +673,7 @@ const MAPS = {
       '|-----OOOOOOOO-----|',
       '|-----OO&&&&OO-----|',
       '|O&&&OOOOOOOOOO&&&O|',
-      '|O&&&OCCCCCOOO&&&OO|',
+      '|O&&&OCC4CCOOO&&&OO|',
       '|O&&&OwWdWwOOO&&&OO|',
       '|OOOOOOOOOOOOOOOOOO|',
       '|||OO&&&&OO&&&&OO|||',
