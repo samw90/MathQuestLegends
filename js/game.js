@@ -864,6 +864,8 @@
     const s = S.skills[p.skillId] || (S.skills[p.skillId] = { attempts: 0, correct: 0, ms: 0, n: 0 });
     s.attempts++;
     if (result === 'first') { s.correct++; s.ms += Math.min(ms, 120000); s.n++; }
+    // The last 10 tries (1 = right on the first try), for "How am I doing?".
+    s.recent = [...(s.recent || []), result === 'first' ? 1 : 0].slice(-10);
     // Missed problems come back after 1, 3, then 7 days (Math Quest's schedule).
     const key = `${p.a}${p.op}${p.b}`;
     const existing = S.review.find((x) => x.key === key);
@@ -1034,23 +1036,120 @@
     }
   }
 
-  // The buddy points the player at the skill they most need.
+  // ---------------------------------------------------------------- the buddy
+
+  // Each starter buddy has its own way of talking; other Legends sound friendly.
+  const VOICE = {
+    sproutle: {
+      hi: ['Hi hi! I\'m so happy we\'re a team!', 'Let\'s grow our brains today!', 'I found a ladybug! Oh, and I\'m ready for puzzles.'],
+      go: 'Ooh, practice time! Let\'s grow!',
+      done: ['We\'re growing so fast!', 'That was fun! Let\'s do it again soon.'],
+    },
+    emberkit: {
+      hi: ['Ready for action! My tail is glowing!', 'Let\'s blaze through some puzzles!', 'I\'m all fired up. Are you?'],
+      go: 'Let\'s go! Full power!',
+      done: ['We\'re on fire!', 'My tail is glowing extra bright!'],
+    },
+    splashfin: {
+      hi: ['Take a deep breath. We\'ve got this.', 'Nice and calm. One step at a time.', '*blows a bubble* Hello, friend.'],
+      go: 'Let\'s go slow and steady.',
+      done: ['Smooth as water.', 'Calm and careful wins every time.'],
+    },
+  };
+  const voice = () => VOICE[S.sidekick] || {
+    hi: ['Hi! I\'m happy to be your buddy!', `I love ${FAMILY_PHRASE[SPECIES[S.sidekick].family] || 'all kinds of'} puzzles. Let's do some together!`],
+    go: 'Let\'s practice together!',
+    done: ['Great teamwork!', 'We make a good team!'],
+  };
+  const buddyMon = () => S.party.find((c) => c.sp === S.sidekick);
+
+  // Talking to the buddy: a hello, then practice, a progress check or a tip.
   async function buddyTalk() {
     if (!S.sidekick) return;
+    await say(`${buddyName()}: ${pick(voice().hi)}`, { keep: true });
+    for (;;) {
+      const i = await choose(['Practice with me', 'How am I doing?', 'What should we work on?', 'Bye!'], { cls: 'start-menu', head: buddyName() });
+      hideDialog();
+      if (i === 0) { await buddyPractice(); return; }
+      if (i === 1) await buddyProgress();
+      else if (i === 2) await buddyTip();
+      else return;
+    }
+  }
+
+  // The skill the buddy wants to practice: the weakest one, or a mix once all are strong.
+  const allMastered = () => MathEngine.gradeSkills(S.grade).every((id) => MathEngine.stretchLevel(S.skills[id]) === 2);
+
+  async function buddyTip() {
     const weak = MathEngine.weakestSkill(S.grade, S.skills);
     const s = S.skills[weak];
-    const fam = MathEngine.SKILLS[weak].family;
-    const legend = SPECIES[speciesFor(fam)].name;
-    const allMastered = MathEngine.gradeSkills(S.grade).every((id) => MathEngine.stretchLevel(S.skills[id]) === 2);
-    if (allMastered) {
+    const legend = SPECIES[speciesFor(MathEngine.SKILLS[weak].family)].name;
+    if (allMastered()) {
       await say([`${buddyName()}: All that practice paid off! Every skill is strong.`, 'Maybe ask a grown-up about trying the next grade.']);
       return;
     }
     await say([
       `${buddyName()}: Let's practice ${MathEngine.SKILLS[weak].label.toLowerCase()}!`,
       !s || s.attempts < 3 ? `${legend} loves those puzzles.` : `${legend} loves those puzzles. We're getting better at them!`,
-      'Let\'s go find one in the tall grass!',
+      'We can find one in the tall grass, or practice right here with me.',
     ]);
+  }
+
+  // Five quick puzzles on the skill that needs it most. Counts like any other practice.
+  async function buddyPractice() {
+    const mixed = allMastered();
+    const skill = MathEngine.weakestSkill(S.grade, S.skills);
+    await say(`${buddyName()}: ${voice().go} ${mixed ? 'A little of everything!' : MathEngine.SKILLS[skill].label + '!'}`);
+    let firsts = 0;
+    let last = null;
+    for (let n = 0; n < 5; n++) {
+      const p = MathEngine.make(mixed ? MathEngine.pickSkill(S.grade, S.skills) : skill, S.grade, S.skills);
+      const r = await ask(p, { head: `Practice with ${buddyName()} ${n + 1}/5` });
+      record(p, r.result, r.ms);
+      if (r.result === 'first') firsts++;
+      last = p;
+    }
+    const lines = [`${buddyName()}: ${firsts} of 5 on the first try!`];
+    if (firsts === 5) lines.push(`${praiseFor(last)} ${pick(voice().done)}`);
+    else if (firsts >= 3) lines.push(`${pick(voice().done)} Every puzzle makes us stronger.`);
+    else lines.push('Those were tricky. Mistakes help our brains grow! Let\'s try again later.');
+    await say(lines);
+    // The buddy learns too: a little XP for each first-try answer.
+    const c = buddyMon();
+    if (c && firsts) {
+      c.xp += firsts * 4;
+      await say(`${nameOf(c)} got ${firsts * 4} XP!`);
+      while (c.xp >= xpNeed(c.lv)) {
+        c.xp -= xpNeed(c.lv);
+        c.lv++;
+        c.hp = Math.min(maxHp(c), c.hp + 3);
+        sfx('level');
+        await say(`${nameOf(c)} grew to level ${c.lv}!`);
+      }
+    }
+    writeSave();
+  }
+
+  // A friendly progress report built from the last 10 tries of each skill.
+  async function buddyProgress() {
+    const total = Object.values(S.skills).reduce((n, s) => n + s.attempts, 0);
+    const mine = MathEngine.gradeSkills(S.grade).filter((id) => S.skills[id] && S.skills[id].attempts >= 3);
+    if (!mine.length) {
+      await say([`${buddyName()}: We're just getting started!`, 'Let\'s solve some puzzles together, and I\'ll keep track.']);
+      return;
+    }
+    const recentAcc = (s) => { const r = s.recent || []; return r.length ? r.reduce((a, b) => a + b, 0) / r.length : MathEngine.accuracy(s); };
+    const label = (id) => MathEngine.SKILLS[id].label.toLowerCase();
+    const best = mine.slice().sort((a, b) => recentAcc(S.skills[b]) - recentAcc(S.skills[a]))[0];
+    const bs = S.skills[best], br = bs.recent || [];
+    const lines = [`${buddyName()}: We've solved ${total} puzzle${total === 1 ? '' : 's'} together!`];
+    lines.push(br.length >= 3 ? `Your strongest is ${label(best)}: ${br.reduce((a, b) => a + b, 0)} of the last ${br.length} right on the first try!` : `You're doing great at ${label(best)}!`);
+    // Getting better: recent tries beat the overall record by a good margin.
+    const up = mine.find((id) => id !== best && (S.skills[id].recent || []).length >= 5 && recentAcc(S.skills[id]) - MathEngine.accuracy(S.skills[id]) >= 0.15);
+    if (up) lines.push(`You're getting better at ${label(up)}. Practice is working!`);
+    const weak = MathEngine.weakestSkill(S.grade, S.skills);
+    if (!allMastered() && weak !== best) lines.push(`Next, let's keep working on ${label(weak)}.`);
+    await say(lines);
   }
 
   function drawWorld(now) {

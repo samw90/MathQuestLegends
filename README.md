@@ -4,7 +4,7 @@ A pixel-art adventure for Kindergarten to Grade 5 in the style of classic handhe
 
 ## How to play
 
-- Pick a **buddy** at Professor Pi's lab: Sproutle, Emberkit or Splashfin. Your buddy follows you everywhere and helps with every kind of math. Turn around and press A to talk to it. Any Legend on your team can be your buddy: MENU → Team → pick one → Make buddy.
+- Pick a **buddy** at Professor Pi's lab: Sproutle, Emberkit or Splashfin. Your buddy follows you everywhere and helps with every kind of math. Turn around and press A (or MENU → Talk to buddy) to practice 5 puzzles together on the skill that needs it most, hear how you're doing (your strongest skill, what's improving, what's next), or get a tip. Sproutle, Emberkit and Splashfin each have their own way of talking. Any Legend on your team can be your buddy: MENU → Team → pick one → Make buddy.
 - Walk through the tall grass on Route 1. Each wild Legend asks one kind of math puzzle:
 
   | Puzzles | Route 1 | Sunny Shore | Dusty Canyon | Frostpeak | Glowcap Cave |
