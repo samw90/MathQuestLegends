@@ -408,6 +408,10 @@
       let i = 0;
       box.classList.remove('done', 'split');
       box.dataset.wait = '1';
+      // Long lines shrink to fit the box instead of spilling out of it.
+      box.style.fontSize = '';
+      txt.textContent = full;
+      for (let fs = 5.2; box.scrollHeight > box.clientHeight + 1 && fs >= 3.6; fs -= 0.4) box.style.fontSize = fs + 'cqw';
       txt.textContent = '';
       speak(full);
       const finish = () => { i = full.length; txt.textContent = full; clearInterval(tm); box.classList.add('done'); };
@@ -1767,7 +1771,7 @@
           await say(`${nameOf(c)} joined your team!`);
         } else {
           S.box.push(c);
-          await say(['Your team is full.', `${nameOf(c)} will wait in the Legend Terminal. Find one in any Rest Center or Professor Pi's lab.`]);
+          await say(['Your team is full.', `${nameOf(c)} will wait in the Legend Terminal.`, 'There\'s a Terminal in every Rest Center and in Professor Pi\'s lab.']);
         }
       } else {
         await say(B.special ? `${nameOf(c)} will wait for you right here.` : `${nameOf(c)} waves goodbye!`);
@@ -2443,6 +2447,7 @@
   // Test hook (only with ?dev in the address): show any problem, e.g. MQL.ask(MathEngine.make('sub-100', 2)).
   if (/[?&]dev\b/.test(location.search)) {
     window.MQL.ask = ask;
+    window.MQL.say = say;
     // Test hook: a throwaway game state so questions can be shown from the title screen.
     window.MQL.testState = (grade = 0) => {
       S = newState('Tester', grade);
