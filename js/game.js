@@ -70,12 +70,19 @@
       lastArea: 'meadow', // the last area with wild Legends
       ret: null, // where the Rest Center door leads back to
       badgeGrade: {}, // badge flag -> highest grade it was won at (sets its color)
+      badgeWins: {}, // badge flag -> every grade it was won at (for the mythical)
+      goldens: {}, // Legends befriended as golden
+      streak: 0, // first-try answers in a row (10 makes a golden Legend appear)
     };
   }
   // Older saves won badges before badge colors existed: count them at the save's grade.
   function upgradeSave(s) {
     s.badgeGrade = s.badgeGrade && typeof s.badgeGrade === 'object' ? s.badgeGrade : {};
     for (const f of BADGE_FLAGS) if (s.flags && s.flags[f] && !(f in s.badgeGrade)) s.badgeGrade[f] = s.grade || 0;
+    s.badgeWins = s.badgeWins && typeof s.badgeWins === 'object' ? s.badgeWins : {};
+    for (const f of BADGE_FLAGS) if (f in s.badgeGrade && !s.badgeWins[f]) s.badgeWins[f] = [s.badgeGrade[f]];
+    s.goldens = s.goldens && typeof s.goldens === 'object' ? s.goldens : {};
+    s.streak = Number(s.streak) || 0;
     return s;
   }
   function loadSave() {
@@ -588,7 +595,8 @@
 
       const bubble = el('div', 'bubble');
       const face = el('img');
-      face.src = Art.creatureURL(S.sidekick || 'sproutle');
+      const bm = S.party.find((c) => c.sp === S.sidekick);
+      face.src = Art.creatureURL(S.sidekick || 'sproutle', !!(bm && bm.golden));
       face.alt = '';
       const bubbleText = el('span');
       bubble.append(face, bubbleText);
@@ -866,6 +874,9 @@
     if (result === 'first') { s.correct++; s.ms += Math.min(ms, 120000); s.n++; }
     // The last 10 tries (1 = right on the first try), for "How am I doing?".
     s.recent = [...(s.recent || []), result === 'first' ? 1 : 0].slice(-10);
+    // 10 first tries in a row: the next wild Legend is golden.
+    S.streak = result === 'first' ? (S.streak || 0) + 1 : 0;
+    if (S.streak >= GOLD_STREAK) S.goldenReady = true;
     // Missed problems come back after 1, 3, then 7 days (Math Quest's schedule).
     const key = `${p.a}${p.op}${p.b}`;
     const existing = S.review.find((x) => x.key === key);
@@ -880,6 +891,8 @@
       if (S.review.length > 30) S.review.shift();
     }
   }
+
+  const GOLD_STREAK = 10;
 
   // The next problem for a battle against `foe`.
   function problemFor(foe) {
@@ -909,7 +922,7 @@
   function npcAt(x, y) { return map().npcs.find((n) => n.x === x && n.y === y); }
   function blocked(x, y) {
     const t = tileAt(x, y);
-    return t === null || SOLID.has(t) || !!npcAt(x, y);
+    return t === null || SOLID.has(t) || !!npcAt(x, y) || !!specialAt(x, y);
   }
   function placePlayer(mapId, x, y, dir) {
     S.map = mapId; S.x = x; S.y = y;
@@ -1009,6 +1022,12 @@
     if (!n && tileAt(x, y) === 'c') n = npcAt(x + dx, y + dy); // talk across a counter
     const t = tileAt(x, y);
     const sign = map().signs[`${x},${y}`];
+    const spec = specialAt(x, y);
+    if (spec && !buddyHere && !n) {
+      busy = true;
+      try { await specialBattle(spec); } finally { busy = false; }
+      return;
+    }
     const pt = portalAt(x, y);
     if (pt && !buddyHere && !n) {
       const w = WORLDS[pt.world - 1];
@@ -1152,6 +1171,17 @@
     await say(lines);
   }
 
+  // Little twinkles around rare and golden Legends.
+  function sparkles(cx, cy, now, r = 12) {
+    for (let i = 0; i < 4; i++) {
+      const a = now / 600 + i * Math.PI / 2, on = Math.floor(now / 200 + i) % 3 !== 0;
+      if (!on) continue;
+      const x = Math.round(cx + Math.cos(a) * r), y = Math.round(cy + Math.sin(a) * r * 0.8);
+      ctx.fillStyle = '#fff6d6'; ctx.fillRect(x - 1, y, 3, 1); ctx.fillRect(x, y - 1, 1, 3);
+      ctx.fillStyle = '#f2c84b'; ctx.fillRect(x, y, 1, 1);
+    }
+  }
+
   function drawWorld(now) {
     const m = map();
     const camX = Math.round(P.px) - 72, camY = Math.round(P.py) - 64;
@@ -1173,8 +1203,13 @@
     const ents = m.npcs.map((n) => ({ y: n.y * TS, x: n.x * TS, img: Art.person(LOOKS[n.look], n.dir, 0), oy: -3 }));
     if (S.sidekick && !F.stacked) {
       const hop = P.moving ? (P.t < STEP_MS / 2 ? 1 : 0) : Math.floor(now / 500) % 2;
-      const img = Art.creatureSmall(S.sidekick, hop);
+      const bm = S.party.find((c) => c.sp === S.sidekick);
+      const img = Art.creatureSmall(S.sidekick, hop, !!(bm && bm.golden));
       ents.push({ y: F.py - 0.5, x: Math.round(F.px) - 2, img, oy: -5, flip: F.dir === 'right' });
+    }
+    for (const sp of SPECIALS) {
+      if (sp.map !== S.map || !specialReady(sp)) continue;
+      ents.push({ y: sp.y * TS, x: sp.x * TS - 2, img: Art.creatureSmall(sp.id, Math.floor(now / 400) % 2), oy: -5, sparkle: true });
     }
     const frame = P.moving && P.t < STEP_MS * 0.6 ? 1 + (P.step % 2) : 0;
     ents.push({ y: P.py, x: Math.round(P.px), img: Art.person(LOOKS.hero, P.dir, frame), oy: -3 });
@@ -1188,6 +1223,7 @@
         ctx.drawImage(e.img, 0, 0);
         ctx.restore();
       } else ctx.drawImage(e.img, x, y);
+      if (e.sparkle) sparkles(x + 10, y + 10, now);
     }
     // Tall grass hides feet.
     for (const [gx, gy, still] of [[P.x, P.y, !P.moving], [F.x, F.y, !P.moving && !F.stacked]]) {
@@ -1297,13 +1333,16 @@
     boss: async (areaId) => {
       const b = BOSSES[areaId], area = AREAS[areaId];
       const won = S.flags[b.flag], wonAt = S.badgeGrade[b.flag] ?? -1;
-      if (won && wonAt >= S.grade) return say(b.after);
+      if (won && (S.badgeWins[b.flag] || []).includes(S.grade)) return say(b.after);
       const tier = BADGE_TIERS[S.grade];
       let lv = area.base;
       if (won) {
         // Replaying at a higher grade: win again to upgrade the badge's color.
         await say(b.after, { keep: true });
-        if (!(await yesNo(`${b.name.toUpperCase()}: You're doing ${GRADES[S.grade]} math now! Want a rematch? Win, and your ${b.badge} turns ${tier.name}.`))) return;
+        const upgrade = S.grade > wonAt;
+        if (!(await yesNo(upgrade
+          ? `${b.name.toUpperCase()}: You're doing ${GRADES[S.grade]} math now! Want a rematch? Win, and your ${b.badge} turns ${tier.name}.`
+          : `${b.name.toUpperCase()}: Want a ${GRADES[S.grade]} rematch? Every grade you win at counts!`))) return;
         lv = Math.max(area.base, ...S.party.map((c) => c.lv)) - 2;
       } else await say(b.intro);
       const weak = MathEngine.weakestSkill(S.grade, S.skills);
@@ -1312,8 +1351,10 @@
       if (result === 'win') {
         S.flags[b.flag] = true;
         S.badgeGrade[b.flag] = Math.max(wonAt, S.grade);
+        S.badgeWins[b.flag] = [...new Set([...(S.badgeWins[b.flag] || []), S.grade])];
         sfx('level');
-        if (won) await say([`${b.name.toUpperCase()}: Amazing! Your ${b.badge} is ${tier.name} now!`]);
+        if (won && S.grade > wonAt) await say([`${b.name.toUpperCase()}: Amazing! Your ${b.badge} is ${tier.name} now!`]);
+        else if (won) await say([`${b.name.toUpperCase()}: Great rematch! That's a ${GRADES[S.grade]} win.`]);
         else await say([`${b.name.toUpperCase()}: ${b.win[0]}`, ...b.win.slice(1), `It's a ${tier.name} badge, for ${GRADES[S.grade]} math.`]);
         if (WORLDS.some((w) => w.areas[w.areas.length - 1] === areaId) && !won) await say(['A portal hums to life nearby!', 'It leads to the next world. The Portal Shrine in town has one too.']);
         writeSave();
@@ -1331,6 +1372,27 @@
   const tierOf = (flag) => BADGE_TIERS[S.badgeGrade[flag] ?? 0];
   // World 1 is always open. Each later world opens when the one before it is beaten.
   const worldOpen = (w) => w.id === 1 || !!S.flags.devAll || !!(WORLDS[w.id - 2].done && S.flags[WORLDS[w.id - 2].done]);
+  // Rare Legends waiting on the map (see SPECIALS in data.js).
+  const mythicalOpen = () => WORLDS.some((w) => w.areas.length && GRADES.every((_, g) => w.areas.every((a) => (S.badgeWins[BOSSES[a].flag] || []).includes(g))));
+  function specialReady(sp) {
+    if (S.caught[sp.id]) return false;
+    if (S.flags.devAll) return true;
+    if (sp.kind === 'ultra') return S.grade === sp.grade && MathEngine.stretchLevel(S.skills[sp.skill]) >= 1;
+    if (sp.kind === 'world') return !!S.flags[sp.need];
+    return mythicalOpen();
+  }
+  const specialAt = (x, y) => SPECIALS.find((sp) => sp.map === S.map && sp.x === x && sp.y === y && specialReady(sp));
+
+  async function specialBattle(sp) {
+    const area = AREAS[map().area];
+    const lv = sp.kind === 'mythical' ? 55 : (area ? area.base : 30) + (sp.kind === 'world' ? 8 : 5);
+    const intro = sp.kind === 'ultra' ? [`A rare ${SPECIES[sp.id].name} is here, glowing softly...`, `It only shows up for ${GRADES[sp.grade]} math stars!`]
+      : sp.kind === 'world' ? [`The Legend of ${WORLDS[sp.world - 1].name} is here!`, 'It wants to see how much you\'ve learned.']
+      : ['The air shimmers. Numbers swirl like stars...', 'The mythical Infinix appears!'];
+    await say(intro);
+    await battle([mon(sp.id, lv, sp.skill)], { special: sp.kind });
+  }
+
   const portalShown = (pt) => !pt.show || !!S.flags[pt.show] || !!S.flags.devAll;
   const portalAt = (x, y) => (map().portals || []).find((pt) => pt.x === x && pt.y === y && portalShown(pt));
 
@@ -1416,12 +1478,15 @@
     const hop = (phase) => -Math.round(Math.abs(Math.sin(now / 260 + phase)) * 3);
     const blink = (offset) => (now + offset) % 3400 < 140;
     const fe = B.fx.e, fp = B.fx.p;
-    if (!fe.hide) ctx.drawImage(Art.creature(B.enemy.sp, blink(1700)), 100 + fe.dx, 8 + fe.dy + hop(1.3));
+    if (!fe.hide) {
+      ctx.drawImage(Art.creature(B.enemy.sp, blink(1700), !!B.enemy.golden), 100 + fe.dx, 8 + fe.dy + hop(1.3));
+      if (B.enemy.golden || B.special) sparkles(124 + fe.dx, 30 + fe.dy, now, 22);
+    }
     if (!fp.hide) {
       ctx.save();
       ctx.translate(14 + 48 + fp.dx, 44 + fp.dy + hop(0));
       ctx.scale(-1, 1);
-      ctx.drawImage(Art.creature(B.me.sp, blink(0)), 0, 0);
+      ctx.drawImage(Art.creature(B.me.sp, blink(0), !!B.me.golden), 0, 0);
       ctx.restore();
     }
   }
@@ -1471,7 +1536,7 @@
     await fade(() => {
       mode = 'battle';
       B = {
-        foes, ei: 0, enemy: foes[0], me: S.party.find(alive), trainer: opts.trainer || null,
+        foes, ei: 0, enemy: foes[0], me: S.party.find(alive), trainer: opts.trainer || null, special: opts.special || null,
         fx: { e: { dx: 0, dy: 0, hide: false }, p: { dx: 0, dy: 0, hide: false } }, idle: true, firstTries: 0,
       };
       foes.forEach((f) => { S.seen[f.sp] = true; });
@@ -1481,7 +1546,8 @@
     });
     const fam = SPECIES[B.enemy.sp].family;
     if (B.trainer) await say([`${B.trainer} wants to battle!`, `${B.trainer} sends out ${nameOf(B.enemy)}!`]);
-    else await say([`A wild ${nameOf(B.enemy)} jumped out!`, `It loves ${FAMILY_PHRASE[fam]} puzzles!`]);
+    else if (B.enemy.golden) await say([`A golden ${nameOf(B.enemy)} jumped out!`, 'It\'s sparkling! Golden Legends love first-try answers.']);
+    else if (!B.special) await say([`A wild ${nameOf(B.enemy)} jumped out!`, `It loves ${FAMILY_PHRASE[fam]} puzzles!`]);
     await say(`Go, ${nameOf(B.me)}!`);
 
     let result = null;
@@ -1536,6 +1602,7 @@
     }
     const fast = r.result === 'first' && r.ms < fastLimit(p);
     if (r.result === 'first') B.firstTries++;
+    if (S.streak === GOLD_STREAK) await say([`${GOLD_STREAK} in a row on the first try!`, 'Something golden is sparkling in the tall grass...']);
     const mult = r.result === 'first' ? (fast ? 1.5 : 1) : 0.6;
     await say(`${nameOf(B.me)} uses ${move}!`);
     await hurt(B.enemy, damage(40, atkOf(B.me), mult), 'e');
@@ -1587,7 +1654,7 @@
   // The foe is out of energy. Wild Legends calm down and may want to be friends.
   async function foeCalmed() {
     await faintAnim('e');
-    await say(B.trainer ? `${nameOf(B.enemy)} is all done!` : `The wild ${nameOf(B.enemy)} calmed down!`);
+    await say(B.trainer ? `${nameOf(B.enemy)} is all done!` : B.special || B.enemy.golden ? `${B.enemy.golden ? 'The golden ' : ''}${nameOf(B.enemy)} calmed down!` : `The wild ${nameOf(B.enemy)} calmed down!`);
     const gain = Math.round(B.enemy.lv * 6 * (B.trainer ? 1.5 : 1));
     await gainXp(B.me, gain);
     B.ei++;
@@ -1602,17 +1669,19 @@
       await say(`You beat ${B.trainer}!`);
       return 'win';
     }
-    // First-try answers make friends.
+    // First-try answers make friends. Rare and golden Legends always want to come along.
     const c = B.enemy;
+    const sure = !!(B.special || c.golden);
     let chance = Math.min(0.9, 0.3 + 0.2 * B.firstTries);
     if (S.caught[c.sp]) chance *= 0.5;
-    if (Math.random() < chance) {
+    if (sure || Math.random() < chance) {
       B.fx.e.hide = false;
       sfx('friend');
       if (await yesNo([`${nameOf(c)} really likes you!`, 'It wants to come with you. Take it along?'])) {
         c.hp = maxHp(c);
         delete c.skill;
         S.caught[c.sp] = true;
+        if (c.golden) S.goldens[c.sp] = true;
         if (S.party.length < 6) {
           S.party.push(c);
           await say(`${nameOf(c)} joined your team!`);
@@ -1621,7 +1690,7 @@
           await say(['Your team is full.', `${nameOf(c)} will wait for you at Professor Pi's lab.`]);
         }
       } else {
-        await say(`${nameOf(c)} waves goodbye!`);
+        await say(B.special ? `${nameOf(c)} will wait for you right here.` : `${nameOf(c)} waves goodbye!`);
       }
     }
     return 'win';
@@ -1652,16 +1721,18 @@
     const area = AREAS[map().area] || AREAS.meadow;
     const sp = area.species[MathEngine.SKILLS[skill].family];
     const lv = area.base + 2 * MathEngine.stretchLevel(S.skills[skill]) + rnd(0, 1);
-    await battle([mon(sp, lv, skill)]);
+    const foe = mon(sp, lv, skill);
+    if (S.goldenReady) { foe.golden = true; S.goldenReady = false; S.streak = 0; }
+    await battle([foe]);
   }
 
   // ---------------------------------------------------------------- menus
 
   function teamItems() {
     return S.party.map((c) => ({
-      label: `${nameOf(c)}  Lv ${c.lv}${c.sp === S.sidekick ? '  ★' : ''}`,
+      label: `${nameOf(c)}${c.golden ? ' ✨' : ''}  Lv ${c.lv}${c.sp === S.sidekick ? '  ★' : ''}`,
       sub: alive(c) ? `HP ${c.hp} / ${maxHp(c)}` : 'Needs a rest',
-      icon: Art.creatureURL(c.sp),
+      icon: Art.creatureURL(c.sp, !!c.golden),
       dim: !alive(c),
     }));
   }
@@ -1673,9 +1744,9 @@
     const sp = SPECIES[c.sp];
     return panel((box) => {
       const img = el('img', 'pic');
-      img.src = Art.creatureURL(c.sp);
+      img.src = Art.creatureURL(c.sp, !!c.golden);
       img.alt = '';
-      box.append(img, el('h3', null, sp.name + (c.sp === S.sidekick ? ' ★' : '')));
+      box.append(img, el('h3', null, (c.golden ? 'Golden ' : '') + sp.name + (c.sp === S.sidekick ? ' ★' : '')));
       box.append(el('p', null, `Level ${c.lv} · HP ${c.hp} / ${maxHp(c)}`));
       box.append(el('p', null, `XP ${c.xp} / ${xpNeed(c.lv)}`));
       box.append(el('p', null, puzzleLabel(c.sp)));
@@ -1714,10 +1785,11 @@
     for (;;) {
       const items = DEX_ORDER.map((id) => {
         const seen = S.seen[id] || S.caught[id];
+        const rare = { ultra: 'Ultra rare', world: 'World Legend', mythical: 'Mythical' }[SPECIES[id].rarity];
         return {
-          label: seen ? SPECIES[id].name : '???',
-          sub: S.caught[id] ? 'Friend!' : seen ? 'Seen' : 'Not found yet',
-          icon: seen ? Art.creatureURL(id) : undefined,
+          label: seen ? SPECIES[id].name + (S.goldens[id] ? ' ✨' : '') : '???',
+          sub: (S.caught[id] ? (S.goldens[id] ? 'Golden friend!' : 'Friend!') : seen ? 'Seen' : 'Not found yet') + (rare ? ` · ${rare}` : ''),
+          icon: seen ? Art.creatureURL(id, !!S.goldens[id]) : undefined,
           dim: !seen,
         };
       });
@@ -1728,9 +1800,11 @@
       const sp = SPECIES[id];
       await panel((box) => {
         const img = el('img', 'pic');
-        img.src = Art.creatureURL(id);
+        img.src = Art.creatureURL(id, !!S.goldens[id]);
         img.alt = '';
-        box.append(img, el('h3', null, sp.name), el('p', null, puzzleLabel(id)), el('p', null, sp.dex));
+        box.append(img, el('h3', null, (S.goldens[id] ? 'Golden ' : '') + sp.name), el('p', null, puzzleLabel(id)), el('p', null, sp.dex));
+        const where = SPECIALS.find((x) => x.id === id);
+        if (where && where.kind === 'ultra') box.append(el('p', null, `Shows up for ${GRADES[where.grade]} players who are getting strong at ${MathEngine.SKILLS[where.skill].label.toLowerCase()}.`));
       });
     }
   }
@@ -1754,6 +1828,10 @@
       const won = AREA_ORDER.filter((a) => S.flags[BOSSES[a].flag]);
       if (won.length) box.append(el('p', null, 'Badge colors show the grade they were won at: ' + won.map((a) => `${BOSSES[a].badge} (${tierOf(BOSSES[a].flag).name}, ${GRADES[S.badgeGrade[BOSSES[a].flag] ?? 0]})`).join(', ') + '.'));
       box.append(el('p', null, `Worlds open: ${WORLDS.filter(worldOpen).map((w) => w.name).join(', ')}.`));
+      const rares = SPECIALS.filter((x) => S.caught[x.id]).length, golds = Object.keys(S.goldens).length;
+      box.append(el('p', null, `Rare Legend friends: ${rares} of ${SPECIALS.length}. Golden Legends: ${golds}. First-try streak: ${S.streak || 0} (10 brings a golden Legend).`));
+      const mine = SPECIALS.filter((x) => x.kind === 'ultra' && x.grade === S.grade);
+      box.append(el('p', null, `${GRADES[S.grade]} ultra rares appear once a skill is getting strong: ` + mine.map((x) => `${SPECIES[x.id].name} (${MathEngine.SKILLS[x.skill].label.toLowerCase()})`).join(', ') + '.'));
       const due = S.review.filter((x) => x.due <= Date.now()).length;
       box.append(el('p', null, `Missed problems saved for review: ${S.review.length} (${due} ready now).`));
     });
@@ -1820,7 +1898,8 @@
     if (!S.sidekick) { S.sidekick = 'sproutle'; S.party.unshift(mon('sproutle', 30)); }
     for (const f of BADGE_FLAGS) { S.flags[f] = true; if (!(f in S.badgeGrade)) S.badgeGrade[f] = S.grade; }
     for (const [id, m] of Object.entries(MAPS)) if (m.heal) S.visited[id] = true;
-    for (const id of Object.keys(SPECIES)) { S.seen[id] = true; S.caught[id] = true; }
+    // Rare Legends stay un-befriended so their encounters can be tried (they all show up with devAll).
+    for (const id of Object.keys(SPECIES)) { S.seen[id] = true; if (!SPECIES[id].rarity) S.caught[id] = true; }
     for (const id of ['hootsum', 'octogroup', 'lizardo', 'flurrfox', 'glowsplit']) {
       if (S.party.length < 6 && !S.party.some((c) => c.sp === id)) S.party.push(mon(id, 30));
     }

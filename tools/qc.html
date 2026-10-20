@@ -171,6 +171,23 @@ function mapSuite() {
       check((MAPS.shrine.portals || []).some((pt) => pt.world === w.id), `${w.name}: no portal in the Portal Shrine`);
     });
     check(BADGE_TIERS.length === GRADES.length, 'Need one badge color per grade');
+    // Rare Legends: a real spot on a real map, not blocking anything, with the right skill for their grade.
+    for (const sp of SPECIALS) {
+      const m = MAPS[sp.map];
+      if (!check(m && SPECIES[sp.id] && SPECIES[sp.id].rarity, `${sp.id}: unknown map or Legend`)) continue;
+      const c = (m.tiles[sp.y] || '')[sp.x];
+      check(c && !SOLID.has(c) && !'=pBIgG'.includes(c), `${sp.id}: waits on a blocked or path tile at ${sp.map} ${sp.x},${sp.y}`);
+      check(!m.warps.some((v) => Math.abs(v.x - sp.x) + Math.abs(v.y - sp.y) <= 1), `${sp.id}: too close to a door or gate`);
+      check(!m.npcs.some((n) => n.x === sp.x && n.y === sp.y), `${sp.id}: stands on a person`);
+      check([[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => walk(m, sp.x + dx, sp.y + dy)), `${sp.id}: nobody can reach it to talk`);
+      if (sp.kind === 'ultra') {
+        check(MathEngine.SKILLS[sp.skill] && MathEngine.gradeSkills(sp.grade).includes(sp.skill), `${sp.id}: skill ${sp.skill} isn't a ${GRADES[sp.grade]} skill`);
+        check(MathEngine.SKILLS[sp.skill] && MathEngine.SKILLS[sp.skill].family === SPECIES[sp.id].family, `${sp.id}: its kind of math doesn't match its skill`);
+      }
+      if (sp.kind === 'world') check(WORLDS[sp.world - 1] && WORLDS[sp.world - 1].done === sp.need, `${sp.id}: should wait for ${WORLDS[sp.world - 1] && WORLDS[sp.world - 1].done}`);
+    }
+    for (let g = 0; g < GRADES.length; g++) check(SPECIALS.filter((x) => x.kind === 'ultra' && x.grade === g).length === 3, `${GRADES[g]} should have 3 ultra rares`);
+    check(Object.keys(SPECIES).filter((id) => SPECIES[id].rarity).every((id) => SPECIALS.some((x) => x.id === id)), 'A rare Legend has no spot to wait in');
     // Area order matches the gates.
     for (const t of TRAVEL) {
       check(MAPS[t.map] && MAPS[t.map].heal, `Quick travel to ${t.map}, which has no Rest Center`);

@@ -1310,6 +1310,262 @@ const Art = (() => {
       k.rect(1, 17, 5, 1, '#f2c84b'); k.rect(2, 19, 4, 1, '#f2c84b');
       k.rect(4, 15, 3, 1, INK);
     },
+
+    // ---------- Grade ultra rares
+    glimmerdot(k) {
+      for (const x of [9, 16, 23]) k.rect(x, 26, 1, 4, INK);
+      k.ell(16, 20, 12, 10, '#e8304a');
+      k.ell(13, 16, 5, 3, '#ff6a7a');
+      k.rect(15.5, 11, 1, 19, INK);
+      for (const [x, y] of [[9, 16], [12, 22], [8, 24], [12, 27], [10, 19], [23, 16], [20, 22], [24, 24], [20, 27], [22, 19]]) k.ell(x, y, 1.4, 1.4, '#fff');
+      k.ell(16, 10, 7, 5, INK);
+      k.rect(11, 2, 1, 5, INK); k.rect(20, 2, 1, 5, INK);
+      k.ell(11.5, 2, 2, 2, '#f2c84b'); k.ell(20.5, 2, 2, 2, '#f2c84b');
+      eyes(k, 11, 8); eyes(k, 17, 8);
+    },
+    plushbloom(k) {
+      k.rect(15, 19, 2, 10, '#3f8f3a');
+      k.ell(10, 24, 4.5, 2, '#4fa84a'); k.ell(22, 22, 4.5, 2, '#4fa84a');
+      k.ell(16, 30, 7, 2, '#8a5a32');
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2;
+        k.ell(16 + Math.cos(a) * 8, 12 + Math.sin(a) * 8, 3.4, 3.4, i % 2 ? '#f2c84b' : '#ffdc5a');
+      }
+      k.ell(16, 12, 6.5, 6.5, '#a86a32');
+      eyes(k, 12, 9); eyes(k, 17, 9);
+      k.rect(14, 15, 4, 1, INK);
+      k.px(11, 14, '#f59aa0'); k.px(21, 14, '#f59aa0');
+    },
+    hopscotchy(k) {
+      k.tri(22, 22, 32, 30, 22, 28, '#c88a4a');
+      k.ell(11, 30, 4.5, 1.6, '#a8703a'); k.ell(21, 30, 4.5, 1.6, '#a8703a');
+      k.ell(17, 21, 8, 9, '#d89a5a');
+      k.ell(17, 23, 4.5, 4, '#f0c890');
+      k.ell(17, 22, 2.5, 1.6, '#c88a4a');
+      k.tri(9, 8, 8, 0, 12, 6, '#d89a5a'); k.tri(14, 7, 15, 0, 17, 7, '#d89a5a');
+      k.ell(11, 10, 6, 5.5, '#d89a5a');
+      eyes(k, 7, 8); eyes(k, 12, 8);
+      k.ell(6, 12, 1.4, 1, INK);
+      k.rect(8, 14, 3, 1, INK);
+    },
+    tentails(k) {
+      // Ten thin tails fanned out like a peacock, each with a white tip.
+      for (let i = 0; i < 10; i++) {
+        const a = -Math.PI * 0.95 + (i / 9) * Math.PI * 1.05;
+        for (let r = 3; r <= 11; r += 1.5) k.ell(20 + Math.cos(a) * r, 19 + Math.sin(a) * r, 1.3, 1.3, '#f08a3c');
+        k.ell(20 + Math.cos(a) * 12, 19 + Math.sin(a) * 12, 1.6, 1.6, '#fff6e0');
+      }
+      k.ell(13, 22, 8, 7, '#f08a3c');
+      k.ell(13, 24, 4.5, 4, '#fff6e0');
+      k.tri(6, 10, 7, 1, 11, 7, '#f08a3c'); k.tri(13, 7, 17, 1, 18, 9, '#f08a3c');
+      k.ell(12, 13, 6.5, 5.5, '#f08a3c');
+      k.ell(10, 15, 4, 2.5, '#fff6e0');
+      eyes(k, 8, 11); eyes(k, 13, 11);
+      k.px(7, 15, INK);
+      k.ell(9, 30, 2.5, 1.4, '#c8642a'); k.ell(17, 30, 2.5, 1.4, '#c8642a');
+    },
+    mirrowl(k) {
+      k.tri(6, 10, 7, 1, 12, 8, '#7a5ab8'); k.tri(26, 10, 25, 1, 20, 8, '#3ac4a8');
+      k.ell(16, 18, 11, 11.5, '#9a7ad8', (x) => x < 16);
+      k.ell(16, 18, 11, 11.5, '#5ad8c0', (x) => x >= 16);
+      k.ell(16, 23, 6.5, 6, '#f4f0ff');
+      k.ell(11, 13, 4, 4, '#fff'); k.ell(21, 13, 4, 4, '#fff');
+      if (blinking) { k.rect(8, 13, 6, 1, INK); k.rect(18, 13, 6, 1, INK); }
+      else { k.ell(10, 13.5, 2, 2.2, INK); k.ell(20, 13.5, 2, 2.2, INK); }
+      k.tri(15, 16, 17, 16, 16, 19, '#f2a23c');
+      k.rect(16, 6, 0.6, 24, '#ffffff');
+      k.rect(12, 29, 3, 2, '#f2a23c'); k.rect(17, 29, 3, 2, '#f2a23c');
+    },
+    riddlynx(k) {
+      k.rect(25, 10, 2, 10, '#6a7aa8'); k.ell(24, 9, 4, 3, '#6a7aa8'); k.rect(20, 7, 4, 2, '#6a7aa8');
+      k.ell(26, 23, 1.6, 1.6, '#6a7aa8');
+      k.ell(15, 22, 9, 7.5, '#8a9ac8');
+      k.ell(15, 24, 5, 4, '#e0e6f8');
+      k.tri(6, 10, 6, 1, 11, 8, '#8a9ac8'); k.tri(14, 8, 17, 1, 18, 10, '#8a9ac8');
+      k.rect(6, 0, 1, 3, INK); k.rect(17, 0, 1, 3, INK);
+      k.ell(12, 13, 6.5, 5.5, '#8a9ac8');
+      k.ell(12, 16, 4, 2.5, '#e0e6f8');
+      if (blinking) { k.rect(8, 12, 3, 1, INK); k.rect(13, 12, 3, 1, INK); }
+      else { k.rect(8, 10, 3, 4, '#f2c84b'); k.rect(8, 11, 1, 3, INK); k.rect(13, 10, 3, 4, '#f2c84b'); k.rect(13, 11, 1, 3, INK); }
+      k.px(11, 15, '#e8506a');
+    },
+    hundrake(k) {
+      k.tri(18, 14, 30, 4, 28, 18, '#2a7a6a'); k.tri(20, 16, 29, 10, 27, 20, '#3ac4a8');
+      k.tri(24, 24, 32, 28, 24, 28, '#2a7a6a');
+      k.ell(17, 21, 10, 8, '#3a9a8a');
+      k.ell(17, 22, 6.5, 5.5, '#f6ecd8');
+      k.rect(11, 18, 12, 2, '#4a7ae8'); k.rect(11, 21, 12, 2, '#e8506a'); k.rect(11, 24, 12, 2, '#f2c84b');
+      k.ell(9, 12, 6.5, 5.5, '#3a9a8a');
+      k.tri(8, 7, 7, 1, 11, 6, '#f2c84b'); k.tri(12, 7, 14, 2, 15, 8, '#f2c84b');
+      eyes(k, 5, 10); eyes(k, 10, 10);
+      k.px(3, 14, INK); k.rect(4, 15, 4, 1, INK);
+      k.ell(12, 29, 2.5, 1.4, '#2a7a6a'); k.ell(22, 29, 2.5, 1.4, '#2a7a6a');
+    },
+    arraycorn(k) {
+      for (const x of [12, 16, 22, 26]) k.rect(x, 24, 2, 7, '#e8e4f4');
+      k.ell(20, 20, 10, 6.5, '#ffffff');
+      k.ell(20, 22, 7, 3, '#f0ecfa');
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 2; c++) k.rect(28 + c * 2, 15 + r * 2, 1.6, 1.6, ['#e8506a', '#f2c84b', '#4a9ae8'][r]);
+      k.rect(10, 9, 5, 9, '#ffffff');
+      k.ell(9, 9, 5, 4.5, '#ffffff');
+      k.ell(5, 11, 3, 2.5, '#f6eef8');
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 2; c++) k.rect(13 + c * 2, 6 + r * 2.5, 1.6, 1.8, ['#e8506a', '#f2c84b', '#4a9ae8', '#5fb84a'][r]);
+      k.tri(7, 6, 6, -1, 9, 5, '#f2c84b');
+      eyes(k, 7, 8);
+      k.px(4, 11, INK);
+    },
+    halfmoon(k) {
+      k.tri(9, 11, 8, 0, 13, 9, '#f6e8b0'); k.tri(19, 9, 22, 0, 24, 11, '#4a4a8a');
+      k.ell(16, 19, 10.5, 10, '#f6e8b0', (x) => x < 16);
+      k.ell(16, 19, 10.5, 10, '#4a4a8a', (x) => x >= 16);
+      k.px(21, 14, '#fff6d6'); k.px(24, 21, '#fff6d6'); k.px(19, 25, '#fff6d6');
+      eyes(k, 11, 15); eyes(k, 18, 15);
+      k.rect(15, 21, 2, 1, INK);
+      k.ell(11, 29, 3, 1.5, '#d8c890'); k.ell(21, 29, 3, 1.5, '#3a3a6a');
+      k.tri(27, 3, 29, 7, 25, 7, '#f2c84b');
+    },
+    timesphinx(k) {
+      k.tri(26, 22, 32, 18, 31, 24, '#c8903a');
+      k.ell(19, 23, 11, 6, '#e0b060');
+      k.ell(8, 28, 4, 1.8, '#c8903a'); k.ell(15, 28, 4, 1.8, '#c8903a');
+      k.tri(4, 12, 18, 12, 6, 26, '#3a6ab8');
+      k.tri(4, 12, 18, 12, 6, 26, '#f2c84b', (x, y) => Math.floor(y) % 4 < 2);
+      k.ell(11, 13, 6, 6, '#e0b060');
+      k.rect(5, 7, 12, 3, '#3a6ab8'); k.rect(5, 7, 12, 1, '#f2c84b');
+      eyes(k, 7, 11); eyes(k, 12, 11);
+      k.rect(9, 16, 3, 1, INK);
+      k.rect(19, 20, 1, 1, '#8a5a1a'); k.rect(21, 20, 1, 1, '#8a5a1a'); k.rect(20, 21, 1, 1, '#8a5a1a'); k.rect(19, 22, 1, 1, '#8a5a1a'); k.rect(21, 22, 1, 1, '#8a5a1a');
+    },
+    dividolphin(k) {
+      k.tri(26, 18, 32, 11, 32, 25, '#3a78c4');
+      k.tri(15, 12, 20, 4, 21, 13, '#3a78c4');
+      k.ell(16, 19, 12, 7, '#5aa8e8');
+      k.ell(15, 22, 9, 3.5, '#d4f0ff');
+      k.ell(4, 20, 3.5, 2, '#5aa8e8');
+      eyes(k, 8, 15);
+      k.rect(2, 21, 4, 1, INK);
+      k.ell(19, 15, 1, 1, '#fff'); k.rect(17, 17, 5, 1, '#fff'); k.ell(19, 19, 1, 1, '#fff');
+      k.ell(8, 30, 1.4, 1.8, '#9ad4f4'); k.ell(24, 30, 1.4, 1.8, '#9ad4f4');
+    },
+    rolypolar(k) {
+      k.ell(8, 9, 3, 3, '#f4f8ff'); k.ell(24, 9, 3, 3, '#f4f8ff');
+      k.ell(8, 9, 1.5, 1.5, '#c8d8ec'); k.ell(24, 9, 1.5, 1.5, '#c8d8ec');
+      k.ell(16, 19, 12.5, 11.5, '#f4f8ff');
+      k.ell(20, 22, 7, 7, '#e0e8f4');
+      k.ell(14, 19, 4.5, 3.5, '#e8eef8');
+      k.ell(14, 18, 1.8, 1.3, INK);
+      eyes(k, 9, 13); eyes(k, 17, 13);
+      k.rect(13, 21, 3, 1, INK);
+      k.ell(8, 27, 3.5, 2.5, '#e0e8f4'); k.ell(24, 27, 3.5, 2.5, '#e0e8f4');
+    },
+    blazemult(k) {
+      k.tri(16, 24, 28, 31, 22, 22, '#f2c84b'); k.tri(16, 24, 10, 31, 12, 22, '#e8702a');
+      k.tri(14, 14, 0, 6, 6, 22, '#e8502a'); k.tri(18, 14, 32, 6, 26, 22, '#e8502a');
+      k.tri(14, 15, 3, 10, 8, 20, '#f2a23c'); k.tri(18, 15, 29, 10, 24, 20, '#f2a23c');
+      k.ell(16, 18, 6, 7, '#e8502a');
+      k.ell(16, 20, 3.5, 4, '#f2c84b');
+      k.tri(14, 6, 15, 0, 17, 6, '#f2c84b'); k.tri(16, 6, 19, 1, 19, 7, '#e8702a');
+      k.ell(16, 10, 4.5, 4.5, '#e8502a');
+      eyes(k, 12, 8); eyes(k, 17, 8);
+      k.tri(14, 12, 18, 12, 16, 15, '#f2c84b');
+    },
+    pizzapup(k) {
+      k.tri(24, 20, 30, 14, 28, 22, '#c89a60');
+      k.ell(16, 22, 9, 8, '#e8c890');
+      k.ell(8, 13, 3, 5.5, '#a8784a'); k.ell(24, 13, 3, 5.5, '#a8784a');
+      k.ell(16, 12, 7, 6, '#e8c890');
+      k.ell(16, 15, 3.5, 2.5, '#f4e0c0');
+      k.ell(16, 13.5, 1.5, 1.2, INK);
+      eyes(k, 11, 9); eyes(k, 18, 9);
+      k.ell(16, 23, 5.5, 5.5, '#c8843a'); k.ell(16, 23, 4.5, 4.5, '#f2c84b');
+      k.rect(15.5, 18.5, 1, 9, '#c8843a'); k.rect(11.5, 22.5, 9, 1, '#c8843a');
+      k.ell(14, 21, 0.9, 0.9, '#e8304a'); k.ell(18, 25, 0.9, 0.9, '#e8304a'); k.ell(18, 21, 0.9, 0.9, '#e8304a'); k.ell(14, 25, 0.9, 0.9, '#e8304a');
+      k.ell(11, 30, 2.5, 1.4, '#c89a60'); k.ell(21, 30, 2.5, 1.4, '#c89a60');
+    },
+    roundolith(k) {
+      k.ell(16, 19, 13.5, 11.5, '#8a8a9a');
+      k.ell(11, 14, 6, 3, '#a8a8b8');
+      k.ell(16, 9, 9, 3, '#4fa84a');
+      k.ell(16, 21, 5.5, 5.5, '#5fd8e8'); k.ell(16, 21, 4, 4, '#8a8a9a');
+      k.rect(15.5, 17, 1, 8, '#5fd8e8');
+      eyes(k, 9, 14); eyes(k, 20, 14);
+      k.ell(8, 30, 3.5, 1.6, '#6a6a7a'); k.ell(24, 30, 3.5, 1.6, '#6a6a7a');
+    },
+    decimeow(k) {
+      k.rect(22, 22, 6, 2, '#9a8ab0'); k.ell(28, 18, 2, 4.5, '#9a8ab0');
+      k.ell(28, 15, 1.2, 1.2, '#f2c84b'); k.ell(26, 23, 1.2, 1.2, '#f2c84b');
+      k.ell(15, 22, 8, 7, '#9a8ab0');
+      k.ell(15, 24, 4.5, 4, '#e8e0f4');
+      k.tri(7, 10, 8, 2, 12, 8, '#9a8ab0'); k.tri(16, 8, 20, 2, 21, 10, '#9a8ab0');
+      k.ell(14, 12, 7, 6, '#9a8ab0');
+      k.ell(14, 7.5, 1.8, 1.8, '#f2c84b');
+      eyes(k, 9, 11); eyes(k, 15, 11);
+      k.px(13, 15, '#f59aa0'); k.rect(12, 16, 3, 1, INK);
+      k.ell(10, 30, 2.5, 1.4, '#7a6a90'); k.ell(19, 30, 2.5, 1.4, '#7a6a90');
+    },
+    griffinity(k) {
+      k.tri(25, 20, 32, 16, 30, 24, '#b8884a');
+      for (const x of [14, 18, 23, 27]) k.rect(x, 24, 2, 7, '#c89a5a');
+      k.ell(20, 20, 9, 6.5, '#d8a860');
+      k.tri(16, 16, 30, 4, 28, 20, '#7a5a3a'); k.tri(18, 17, 29, 9, 26, 21, '#a07a4a');
+      k.ell(11, 11, 6, 5.5, '#ffffff');
+      k.ell(13, 15, 4, 3, '#f0f0f6');
+      k.tri(5, 11, 1, 13, 5, 15, '#f2c84b');
+      eyes(k, 7, 9);
+      k.tri(9, 6, 11, 2, 13, 6, '#ffffff');
+    },
+    piewyvern(k) {
+      k.tri(25, 22, 32, 28, 24, 28, '#7a4ab8');
+      k.tri(15, 16, 6, 4, 13, 20, '#b88ae8'); k.tri(22, 16, 31, 6, 26, 20, '#b88ae8');
+      k.ell(17, 22, 9, 7, '#9a6ad8');
+      k.ell(17, 24, 5, 3.5, '#e8dcf8');
+      k.ell(19, 14, 5.5, 2.6, '#c8843a'); k.ell(19, 13.5, 4.5, 1.8, '#e8a868');
+      k.rect(18.5, 11.5, 1, 4, '#c8843a'); k.rect(15, 13.5, 8, 1, '#c8843a');
+      k.ell(8, 14, 5, 4.5, '#9a6ad8');
+      k.tri(7, 10, 5, 5, 10, 10, '#7a4ab8');
+      eyes(k, 4, 12);
+      k.rect(3, 16, 3, 1, INK);
+      k.ell(12, 29, 2.5, 1.4, '#7a4ab8'); k.ell(21, 29, 2.5, 1.4, '#7a4ab8');
+    },
+
+    // ---------- World Legends and the mythical
+    equalion(k) {
+      k.tri(27, 20, 32, 14, 31, 24, '#c88a3a'); k.ell(31, 13, 1.6, 2, '#a86a2a');
+      for (const x of [17, 21, 25, 28]) k.rect(x, 24, 2.4, 7, '#e8b860');
+      k.ell(22, 21, 9, 6, '#f2c870');
+      k.ell(12, 14, 10.5, 10.5, '#d88a2a');
+      k.rect(5, 10, 14, 2, '#ffe08a'); k.rect(5, 17, 14, 2, '#ffe08a');
+      k.ell(11, 15, 6, 6, '#f2c870');
+      k.ell(9, 18, 3, 2, '#fff0c8');
+      eyes(k, 6, 12); eyes(k, 12, 12);
+      k.ell(8, 17, 1.4, 1, INK);
+      k.tri(9, 3, 11, -1, 13, 3, '#f2c84b'); k.tri(5, 4, 6, 0, 9, 4, '#f2c84b'); k.tri(13, 4, 16, 0, 17, 4, '#f2c84b');
+    },
+    whisperstag(k) {
+      for (const x of [16, 20, 25, 28]) k.rect(x, 24, 2, 7, '#8a5a32');
+      k.ell(22, 21, 9, 6, '#a8784a');
+      k.ell(21, 19, 1, 1, '#fff6e0'); k.ell(25, 21, 1, 1, '#fff6e0'); k.ell(19, 22, 1, 1, '#fff6e0');
+      k.rect(11, 12, 4, 9, '#a8784a');
+      k.ell(10, 12, 5, 4, '#a8784a');
+      k.ell(6, 14, 2.5, 2, '#c89a6a');
+      k.rect(8, 2, 1, 8, '#6a4a2a'); k.rect(5, 4, 3, 1, '#6a4a2a'); k.rect(13, 1, 1, 9, '#6a4a2a'); k.rect(14, 3, 3, 1, '#6a4a2a');
+      k.ell(5, 3, 2, 1.5, '#5fb84a'); k.ell(8, 1, 2, 1.5, '#4fa84a'); k.ell(13, 0.5, 2, 1.5, '#5fb84a'); k.ell(17, 2.5, 2, 1.5, '#4fa84a');
+      k.tri(14, 8, 18, 6, 16, 10, '#a8784a');
+      eyes(k, 6, 10);
+      k.px(4, 14, INK);
+    },
+    infinix(k) {
+      k.tri(26, 17, 31, 13, 31, 21, '#5fd8e8');
+      k.ell(10, 18, 7, 6.5, '#7a5ad8'); k.ell(21, 18, 7, 6.5, '#7a5ad8');
+      k.ell(10, 18, 3.5, 3, '#c8b8ff'); k.ell(21, 18, 3.5, 3, '#c8b8ff');
+      k.ell(15.5, 18, 3, 2.5, '#9a7af0');
+      for (const [x, y] of [[9, 17], [21, 19], [20, 16], [11, 19]]) k.px(x, y, '#ffffff');
+      k.ell(6, 9, 5, 4.5, '#7a5ad8');
+      k.tri(3, 6, 2, 1, 6, 5, '#7a5ad8'); k.tri(7, 5, 10, 1, 10, 6, '#7a5ad8');
+      eyes(k, 2, 7); eyes(k, 7, 7);
+      k.px(5, 12, '#f2c84b');
+      for (const [x, y] of [[16, 6], [26, 8], [4, 28], [25, 28]]) { k.px(x, y, '#f2c84b'); k.px(x - 1, y, '#fff6d6'); k.px(x + 1, y, '#fff6d6'); }
+    },
   };
 
   // These were drawn facing right; they're mirrored so every Legend faces left.
@@ -1323,22 +1579,48 @@ const Art = (() => {
     return m;
   }
 
+  // Golden Legends: the same art in shades of gold. Outlines and eye whites stay put.
+  function goldify(src) {
+    const c = canvas(src.width, src.height), g = c.getContext('2d');
+    g.drawImage(src, 0, 0);
+    const img = g.getImageData(0, 0, c.width, c.height), d = img.data;
+    const ramp = [[122, 74, 16], [224, 160, 32], [255, 242, 168]];
+    for (let i = 0; i < d.length; i += 4) {
+      if (!d[i + 3]) continue;
+      const [r, gg, b] = [d[i], d[i + 1], d[i + 2]];
+      if (r < 70 && gg < 70 && b < 90) continue;
+      if (r > 235 && gg > 235 && b > 235) continue;
+      const t = Math.min(1, (0.3 * r + 0.59 * gg + 0.11 * b) / 230);
+      const [lo, hi, f] = t < 0.5 ? [ramp[0], ramp[1], t * 2] : [ramp[1], ramp[2], (t - 0.5) * 2];
+      for (let k = 0; k < 3; k++) d[i + k] = Math.round(lo[k] + (hi[k] - lo[k]) * f);
+    }
+    g.putImageData(img, 0, 0);
+    return c;
+  }
+
   const creatureCache = {};
-  function creature(id, blink = false) {
-    const key = blink ? id + ':blink' : id;
+  function creature(id, blink = false, golden = false) {
+    const key = id + (blink ? ':blink' : '') + (golden ? ':gold' : '');
     if (!creatureCache[key]) {
-      const c = canvas(48, 48);
-      blinking = blink;
-      CREATURES[id](kit(c, 1.5));
-      blinking = false;
-      creatureCache[key] = mirrored({ id, img: outline(c) });
+      if (golden) creatureCache[key] = goldify(creature(id, blink));
+      else {
+        const c = canvas(48, 48);
+        blinking = blink;
+        CREATURES[id](kit(c, 1.5));
+        blinking = false;
+        creatureCache[key] = mirrored({ id, img: outline(c) });
+      }
     }
     return creatureCache[key];
   }
 
   // A small 20px version for walking around the map, with a hop frame.
   const smallCache = {};
-  function creatureSmall(id, frame) {
+  function creatureSmall(id, frame, golden = false) {
+    if (golden) {
+      const key = id + frame + ':gold';
+      return smallCache[key] || (smallCache[key] = goldify(creatureSmall(id, frame)));
+    }
     const key = id + frame;
     if (!smallCache[key]) {
       const c = canvas(20, 20);
@@ -1352,8 +1634,9 @@ const Art = (() => {
   }
 
   const urlCache = {};
-  function creatureURL(id) {
-    return urlCache[id] || (urlCache[id] = creature(id).toDataURL());
+  function creatureURL(id, golden = false) {
+    const key = id + (golden ? ':gold' : '');
+    return urlCache[key] || (urlCache[key] = creature(id, false, golden).toDataURL());
   }
 
   const platformCache = {};

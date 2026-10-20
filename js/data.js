@@ -74,6 +74,34 @@ const SPECIES = {
   crocalc: { name: 'Crocalc', hp: 38, atk: 13, family: 'mixed', moves: ['Chomp', 'Tail Whip'], dex: 'Marsh Mae\'s partner. The bumps on its back are like buttons.' },
   owlgebra: { name: 'Owlgebra', hp: 36, atk: 13, family: 'mixed', moves: ['Hoot Storm', 'Glasses Glint'], dex: 'Scout Wren\'s partner. Its glasses help it spot every pattern.' },
   cascoi: { name: 'Cascoi', hp: 42, atk: 13, family: 'mixed', moves: ['Waterfall', 'Koi Dance'], dex: 'Elder Brook\'s partner. It swam up the falls and became a dragon.' },
+
+  // ---------- Grade ultra rares: 3 per grade. Each waits in one spot and wakes up
+  // when you're getting strong at its skill (see SPECIALS below).
+  glimmerdot: { name: 'Glimmerdot', hp: 30, atk: 11, family: 'compare', rarity: 'ultra', moves: ['Dot Dazzle', 'Glow Flutter'], dex: 'A rare ladybug with exactly ten dots. It glows when you count them all.' },
+  plushbloom: { name: 'Plushbloom', hp: 32, atk: 10, family: 'add', rarity: 'ultra', moves: ['Petal Pop', 'Sunbeam'], dex: 'A rare flower. It grows one more petal for every sum you solve.' },
+  hopscotchy: { name: 'Hopscotchy', hp: 30, atk: 12, family: 'mult', rarity: 'ultra', moves: ['Ten Hop', 'Pouch Bop'], dex: 'A rare kangaroo that hops by tens: 10, 20, 30!' },
+  tentails: { name: 'Tentails', hp: 32, atk: 12, family: 'add', rarity: 'ultra', moves: ['Tail Fan', 'Make Ten'], dex: 'A rare fox with ten tails. It always makes a ten first.' },
+  mirrowl: { name: 'Mirrowl', hp: 32, atk: 11, family: 'mult', rarity: 'ultra', moves: ['Mirror Wing', 'Double Hoot'], dex: 'A rare owl whose two sides match perfectly. Doubles!' },
+  riddlynx: { name: 'Riddlynx', hp: 30, atk: 12, family: 'div', rarity: 'ultra', moves: ['Riddle Pounce', 'Mystery Swipe'], dex: 'A rare lynx with a tail shaped like a question mark.' },
+  hundrake: { name: 'Hundrake', hp: 34, atk: 12, family: 'compare', rarity: 'ultra', moves: ['Place Blast', 'Scale Shine'], dex: 'A rare dragon with rows of hundreds, tens and ones scales.' },
+  arraycorn: { name: 'Arraycorn', hp: 32, atk: 12, family: 'mult', rarity: 'ultra', moves: ['Grid Gallop', 'Horn Spark'], dex: 'A rare unicorn. Its mane grows in neat rows and columns.' },
+  halfmoon: { name: 'Halfmoon', hp: 30, atk: 12, family: 'div', rarity: 'ultra', moves: ['Moon Split', 'Star Hop'], dex: 'A rare moon rabbit. Half of it glows, half of it rests.' },
+  timesphinx: { name: 'Timesphinx', hp: 36, atk: 12, family: 'mult', rarity: 'ultra', moves: ['Times Roar', 'Sand Riddle'], dex: 'A rare sphinx that asks one times table riddle a day.' },
+  dividolphin: { name: 'Dividolphin', hp: 34, atk: 12, family: 'div', rarity: 'ultra', moves: ['Split Splash', 'Leap'], dex: 'A rare dolphin that shares every fish it catches.' },
+  rolypolar: { name: 'Rolypolar', hp: 36, atk: 11, family: 'compare', rarity: 'ultra', moves: ['Round Roll', 'Snow Hug'], dex: 'A rare polar bear that rolls numbers to the nearest ten.' },
+  blazemult: { name: 'Blazemult', hp: 34, atk: 13, family: 'mult', rarity: 'ultra', moves: ['Flame Burst', 'Rising Wing'], dex: 'A rare fire bird. Its flames multiply as it flies.' },
+  pizzapup: { name: 'Pizzapup', hp: 34, atk: 12, family: 'div', rarity: 'ultra', moves: ['Slice Toss', 'Happy Bark'], dex: 'A rare puppy who cuts pizza into perfectly equal slices.' },
+  roundolith: { name: 'Roundolith', hp: 40, atk: 11, family: 'compare', rarity: 'ultra', moves: ['Rune Glow', 'Boulder Roll'], dex: 'A rare round stone giant. Its rune rounds big numbers.' },
+  decimeow: { name: 'Decimeow', hp: 34, atk: 13, family: 'add', rarity: 'ultra', moves: ['Point Pounce', 'Tenth Swipe'], dex: 'A rare cat with a decimal point on its forehead.' },
+  griffinity: { name: 'Griffinity', hp: 38, atk: 13, family: 'mult', rarity: 'ultra', moves: ['Sky Dive', 'Talon Grid'], dex: 'A rare griffin. It solves big times problems in midair.' },
+  piewyvern: { name: 'Piewyvern', hp: 36, atk: 13, family: 'div', rarity: 'ultra', moves: ['Pie Toss', 'Wing Gust'], dex: 'A rare wyvern that carries a pie cut into equal parts.' },
+
+  // ---------- World Legends: one waits in each world after its last boss is beaten.
+  equalion: { name: 'Equalion', hp: 46, atk: 14, family: 'mixed', rarity: 'world', moves: ['Balance Roar', 'Golden Mane'], dex: 'The Legend of Pinecrest Valley. Its mane makes an equals sign.' },
+  whisperstag: { name: 'Whisperstag', hp: 48, atk: 14, family: 'mixed', rarity: 'world', moves: ['Leaf Storm', 'Antler Glow'], dex: 'The Legend of Whisperwood. Its antlers grow a new leaf every spring.' },
+
+  // ---------- The mythical: only for players who clear a world at every grade.
+  infinix: { name: 'Infinix', hp: 60, atk: 15, family: 'mixed', rarity: 'mythical', moves: ['Forever Loop', 'Star Swirl'], dex: 'A mythical Legend shaped like infinity. Numbers never end, and neither does it.' },
 };
 
 const STARTERS = ['sproutle', 'emberkit', 'splashfin'];
@@ -97,7 +125,10 @@ const WORLD2_AREAS = ['forest', 'river', 'swamp', 'treetops', 'waterfall'];
 const AREA_ORDER = [...WORLD1_AREAS, ...WORLD2_AREAS];
 
 // Every Legend once, in the order you meet them.
-const DEX_ORDER = [...new Set([...STARTERS, ...AREA_ORDER.flatMap((a) => [...Object.values(AREAS[a].species), AREAS[a].boss])])];
+// Every Legend once, in the order you meet them, with the rare ones at the end.
+const RARE = (id) => !!SPECIES[id].rarity;
+const DEX_ORDER = [...new Set([...STARTERS, ...AREA_ORDER.flatMap((a) => [...Object.values(AREAS[a].species), AREAS[a].boss]),
+  ...Object.keys(SPECIES).filter(RARE)])];
 
 // One boss guards the way out of each area.
 const BOSSES = {
@@ -745,6 +776,33 @@ const MAPS = {
     signs: {},
   },
 };
+
+// Rare Legends waiting at fixed spots. Ultra rares appear only at their grade, once
+// the player is getting strong at their skill. World Legends appear after a world's
+// last boss. The mythical appears after a world is cleared at every grade.
+const SPECIALS = [
+  { id: 'glimmerdot', kind: 'ultra', grade: 0, skill: 'count-10', map: 'route1', x: 1, y: 2 },
+  { id: 'plushbloom', kind: 'ultra', grade: 0, skill: 'add-10', map: 'forest', x: 1, y: 2 },
+  { id: 'hopscotchy', kind: 'ultra', grade: 0, skill: 'skip-10', map: 'shore', x: 18, y: 15 },
+  { id: 'tentails', kind: 'ultra', grade: 1, skill: 'add-20', map: 'canyon', x: 1, y: 2 },
+  { id: 'mirrowl', kind: 'ultra', grade: 1, skill: 'doubles', map: 'treetops', x: 1, y: 2 },
+  { id: 'riddlynx', kind: 'ultra', grade: 1, skill: 'missing-20', map: 'river', x: 1, y: 2 },
+  { id: 'hundrake', kind: 'ultra', grade: 2, skill: 'place-100', map: 'cave', x: 1, y: 3 },
+  { id: 'arraycorn', kind: 'ultra', grade: 2, skill: 'equal-groups', map: 'snow', x: 18, y: 2 },
+  { id: 'halfmoon', kind: 'ultra', grade: 2, skill: 'halves', map: 'swamp', x: 1, y: 11 },
+  { id: 'timesphinx', kind: 'ultra', grade: 3, skill: 'mult-facts', map: 'canyon', x: 18, y: 4 },
+  { id: 'dividolphin', kind: 'ultra', grade: 3, skill: 'div-facts', map: 'waterfall', x: 1, y: 15 },
+  { id: 'rolypolar', kind: 'ultra', grade: 3, skill: 'round', map: 'snow', x: 1, y: 15 },
+  { id: 'blazemult', kind: 'ultra', grade: 4, skill: 'mult-1digit', map: 'canyon', x: 1, y: 14 },
+  { id: 'pizzapup', kind: 'ultra', grade: 4, skill: 'equiv-frac', map: 'river', x: 18, y: 2 },
+  { id: 'roundolith', kind: 'ultra', grade: 4, skill: 'round-big', map: 'forest', x: 18, y: 2 },
+  { id: 'decimeow', kind: 'ultra', grade: 5, skill: 'dec-add', map: 'shore', x: 18, y: 5 },
+  { id: 'griffinity', kind: 'ultra', grade: 5, skill: 'mult-2digit', map: 'treetops', x: 18, y: 2 },
+  { id: 'piewyvern', kind: 'ultra', grade: 5, skill: 'frac-add', map: 'swamp', x: 18, y: 11 },
+  { id: 'equalion', kind: 'world', world: 1, need: 'badge5', map: 'cave', x: 18, y: 3 },
+  { id: 'whisperstag', kind: 'world', world: 2, need: 'badge10', map: 'waterfall', x: 18, y: 15 },
+  { id: 'infinix', kind: 'mythical', map: 'shrine', x: 6, y: 3 },
+];
 
 // Quick-travel stops on the world map, in order, with where each sits on the map picture.
 const TRAVEL = [
