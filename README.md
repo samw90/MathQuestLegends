@@ -61,6 +61,8 @@ A pixel-art adventure for Kindergarten to Grade 5 in the style of classic handhe
 - **Legend Terminal:** when your team is full (6), new friends wait in storage. Use the terminal in Professor Pi's lab or any Rest Center to take them out, put team members away, or swap. Your buddy always stays with you.
 - The Rest Center (pink roof) heals your team. If your whole team needs a rest, you wake up there. Nothing is lost.
 
+**MENU in battle:** at the SOLVE / TEAM / RUN choice, MENU opens Team, Legendex, Grown-ups and Settings. Map and Save & load aren't available mid-battle, because a save holds your team and where you're standing, not the battle itself.
+
 **Controls:** on-screen D-pad, A, B and MENU buttons, or the keyboard: arrows/WASD to move, Z or Space for A, X for B, Enter for the menu. During a question, type the number and press Enter (or 1–4 to pick a choice), and press B or H for a hint.
 
 ## Hints

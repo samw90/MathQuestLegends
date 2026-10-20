@@ -403,7 +403,7 @@
   // A list of choices. Items are strings or { label, sub, icon, dim }.
   // Resolves to the chosen index, or -1 when cancelled with B.
   function choose(items, opts = {}) {
-    const { cancel = true, cols = 1, cls = '', start = 0, head } = opts;
+    const { cancel = true, cols = 1, cls = '', start = 0, head, onStart = false } = opts;
     return new Promise((res) => {
       const box = el('div', 'box menu ' + cls);
       box.style.setProperty('--cols', cols);
@@ -436,6 +436,7 @@
         else if (btn === 'right' && cols > 1) sel = (sel + 1) % n;
         else if (btn === 'a') return done(sel);
         else if (btn === 'b' && cancel) return done(-1);
+        else if (btn === 'start' && onStart) return done(-2); // MENU pressed
         else return;
         sfx('move');
         draw();
@@ -1626,9 +1627,10 @@
     B.idle = true;
     await say(`What will ${nameOf(B.me)} do?`, { keep: true });
     dialogEl.classList.add('split');
-    const act = await choose(['SOLVE', 'TEAM', 'RUN'], { cancel: false, cols: 2, cls: 'battle-menu' });
+    const act = await choose(['SOLVE', 'TEAM', 'RUN'], { cancel: false, cols: 2, cls: 'battle-menu', onStart: true });
     B.idle = false;
     hideDialog();
+    if (act === -2) { await battleMenu(); return null; }
     if (act === 0) return solve();
     if (act === 1) return switchTeam();
     if (B.trainer) { await say('You can\'t run from this battle!'); return null; }
@@ -1951,10 +1953,11 @@
         `Sound: ${soundOn ? 'On' : 'Off'}`,
         `Answers: ${answerLabel()}`,
         `Controls: ${layoutLabel()}`,
-        ...(DEV ? ['Dev: unlock everything', 'Dev: go to Portal Shrine'] : []),
+        ...(DEV ? ['Dev: unlock everything'] : []),
+        ...(DEV && !B ? ['Dev: go to Portal Shrine'] : []), // not mid-battle
         'Back',
       ], { cls: 'start-menu' });
-      const devItem = DEV && i >= 6 && i <= 7 ? i - 6 : -1;
+      const devItem = !DEV ? -1 : i === 6 ? 0 : i === 7 && !B ? 1 : -1;
       if (i === 0) {
         const g = await choose(GRADES, { cls: 'start-menu', start: S.grade });
         if (g >= 0) S.grade = g;
@@ -2250,6 +2253,22 @@
         await say(`Welcome back, ${S.name}!`);
         return true;
       } else return false;
+    }
+  }
+
+  // MENU during a battle. Map and Save & load stay out: a save holds your team and
+  // where you're standing, not the battle, so saving or loading mid-fight isn't allowed.
+  async function battleMenu() {
+    sfx('select');
+    let i = 0;
+    for (;;) {
+      i = await choose(['Team', 'Legendex', 'Grown-ups', 'Settings', 'Back to battle'], { cls: 'start-menu', start: Math.max(0, i), head: 'Menu (in battle)' });
+      if (i === 0) await teamMenu();
+      else if (i === 1) await dexMenu();
+      else if (i === 2) await progressPage();
+      else if (i === 3) await settingsMenu();
+      else return;
+      updHud();
     }
   }
 
