@@ -551,6 +551,15 @@ const Art = (() => {
       k.rect(2, 2, 6, 9, '#a07ae8'); k.tri(2, 11, 8, 11, 5, 14, '#a07ae8'); k.ell(5, 6, 1.5, 1.5, '#f2c84b');
     },
 
+    // Legend Terminal: where stored Legends wait (lab and Rest Centers).
+    '¦': (k) => {
+      floor(k);
+      k.rect(2, 9, 12, 7, '#8a8a9a'); k.rect(2, 9, 12, 1, '#a8a8b8');
+      k.rect(3, 1, 10, 9, '#4a4566'); k.rect(4, 2, 8, 6, '#5fd8e8');
+      k.ell(8, 5, 2, 2, '#f2c84b'); k.px(7, 4, INK); k.px(9, 4, INK);
+      k.rect(5, 11, 2, 1, '#e8506a'); k.rect(9, 11, 2, 1, '#5fb84a');
+    },
+
     // Portal Shrine standing stone.
     Y: (k) => {
       grass(k);

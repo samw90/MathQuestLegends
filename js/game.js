@@ -1036,6 +1036,11 @@
       busy = false;
       return;
     }
+    if (t === '¦' && !buddyHere && !n) {
+      busy = true;
+      try { await storageMenu(); } finally { busy = false; }
+      return;
+    }
     if (!buddyHere && !n && !sign && !(t && '123'.includes(t))) return;
     busy = true;
     try {
@@ -1717,7 +1722,7 @@
           await say(`${nameOf(c)} joined your team!`);
         } else {
           S.box.push(c);
-          await say(['Your team is full.', `${nameOf(c)} will wait for you at Professor Pi's lab.`]);
+          await say(['Your team is full.', `${nameOf(c)} will wait in the Legend Terminal. Find one in any Rest Center or Professor Pi's lab.`]);
         }
       } else {
         await say(B.special ? `${nameOf(c)} will wait for you right here.` : `${nameOf(c)} waves goodbye!`);
@@ -1808,6 +1813,57 @@
         await say(`${nameOf(c)} will go first next time!`);
       }
     }
+  }
+
+  // The Legend Terminal (Professor Pi's lab and every Rest Center): Legends that
+  // didn't fit on your team wait here. Take them out, put team members away, or swap.
+  function storedItems() {
+    return S.box.map((c) => ({
+      label: `${nameOf(c)}${c.golden ? ' ✨' : ''}  Lv ${c.lv}`,
+      sub: puzzleLabel(c.sp),
+      icon: Art.creatureURL(c.sp, !!c.golden),
+    }));
+  }
+  async function storageMenu() {
+    sfx('select');
+    await say(['LEGEND TERMINAL', `Legends waiting here: ${S.box.length}. Your team: ${S.party.length} of 6.`], { keep: true });
+    for (;;) {
+      const i = await choose(['Take out a Legend', 'Put away a Legend', 'Done'], { cls: 'start-menu', head: 'Legend Terminal' });
+      hideDialog();
+      if (i === 0) {
+        if (!S.box.length) { await say('No Legends are waiting here yet.'); continue; }
+        const j = await choose(storedItems(), { cls: 'full', head: `Stored Legends (${S.box.length})` });
+        if (j < 0) continue;
+        const c = S.box[j];
+        if (S.party.length < 6) {
+          S.box.splice(j, 1);
+          S.party.push(c);
+          sfx('friend');
+          await say(`${nameOf(c)} joined your team!`);
+        } else {
+          const k = await teamPicker(`Team is full. Swap ${nameOf(c)} with...`);
+          if (k < 0) continue;
+          const out = S.party[k];
+          if (out.sp === S.sidekick) { await say(`${nameOf(out)} is your buddy, so it stays with you.`); continue; }
+          S.party[k] = c;
+          S.box[j] = out;
+          sfx('friend');
+          await say(`${nameOf(c)} joined your team, and ${nameOf(out)} will wait here.`);
+        }
+      } else if (i === 1) {
+        if (S.party.length <= 1) { await say('You need at least one Legend with you.'); continue; }
+        const k = await teamPicker('Put away which Legend?');
+        if (k < 0) continue;
+        const c = S.party[k];
+        if (c.sp === S.sidekick) { await say(`${nameOf(c)} is your buddy, so it stays with you. You can pick a new buddy in MENU, Team.`); continue; }
+        S.party.splice(k, 1);
+        c.hp = maxHp(c);
+        S.box.push(c);
+        await say(`${nameOf(c)} will wait here. It's all rested up!`);
+      } else break;
+      writeSave();
+    }
+    writeSave();
   }
 
   async function dexMenu() {

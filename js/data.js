@@ -455,8 +455,8 @@ const LOOKS = {
 //   shrine  j stone floor  Y standing stone  (portals are drawn on top from each map's `portals` list)
 //   bosses  four house styles, each roof / roof with emblem / wall / door:
 //           cabin D E N S   tent < > ? /   tower # ! [ ]   dome a y $ +
-//   inside  x wall  o floor  b shelf  t table  1/2/3 buddy beds  c counter  m exit mat
-const SOLID = new Set('T~srRCVwWxbt123c PKMAQXF-zJZU|45678Y#![]DENS<>?/ay$+ζηθικμοφχΔΞ¤£¥®°¿ßÐÅÇÎÒÔÕÁ'.split(''));
+//   inside  x wall  o floor  b shelf  t table  1/2/3 buddy beds  c counter  m exit mat  ¦ Legend Terminal
+const SOLID = new Set('T~srRCVwWxbt123c PKMAQXF-zJZU|45678Y#![]DENS<>?/ay$+ζηθικμοφχΔΞ¤£¥®°¿ßÐÅÇÎÒÔÕÁ¦'.split(''));
 // Legends hide in these.
 const ENCOUNTER = new Set([',', ';', '"', '^', '%', 'e', 'L', 'v', 'l', '&', 'ε', 'ν', 'τ', 'ψ', 'Λ', '¢', 'µ', '±', 'Ø', 'Þ', 'Ä', 'È', 'Ì', 'Ï', 'Ó']);
 
@@ -722,7 +722,7 @@ const MAPS = {
     border: ' ',
     tiles: [
       'xxxxxxxxxx',
-      'xbbboobbbx',
+      'xbbbo¦bbbx',
       'xoooooooox',
       'xoo123ooox',
       'xoooooooox',
@@ -1604,7 +1604,7 @@ const MAPS = {
     border: ' ',
     tiles: [
       'xxxxxxxxxx',
-      'xboooooobx',
+      'xbooooo¦bx',
       'xccccccoox',
       'xoooooooox',
       'xoooooooox',

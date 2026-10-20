@@ -58,6 +58,7 @@ A pixel-art adventure for Kindergarten to Grade 5 in the style of classic handhe
 - **Battles:** the two Legends face each other, bounce on their toes and blink now and then.
 - **Boss houses:** every boss guards the door of a log cabin, striped tent, stone tower or domed hall. Rest Centers have a heart on the roof, Professor Pi's lab has a π badge, and your home has a teal roof and a chimney.
 - **Badge colors:** each badge's color shows the grade it was won at: Bronze (K), Silver (1), Gold (2), Emerald (3), Sapphire (4), Crystal (5). Start a harder grade and every boss offers a rematch to upgrade its badge.
+- **Legend Terminal:** when your team is full (6), new friends wait in storage. Use the terminal in Professor Pi's lab or any Rest Center to take them out, put team members away, or swap. Your buddy always stays with you.
 - The Rest Center (pink roof) heals your team. If your whole team needs a rest, you wake up there. Nothing is lost.
 
 **Controls:** on-screen D-pad, A, B and MENU buttons, or the keyboard: arrows/WASD to move, Z or Space for A, X for B, Enter for the menu. During a question, type the number and press Enter (or 1–4 to pick a choice), and press B or H for a hint.
