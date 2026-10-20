@@ -125,6 +125,12 @@ function mapSuite() {
         if (v.need) check(v.block && (!SCRIPT_NAMES || SCRIPT_NAMES.has(v.block)), `${id}: locked warp needs a block script`);
         if (v.need && v.need.startsWith('badge')) check(BADGE_FLAGS.includes(v.need), `${id}: unknown badge ${v.need}`);
       }
+      for (const pt of m.portals || []) {
+        check(walk(m, pt.x, pt.y), `${id}: portal at ${pt.x},${pt.y} isn't on open ground`);
+        check(WORLDS[pt.world - 1], `${id}: portal to unknown world ${pt.world}`);
+        check(!pt.show || BADGE_FLAGS.includes(pt.show), `${id}: portal waits for unknown flag ${pt.show}`);
+        check(!m.warps.some((v) => v.x === pt.x && v.y === pt.y), `${id}: portal sits on a warp`);
+      }
       // From every arrival spot you can walk to at least one way out.
       const arrivals = Object.entries(MAPS).flatMap(([, o]) => o.warps.filter((v) => v.to === id).map((v) => [v.tx, v.ty]));
       if (id === 'center') arrivals.push([4, 5]);
@@ -152,6 +158,14 @@ function mapSuite() {
       if (MAPS[id].warps.some((v) => v.to === 'center')) seen.add('center');
     }
     for (const id of Object.keys(MAPS)) check(seen.has(id), `${id}: can't be reached from town`);
+    // Worlds: ids in order, a start spot for every built world, and a shrine portal for each.
+    WORLDS.forEach((w, i) => {
+      check(w.id === i + 1, `World ${w.name} has id ${w.id}, expected ${i + 1}`);
+      if (w.start) check(MAPS[w.start.map] && walk(MAPS[w.start.map], w.start.x, w.start.y), `${w.name}: start spot is blocked`);
+      if (w.start) check(w.done && BADGE_FLAGS.includes(w.done), `${w.name}: no badge marks it as beaten`);
+      check((MAPS.shrine.portals || []).some((pt) => pt.world === w.id), `${w.name}: no portal in the Portal Shrine`);
+    });
+    check(BADGE_TIERS.length === GRADES.length, 'Need one badge color per grade');
     // Area order matches the gates.
     for (const t of TRAVEL) {
       check(MAPS[t.map] && MAPS[t.map].heal, `Quick travel to ${t.map}, which has no Rest Center`);

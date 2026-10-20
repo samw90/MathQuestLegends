@@ -10,6 +10,8 @@
   const SAVE_KEY = 'mql:save:v2';
   const DAY = 24 * 60 * 60 * 1000;
   // How each kind of puzzle is named in battle: "It loves take-away puzzles!"
+  // Testing tools show up only with ?dev in the address.
+  const DEV = /[?&]dev\b/.test(location.search);
   const FAMILY_PHRASE = {
     add: 'adding', sub: 'take-away', compare: 'number',
     mult: 'grouping', div: 'sharing', mixed: 'all kinds of',
@@ -67,14 +69,21 @@
       healMap: 'town', // the last place with a Rest Center
       lastArea: 'meadow', // the last area with wild Legends
       ret: null, // where the Rest Center door leads back to
+      badgeGrade: {}, // badge flag -> highest grade it was won at (sets its color)
     };
+  }
+  // Older saves won badges before badge colors existed: count them at the save's grade.
+  function upgradeSave(s) {
+    s.badgeGrade = s.badgeGrade && typeof s.badgeGrade === 'object' ? s.badgeGrade : {};
+    for (const f of BADGE_FLAGS) if (s.flags && s.flags[f] && !(f in s.badgeGrade)) s.badgeGrade[f] = s.grade || 0;
+    return s;
   }
   function loadSave() {
     try {
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return null;
       const s = JSON.parse(raw);
-      return Object.assign(newState(s.name || 'Hero', s.grade || 0), s);
+      return upgradeSave(Object.assign(newState(s.name || 'Hero', s.grade || 0), s));
     } catch (e) { return null; }
   }
   function writeSave() {
@@ -949,6 +958,13 @@
 
   async function arrived() {
     const m = map();
+    const pt = portalAt(P.x, P.y);
+    if (pt) {
+      busy = true;
+      await usePortal(pt);
+      busy = false;
+      return;
+    }
     const w = m.warps.find((v) => v.x === P.x && v.y === P.y);
     if (w) {
       busy = true;
@@ -991,6 +1007,14 @@
     if (!n && tileAt(x, y) === 'c') n = npcAt(x + dx, y + dy); // talk across a counter
     const t = tileAt(x, y);
     const sign = map().signs[`${x},${y}`];
+    const pt = portalAt(x, y);
+    if (pt && !buddyHere && !n) {
+      const w = WORLDS[pt.world - 1];
+      busy = true;
+      await say(worldOpen(w) ? [`A portal to ${w.name}.`, w.start ? 'Step in to go there!' : 'That world is still being built.'] : [`A sleeping portal to ${w.name}.`, `Beat ${WORLDS[w.id - 2].name} to wake it up.`]);
+      busy = false;
+      return;
+    }
     if (!buddyHere && !n && !sign && !(t && '123'.includes(t))) return;
     busy = true;
     try {
@@ -1041,6 +1065,12 @@
         if (img) ctx.drawImage(img, tx * TS - camX, ty * TS - camY);
       }
     }
+    const spin = Math.floor(now / 160) % 4;
+    for (const pt of m.portals || []) {
+      if (!portalShown(pt)) continue;
+      const w = WORLDS[pt.world - 1];
+      ctx.drawImage(Art.portal(w.color, spin, worldOpen(w)), pt.x * TS - camX, pt.y * TS - camY);
+    }
     const ents = m.npcs.map((n) => ({ y: n.y * TS, x: n.x * TS, img: Art.person(LOOKS[n.look], n.dir, 0), oy: -3 }));
     if (S.sidekick && !F.stacked) {
       const hop = P.moving ? (P.t < STEP_MS / 2 ? 1 : 0) : Math.floor(now / 500) % 2;
@@ -1084,7 +1114,7 @@
       if (!S.flags.badge1) return say(['Ranger Rowan is waiting at the end of Route 1.', 'Rowan likes to pick the puzzles you need most.', 'Win, and you\'ll earn a badge!']);
       const n = badgeCount();
       if (n < 5) return say([`You have ${n} badge${n === 1 ? '' : 's'}! Way to go!`, 'Each place up north has a new boss to beat.', 'Check the MENU map to travel fast.']);
-      return say(['All five badges! You\'re a true Math Quest Legend!', 'I\'m so proud of you and your buddy.']);
+      return say(['All five badges! You\'re a true Math Quest Legend!', 'The Portal Shrine by the town gate can take you to new worlds.', 'And if you start a harder grade, the bosses will want a rematch!']);
     },
 
     async starter(n) {
@@ -1149,24 +1179,66 @@
       return say(['This way is closed for now.', `Beat ${boss.name} to open it!`]);
     },
 
+    sage: () => {
+      const open = WORLDS.filter(worldOpen).length;
+      return say([
+        'Welcome to the Portal Shrine!',
+        'Each portal leads to a different world.',
+        'Beat every boss in a world, and the next portal wakes up.',
+        open > 1 ? `${open} of ${WORLDS.length} portals are awake.` : `Only the ${WORLDS[0].name} portal is awake so far.`,
+      ]);
+    },
+
     // Each boss opens with the Legend for your weakest skill, then its own partner.
     boss: async (areaId) => {
       const b = BOSSES[areaId], area = AREAS[areaId];
-      if (S.flags[b.flag]) return say(b.after);
-      await say(b.intro);
+      const won = S.flags[b.flag], wonAt = S.badgeGrade[b.flag] ?? -1;
+      if (won && wonAt >= S.grade) return say(b.after);
+      const tier = BADGE_TIERS[S.grade];
+      let lv = area.base;
+      if (won) {
+        // Replaying at a higher grade: win again to upgrade the badge's color.
+        await say(b.after, { keep: true });
+        if (!(await yesNo(`${b.name.toUpperCase()}: You're doing ${GRADES[S.grade]} math now! Want a rematch? Win, and your ${b.badge} turns ${tier.name}.`))) return;
+        lv = Math.max(area.base, ...S.party.map((c) => c.lv)) - 2;
+      } else await say(b.intro);
       const weak = MathEngine.weakestSkill(S.grade, S.skills);
       const first = area.species[MathEngine.SKILLS[weak].family];
-      const result = await battle([mon(first, area.base + 3, weak), mon(area.boss, area.base + 4)], { trainer: b.name });
+      const result = await battle([mon(first, lv + 3, weak), mon(area.boss, lv + 4)], { trainer: b.name });
       if (result === 'win') {
         S.flags[b.flag] = true;
+        S.badgeGrade[b.flag] = Math.max(wonAt, S.grade);
         sfx('level');
-        await say([`${b.name.toUpperCase()}: ${b.win[0]}`, ...b.win.slice(1)]);
+        if (won) await say([`${b.name.toUpperCase()}: Amazing! Your ${b.badge} is ${tier.name} now!`]);
+        else await say([`${b.name.toUpperCase()}: ${b.win[0]}`, ...b.win.slice(1), `It's a ${tier.name} badge, for ${GRADES[S.grade]} math.`]);
+        if (areaId === AREA_ORDER[AREA_ORDER.length - 1] && !won) await say(['A portal hums to life nearby!', 'It leads to the next world. The Portal Shrine in town has one too.']);
         writeSave();
       }
     },
   };
 
   const badgeCount = () => BADGE_FLAGS.filter((f) => S.flags[f]).length;
+  const tierOf = (flag) => BADGE_TIERS[S.badgeGrade[flag] ?? 0];
+  // World 1 is always open. Each later world opens when the one before it is beaten.
+  const worldOpen = (w) => w.id === 1 || !!S.flags.devAll || !!(WORLDS[w.id - 2].done && S.flags[WORLDS[w.id - 2].done]);
+  const portalShown = (pt) => !pt.show || !!S.flags[pt.show] || !!S.flags.devAll;
+  const portalAt = (x, y) => (map().portals || []).find((pt) => pt.x === x && pt.y === y && portalShown(pt));
+
+  async function usePortal(pt) {
+    const w = WORLDS[pt.world - 1];
+    const back = () => { const [dx, dy] = DIRS[P.dir]; startStep(P.x - dx, P.y - dy); };
+    if (!worldOpen(w)) {
+      await say(['This portal is asleep.', `Beat every boss in ${WORLDS[w.id - 2].name} to wake it up.`]);
+      return back();
+    }
+    if (!w.start) {
+      await say([`This portal leads to ${w.name}.`, 'That world is still being built. Check back soon!']);
+      return back();
+    }
+    sfx('level');
+    await fade(() => { placePlayer(w.start.map, w.start.x, w.start.y, w.start.dir); writeSave(); });
+    await say(`Welcome to ${w.name}!`);
+  }
   // The Legend that asks this kind of math where you are (or where you last were).
   function speciesFor(fam) {
     const area = AREAS[(map() && map().area) || S.lastArea] || AREAS.meadow;
@@ -1557,6 +1629,9 @@
       const weak = MathEngine.weakestSkill(S.grade, S.skills);
       box.append(el('p', null, `Practicing most: ${MathEngine.SKILLS[weak].label}. Wild Legends that ask these puzzles show up more often.`));
       box.append(el('p', null, `Badges: ${badgeCount()} of 5 · Legendex: ${DEX_ORDER.filter((id) => S.caught[id]).length} of ${DEX_ORDER.length} friends`));
+      const won = AREA_ORDER.filter((a) => S.flags[BOSSES[a].flag]);
+      if (won.length) box.append(el('p', null, 'Badge colors show the grade they were won at: ' + won.map((a) => `${BOSSES[a].badge} (${tierOf(BOSSES[a].flag).name}, ${GRADES[S.badgeGrade[BOSSES[a].flag] ?? 0]})`).join(', ') + '.'));
+      box.append(el('p', null, `Worlds open: ${WORLDS.filter(worldOpen).map((w) => w.name).join(', ')}.`));
       const due = S.review.filter((x) => x.due <= Date.now()).length;
       box.append(el('p', null, `Missed problems saved for review: ${S.review.length} (${due} ready now).`));
     });
@@ -1578,8 +1653,10 @@
         `Sound: ${soundOn ? 'On' : 'Off'}`,
         `Answers: ${answerLabel()}`,
         `Controls: ${layoutLabel()}`,
+        ...(DEV ? ['Dev: unlock everything', 'Dev: go to Portal Shrine'] : []),
         'Back',
       ], { cls: 'start-menu' });
+      const devItem = DEV && i >= 6 && i <= 7 ? i - 6 : -1;
       if (i === 0) {
         const g = await choose(GRADES, { cls: 'start-menu', start: S.grade });
         if (g >= 0) S.grade = g;
@@ -1599,11 +1676,35 @@
         layout = LAYOUTS[(LAYOUTS.indexOf(layout) + 1) % LAYOUTS.length];
         try { localStorage.setItem('mql:layout', layout); } catch (e) { /* ignore */ }
         applyLayout();
+      } else if (devItem === 0) {
+        if (await yesNo('Unlock every badge, place, Legend and portal in this save? (Export your save first to keep a copy.)')) {
+          devUnlockAll();
+          await say('Done! Everything is unlocked.');
+        }
+      } else if (devItem === 1) {
+        await fade(() => { placePlayer('shrine', 5, 7, 'up'); writeSave(); });
+        return 'closed';
       } else {
         writeSave();
         return;
       }
     }
+  }
+
+  // Testing helper (only with ?dev in the address): opens everything in this save.
+  function devUnlockAll() {
+    S.flags.starter = true;
+    S.flags.devAll = true;
+    if (!S.sidekick) { S.sidekick = 'sproutle'; S.party.unshift(mon('sproutle', 30)); }
+    for (const f of BADGE_FLAGS) { S.flags[f] = true; if (!(f in S.badgeGrade)) S.badgeGrade[f] = S.grade; }
+    for (const [id, m] of Object.entries(MAPS)) if (m.heal) S.visited[id] = true;
+    for (const id of Object.keys(SPECIES)) { S.seen[id] = true; S.caught[id] = true; }
+    for (const id of ['hootsum', 'octogroup', 'lizardo', 'flurrfox', 'glowsplit']) {
+      if (S.party.length < 6 && !S.party.some((c) => c.sp === id)) S.party.push(mon(id, 30));
+    }
+    S.party.forEach((c) => { if (c.lv < 30) c.lv = 30; });
+    healAll();
+    writeSave();
   }
 
   // Lists the best voices first; each one says a sample line when chosen.
@@ -1671,7 +1772,7 @@
       sub: S.visited[t.map] ? 'Tap to travel here' : 'Not visited yet',
       dim: !S.visited[t.map],
     }));
-    const i = await choose(items, { cls: 'maplist', head: `Badges: ${badgeCount()} of 5` });
+    const i = await choose(items, { cls: 'maplist', head: `${WORLDS[0].name} · Badges: ${badgeCount()} of 5` });
     view.remove();
     if (i < 0) return false;
     const t = TRAVEL[i];
@@ -1691,13 +1792,14 @@
     if (!d || typeof d !== 'object' || d.v !== 2 || !Array.isArray(d.party) || !MAPS[d.map]) return null;
     const s = Object.assign(newState(String(d.name || 'Hero').slice(0, 10), 0), d);
     s.name = String(s.name).slice(0, 10) || 'Hero';
-    s.grade = Math.max(0, Math.min(3, Number(s.grade) | 0));
+    s.grade = Math.max(0, Math.min(GRADES.length - 1, Number(s.grade) | 0));
     const okMon = (c) => c && SPECIES[c.sp] && Number.isFinite(c.lv) && Number.isFinite(c.hp);
     s.party = s.party.filter(okMon);
     s.box = (Array.isArray(s.box) ? s.box : []).filter(okMon);
     for (const k of ['flags', 'seen', 'caught', 'skills', 'visited']) if (!s[k] || typeof s[k] !== 'object') s[k] = {};
     if (!Array.isArray(s.review)) s.review = [];
     s.visited.town = true;
+    upgradeSave(s);
     const rows = MAPS[s.map].tiles;
     if (!(s.y >= 0 && s.y < rows.length && s.x >= 0 && s.x < rows[0].length)) { s.map = 'town'; s.x = 15; s.y = 10; }
     return s;
@@ -1812,7 +1914,7 @@
       else if (i === 2) await dexMenu();
       else if (i === 3) { if (S.sidekick) await buddyTalk(); else await say('You don\'t have a buddy yet.'); }
       else if (i === 4) await progressPage();
-      else if (i === 5) await settingsMenu();
+      else if (i === 5) { if ((await settingsMenu()) === 'closed') break; }
       else if (i === 6) { if (await saveMenu()) break; }
       else break;
     }

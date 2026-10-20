@@ -204,6 +204,13 @@ const Art = (() => {
     r: (k) => roof(k, '#c0504d', '#8e3433'),
     R: (k) => roof(k, '#5a7bbf', '#3e5b94'),
     C: (k) => roof(k, '#e86a8a', '#b8405e'),
+    V: (k) => roof(k, '#7a5ad8', '#4e3a9a'),
+    j: (k) => {
+      k.rect(0, 0, 16, 16, '#cfc8e0');
+      k.rect(0, 0, 16, 1, '#b4abcc'); k.rect(0, 8, 16, 1, '#b4abcc');
+      k.rect(0, 0, 1, 8, '#b4abcc'); k.rect(8, 8, 1, 8, '#b4abcc');
+      k.px(4, 4, '#e4def0'); k.px(12, 12, '#e4def0');
+    },
     w: wall,
     W: (k) => {
       wall(k);
@@ -871,5 +878,28 @@ const Art = (() => {
     return platformCache[key];
   }
 
-  return { tile, person, creature, creatureSmall, creatureURL, platform };
+  // A world portal on the ground: a glowing ring in the world's color that
+  // swirls when awake, and a dark stone ring when asleep.
+  const portalCache = {};
+  function portal(color, frame, awake) {
+    const key = color + frame + awake;
+    if (!portalCache[key]) {
+      const c = canvas(16, 16), k = kit(c);
+      k.ell(8, 9, 7.5, 6, '#2b2840');
+      if (awake) {
+        k.ell(8, 9, 6.5, 5, color);
+        k.ell(8, 9, 4.5, 3.4, shade(color, 1.35));
+        k.ell(8, 9, 2.4, 1.8, '#ffffff');
+        const a = frame * Math.PI / 2;
+        k.rect(8 + Math.round(Math.cos(a) * 5) - 1, 9 + Math.round(Math.sin(a) * 3.6) - 1, 2, 2, '#ffffff');
+      } else {
+        k.ell(8, 9, 6.5, 5, '#6a6488');
+        k.ell(8, 9, 4.5, 3.4, '#4a4566');
+      }
+      portalCache[key] = c;
+    }
+    return portalCache[key];
+  }
+
+  return { tile, person, creature, creatureSmall, creatureURL, platform, portal };
 })();

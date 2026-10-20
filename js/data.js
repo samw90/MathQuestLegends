@@ -103,6 +103,24 @@ const BOSSES = {
 };
 const BADGE_FLAGS = AREA_ORDER.map((a) => BOSSES[a].flag);
 
+// Badges change color with the grade they were won at, so replaying a world at a
+// higher grade upgrades them.
+const BADGE_TIERS = [
+  { name: 'Bronze', color: '#c8834a' }, { name: 'Silver', color: '#c8ccd8' }, { name: 'Gold', color: '#f2c84b' },
+  { name: 'Emerald', color: '#3fbf7a' }, { name: 'Sapphire', color: '#4a7ae8' }, { name: 'Crystal', color: '#e0b8ff' },
+];
+
+// Worlds: 5 areas each. Beating a world's last boss wakes the next world's portal.
+// The Portal Shrine in Pinecrest Town has a portal to every world.
+// Worlds 2-5 are planned; their names are working titles until they're built.
+const WORLDS = [
+  { id: 1, name: 'Pinecrest Valley', color: '#5fb84a', areas: AREA_ORDER, start: { map: 'route1', x: 9, y: 16, dir: 'up' }, done: 'badge5' },
+  { id: 2, name: 'Whisperwood', color: '#2f8f5a', areas: [], start: null, done: null },
+  { id: 3, name: 'Brightport City', color: '#e0a030', areas: [], start: null, done: null },
+  { id: 4, name: 'Coral Deep', color: '#3ac4c8', areas: [], start: null, done: null },
+  { id: 5, name: 'Sky Isles', color: '#a07ae8', areas: [], start: null, done: null },
+];
+
 const LOOKS = {
   hero: { id: 'hero', hat: '#2a9d8f', hair: '#3a2a1a', shirt: '#f08a3c', pants: '#3a4a8a' },
   mom: { id: 'mom', hair: '#7a4a2a', shirt: '#e86a8a', pants: '#5a5a8a', long: true },
@@ -119,6 +137,7 @@ const LOOKS = {
   sheriff: { id: 'sheriff', hat: '#a0703a', hair: '#5a3418', shirt: '#d8b070', pants: '#5a4a3a' },
   coach: { id: 'coach', hair: '#e0a030', shirt: '#4a9ae8', pants: '#2b2840', long: true },
   keeper: { id: 'keeper', hat: '#5a3a94', hair: '#c8c8d4', shirt: '#7a4ab8', pants: '#3a2a5a' },
+  sage: { id: 'sage', hair: '#f4f4f8', shirt: '#3ac4c8', pants: '#2a5a7a', long: true },
 };
 
 // Tiles:
@@ -127,9 +146,10 @@ const LOOKS = {
 //   canyon  : red dirt  " dry brush  K cactus  M mesa rock
 //   snow    * snow   ^ snow drift  A pine  i ice
 //   cave    q cave floor  % glow moss  Q cave wall  X crystal  u glow mushrooms
-//   houses  r/R/C roofs  w wall  W window  d door
+//   houses  r/R/C/V roofs (V = Portal Shrine)  w wall  W window  d door
+//   shrine  j stone floor  (portals are drawn on top from each map's `portals` list)
 //   inside  x wall  o floor  b shelf  t table  1/2/3 buddy beds  c counter  m exit mat
-const SOLID = new Set('T~srRCwWxbt123c PKMAQX'.split(''));
+const SOLID = new Set('T~srRCVwWxbt123c PKMAQX'.split(''));
 // Legends hide in these.
 const ENCOUNTER = new Set([',', ';', '"', '^', '%']);
 
@@ -154,9 +174,9 @@ const MAPS = {
       'T.f..s...==...f....T',
       'T........==..CCCCC.T',
       'T........==..wWdWw.T',
-      'T~~~.....==....=...T',
-      'T~~~.....=========.T',
-      'T~~~..f..==.....f..T',
+      'TVVV.....==....=...T',
+      'TwdW.....=========.T',
+      'T...s.f..==.....f..T',
       'T........==........T',
       'TTTTTTTTTTTTTTTTTTTT',
     ],
@@ -168,10 +188,11 @@ const MAPS = {
       { x: 3, y: 3, to: 'house', tx: 3, ty: 5, dir: 'up' },
       { x: 15, y: 3, to: 'lab', tx: 4, ty: 6, dir: 'up' },
       centerDoor(15, 9),
+      { x: 2, y: 11, to: 'shrine', tx: 5, ty: 7, dir: 'up' },
       { x: 9, y: 0, to: 'route1', tx: 9, ty: 16, dir: 'up', need: 'starter', block: 'kidBlock' },
       { x: 10, y: 0, to: 'route1', tx: 10, ty: 16, dir: 'up', need: 'starter', block: 'kidBlock' },
     ],
-    signs: { '5,7': ['PINECREST TOWN', 'Every legend starts with 1 + 1.'] },
+    signs: { '5,7': ['PINECREST TOWN', 'Every legend starts with 1 + 1.'], '4,12': ['PORTAL SHRINE', 'Portals to every world wait inside.'] },
   },
 
   route1: {
@@ -363,6 +384,7 @@ const MAPS = {
       { x: 9, y: 1, dir: 'down', look: 'keeper', script: 'boss', arg: 'cave' },
       { x: 4, y: 15, dir: 'right', look: 'miner', script: 'caveKid' },
     ],
+    portals: [{ x: 11, y: 1, world: 2, show: 'badge5' }],
     warps: [
       back(9, 17, 'snow', 9, 1),
       back(10, 17, 'snow', 10, 1),
@@ -403,6 +425,30 @@ const MAPS = {
     ],
     npcs: [{ x: 7, y: 3, dir: 'left', look: 'prof', script: 'prof' }],
     warps: [{ x: 4, y: 7, to: 'town', tx: 15, ty: 4, dir: 'down' }],
+    signs: {},
+  },
+
+  // Five portals in a ring, one for each world. Locked ones are dark.
+  shrine: {
+    name: 'Portal Shrine',
+    border: ' ',
+    tiles: [
+      'xxxxxxxxxxx',
+      'xbjjjjjjjbx',
+      'xjjjjjjjjjx',
+      'xjjjjjjjjjx',
+      'xjjjjjjjjjx',
+      'xjjjjjjjjjx',
+      'xjjjjjjjjjx',
+      'xjjjjjjjjjx',
+      'xxxxxmxxxxx',
+    ],
+    npcs: [{ x: 5, y: 4, dir: 'down', look: 'sage', script: 'sage' }],
+    warps: [{ x: 5, y: 8, to: 'town', tx: 2, ty: 12, dir: 'down' }],
+    portals: [
+      { x: 5, y: 2, world: 1 }, { x: 8, y: 3, world: 2 }, { x: 7, y: 6, world: 3 },
+      { x: 3, y: 6, world: 4 }, { x: 2, y: 3, world: 5 },
+    ],
     signs: {},
   },
 

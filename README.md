@@ -33,6 +33,8 @@ A pixel-art adventure for Kindergarten to Grade 5 in the style of classic handhe
   Every boss opens with the Legend for the skill you need most. Wild Legends get stronger in each new area.
 - **33 Legends:** 3 buddies, plus 5 wild Legends and a boss Legend in every area. Each area has its own Legend for adding, taking away, comparing, equal groups and sharing.
 - **Map:** MENU → Map shows the world and lets you quick-travel to any place you've visited.
+- **Worlds and the Portal Shrine:** Pinecrest Valley is World 1 (Route 1 to Glowcap Cave). Beating Keeper Onyx wakes a portal to the next world, and the Portal Shrine in Pinecrest Town (purple roof) has a portal to all five worlds. Sleeping portals are dark until the world before them is beaten. Worlds 2–5 (Whisperwood, Brightport City, Coral Deep, Sky Isles: working names) are still being built.
+- **Badge colors:** each badge's color shows the grade it was won at: Bronze (K), Silver (1), Gold (2), Emerald (3), Sapphire (4), Crystal (5). Start a harder grade and every boss offers a rematch to upgrade its badge.
 - The Rest Center (pink roof) heals your team. If your whole team needs a rest, you wake up there. Nothing is lost.
 
 **Controls:** on-screen D-pad, A, B and MENU buttons, or the keyboard: arrows/WASD to move, Z or Space for A, X for B, Enter for the menu. During a question, type the number and press Enter (or 1–4 to pick a choice), and press B or H for a hint.
@@ -103,5 +105,7 @@ To publish it, push to GitHub and turn on GitHub Pages for the `main` branch (Se
 - `tools/layout-qc.js`, `tools/flow-qc.js`: in-game checks for question layout and the hint / Teach me path
 
 **Quality checks:** serve the folder, open `tools/qc.html` and read the report (it runs about 33,000 checks). For the in-game checks, open the game with `?dev`, then in the browser console run `await import('./tools/layout-qc.js'); await layoutQC()` (try phone and tablet sizes) or `await import('./tools/flow-qc.js'); await flowQC()`.
+
+**Dev unlock:** open the game with `?dev` in the address (for example https://samw90.github.io/MathQuestLegends/?dev). MENU → Settings then shows *Dev: unlock everything* (all badges, places, Legends and portals, plus a level 30 team) and *Dev: go to Portal Shrine*. Unlocking changes the save, so export it first to keep a copy.
 
 For testing, open the game with `?dev` in the address to get `MQL.ask(MQL.MathEngine.make('sub-100', 2))` in the browser console, or `?dev&quiz=sub-100&grade=2` to jump straight into practice questions (handy on a phone or simulator).
