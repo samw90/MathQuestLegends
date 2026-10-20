@@ -608,7 +608,10 @@
         grid.scrollIntoView({ block: 'nearest' });
       };
 
-      const grid = el('div', 'answers' + (p.choices.length === 4 ? ' four' : p.choices.length === 3 ? ' three' : ' two'));
+      // Long answers (like 102,000) go 2 x 2 with smaller text so they always fit.
+      const longest = Math.max(...p.choices.map((c) => MathEngine.show(c).length));
+      const cols = p.choices.length === 4 && longest > 3 ? 'two' : p.choices.length === 4 ? 'four' : p.choices.length === 3 ? 'three' : 'two';
+      const grid = el('div', `answers ${cols}${longest >= 9 ? ' xlong' : longest >= 6 ? ' long' : ''}`);
       const foot = el('div', 'qfoot');
       const hintBtn = el('button', 'hintbtn', '💡 Hint');
       hintBtn.type = 'button';
@@ -807,7 +810,8 @@
         note.textContent = '';
         next.hidden = true;
         grid.textContent = '';
-        grid.className = 'answers ' + (s.choices.length === 2 ? 'two' : 'three');
+        const longest = Math.max(...s.choices.map((c) => MathEngine.show(c).length));
+        grid.className = 'answers ' + (s.choices.length === 2 || longest >= 7 ? 'two' : 'three') + (longest >= 9 ? ' xlong' : longest >= 6 ? ' long' : '');
         box.scrollTop = 0;
         btns = s.choices.map((c, i) => {
           const b = el('button', 'ans', MathEngine.show(c));

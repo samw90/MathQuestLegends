@@ -48,7 +48,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  padding: max(12px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  /* Extra room below the status bar / notch so nothing sits under it on a home-screen app. */
+  padding: max(12px, calc(env(safe-area-inset-top) + 18px)) 16px max(16px, env(safe-area-inset-bottom));
   background: linear-gradient(var(--shell), var(--shell-dark));
 }
 
@@ -299,6 +300,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   cursor: pointer;
   padding: 0 1cqw;
 }
+.quiz, .teach { overflow-x: hidden; }
 .quiz .q { font-size: 8.6cqw; font-weight: 900; text-align: center; line-height: 1.15; }
 .quiz .q.long { font-size: 4.8cqw; font-weight: 800; text-align: left; line-height: 1.25; }
 
@@ -324,8 +326,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .answers.three { grid-template-columns: 1fr 1fr 1fr; }
 .answers.four { grid-template-columns: repeat(4, 1fr); }
+/* Big numbers (102,000) don't fit four across: the game switches to 2 x 2 and shrinks the text. */
+.answers.long, .answers.xlong { gap: 1.4cqw; }
+.answers.long .ans { font-size: 6cqw; padding: .8cqw 0; }
+.answers.xlong .ans { font-size: 4.8cqw; padding: .8cqw 0; }
 .ans {
   all: unset;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
   text-align: center;
   font-size: 7.4cqw;
   font-weight: 900;
@@ -376,7 +385,7 @@ body.kb .ans.sel { outline: .9cqw solid var(--accent); outline-offset: .3cqw; }
 .vis.baseten .grp.x .rod, .vis.baseten .grp.x .cube { background: #f6a1a1; }
 .vis.baseten .sign { font-size: 7cqw; font-weight: 900; }
 
-.vis.numberline { padding: 1cqw 4cqw 6.5cqw; }
+.vis.numberline { padding: 1cqw 8cqw 5.4cqw; }
 .vis.numberline .track { position: relative; width: 100%; height: .8cqw; background: var(--ink); border-radius: 1cqw; margin-top: 2cqw; }
 .vis.numberline .tick { position: absolute; top: -1.2cqw; width: .5cqw; height: 3.2cqw; margin-left: -.25cqw; background: var(--ink); }
 .vis.numberline .tick.end { height: 4cqw; top: -1.6cqw; }
@@ -385,7 +394,7 @@ body.kb .ans.sel { outline: .9cqw solid var(--accent); outline-offset: .3cqw; }
 .vis.numberline .mark.q { background: var(--gold); }
 /* The number being asked about sits above the line so it never collides with end labels. */
 .vis.numberline .mark.q b { top: auto; bottom: 4cqw; }
-.vis.numberline { padding-top: 6cqw; }
+.vis.numberline { padding-top: 5cqw; }
 .vis.numberline .mark b { position: absolute; top: 4cqw; left: 50%; transform: translateX(-50%); font-size: 3.6cqw; white-space: nowrap; }
 .vis.bars { flex-direction: column; gap: 1cqw; align-items: stretch; padding: 0 3cqw; }
 .vis.bars .bar { display: flex; align-items: center; gap: 1.5cqw; }
