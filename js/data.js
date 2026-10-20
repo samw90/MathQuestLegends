@@ -98,6 +98,29 @@ const SPECIES = {
   anchorca: { name: 'Anchorca', hp: 46, atk: 14, family: 'mixed', moves: ['Anchor Drop', 'Wave'], dex: 'Skipper Jo\'s partner. An orca with an anchor tattoo.' },
   gearadon: { name: 'Gearadon', hp: 46, atk: 15, family: 'mixed', moves: ['Gear Grind', 'Tick Tock'], dex: 'Mayor Bell\'s partner. Made of gears that turn just right.' },
   brightwing: { name: 'Brightwing', hp: 50, atk: 15, family: 'mixed', rarity: 'world', moves: ['Neon Blaze', 'City Lights'], dex: 'The Legend of Brightport City. It lights up the whole skyline.' },
+
+  // ---------- World 4: Coral Deep
+  clownplus: { name: 'Clownplus', hp: 22, atk: 12, family: 'add', moves: ['Stripe Swish', 'Fin Flip'], dex: 'Its stripes look like plus signs. It adds up its friends.' },
+  barnaplus: { name: 'Barnaplus', hp: 30, atk: 10, family: 'add', moves: ['Cling', 'Shell Shield'], dex: 'Barnacles keep sticking to it. One more, one more!' },
+  anglerplus: { name: 'Anglerplus', hp: 26, atk: 12, family: 'add', moves: ['Lure Light', 'Big Bite'], dex: 'Its glowing lure adds one more light at a time.' },
+  urchless: { name: 'Urchless', hp: 24, atk: 12, family: 'sub', moves: ['Spine Shot', 'Roll'], dex: 'It shoots spines away. Count how many are left!' },
+  squidrop: { name: 'Squidrop', hp: 24, atk: 12, family: 'sub', moves: ['Ink Drop', 'Tentacle Tap'], dex: 'Every puff of ink means one less drop in its tank.' },
+  eelaway: { name: 'Eelaway', hp: 24, atk: 13, family: 'sub', moves: ['Zap', 'Slither'], dex: 'It zips away so fast, there are fewer each time you look.' },
+  puffbig: { name: 'Puffbig', hp: 26, atk: 11, family: 'compare', moves: ['Puff Up', 'Spike Bump'], dex: 'It puffs up big to show which number is bigger.' },
+  seamore: { name: 'Seamore', hp: 22, atk: 12, family: 'compare', moves: ['Tail Curl', 'Bubble Kiss'], dex: 'A seahorse that always swims toward the bigger number.' },
+  lanternfin: { name: 'Lanternfin', hp: 24, atk: 12, family: 'compare', moves: ['Lantern Glow', 'Dark Dart'], dex: 'Its lantern shines brighter on the bigger number.' },
+  schoolio: { name: 'Schoolio', hp: 24, atk: 12, family: 'mult', moves: ['School Swirl', 'Fin Wave'], dex: 'Little fish swim together in equal groups.' },
+  prawnpairs: { name: 'Prawnpairs', hp: 22, atk: 12, family: 'mult', moves: ['Pair Pinch', 'Hop Back'], dex: 'Two little prawns who do everything in pairs.' },
+  mantarray: { name: 'Mantarray', hp: 30, atk: 12, family: 'mult', moves: ['Glide', 'Spot Flash'], dex: 'A manta ray with spots in neat rows. An array!' },
+  starsplit: { name: 'Starsplit', hp: 24, atk: 12, family: 'div', moves: ['Arm Spin', 'Star Stick'], dex: 'A starfish that shares its five arms fairly.' },
+  clamshare: { name: 'Clamshare', hp: 28, atk: 11, family: 'div', moves: ['Clam Snap', 'Pearl Toss'], dex: 'It opens up to share its pearls in equal groups.' },
+  narwhalf: { name: 'Narwhalf', hp: 28, atk: 12, family: 'div', moves: ['Horn Split', 'Ice Splash'], dex: 'A narwhal whose horn splits things exactly in half.' },
+  coralord: { name: 'Coralord', hp: 46, atk: 14, family: 'mixed', moves: ['Reef Wall', 'Color Burst'], dex: 'Diver Dot\'s partner. A whole coral reef that can walk.' },
+  kelpsquatch: { name: 'Kelpsquatch', hp: 48, atk: 14, family: 'mixed', moves: ['Kelp Wrap', 'Big Stomp'], dex: 'Ranger Kip\'s partner. Shy, hairy and covered in kelp.' },
+  krakenumb: { name: 'Krakenumb', hp: 50, atk: 15, family: 'mixed', moves: ['Tentacle Storm', 'Ink Cloud'], dex: 'Captain Barnacle\'s partner. It counts with eight long arms.' },
+  abyssaur: { name: 'Abyssaur', hp: 50, atk: 15, family: 'mixed', moves: ['Deep Roar', 'Glow Bite'], dex: 'Explorer Nyx\'s partner. A dinosaur from the deepest sea.' },
+  tritonix: { name: 'Tritonix', hp: 52, atk: 16, family: 'mixed', moves: ['Trident Strike', 'Tide Turn'], dex: 'Oracle Pearl\'s partner. Guardian of the Sunken Temple.' },
+  leviathorn: { name: 'Leviathorn', hp: 56, atk: 16, family: 'mixed', rarity: 'world', moves: ['Tidal Crash', 'Coral Crown'], dex: 'The Legend of Coral Deep. A sea serpent with a crown of coral.' },
   // ---------- Grade ultra rares: 3 per grade. Each waits in one spot and wakes up
   // when you're getting strong at its skill (see SPECIALS below).
   glimmerdot: { name: 'Glimmerdot', hp: 30, atk: 11, family: 'compare', rarity: 'ultra', moves: ['Dot Dazzle', 'Glow Flutter'], dex: 'A rare ladybug with exactly ten dots. It glows when you count them all.' },
@@ -147,11 +170,17 @@ const AREAS = {
   subway: { name: 'Subway Station', world: 3, base: 54, boss: 'metrodrake', species: { add: 'taxicub', sub: 'mouseless', compare: 'neonewt', mult: 'traintrio', div: 'slicerat' } },
   harbor: { name: 'Harbor Docks', world: 3, base: 58, boss: 'anchorca', species: { add: 'crabplus', sub: 'seaslurp', compare: 'lighthousey', mult: 'traintrio', div: 'pelishare' } },
   clocktower: { name: 'Clock Tower Square', world: 3, base: 62, boss: 'gearadon', species: { add: 'taxicub', sub: 'raccminus', compare: 'lampling', mult: 'bricklet', div: 'balloonsplit' } },
+  reef: { name: 'Rainbow Reef', world: 4, base: 66, boss: 'coralord', species: { add: 'clownplus', sub: 'urchless', compare: 'puffbig', mult: 'schoolio', div: 'starsplit' } },
+  kelp: { name: 'Kelp Forest', world: 4, base: 70, boss: 'kelpsquatch', species: { add: 'clownplus', sub: 'squidrop', compare: 'seamore', mult: 'schoolio', div: 'clamshare' } },
+  wreck: { name: 'Sunken Ship', world: 4, base: 74, boss: 'krakenumb', species: { add: 'barnaplus', sub: 'urchless', compare: 'seamore', mult: 'prawnpairs', div: 'clamshare' } },
+  trench: { name: 'Dark Trench', world: 4, base: 78, boss: 'abyssaur', species: { add: 'anglerplus', sub: 'squidrop', compare: 'lanternfin', mult: 'prawnpairs', div: 'narwhalf' } },
+  temple: { name: 'Sunken Temple', world: 4, base: 82, boss: 'tritonix', species: { add: 'anglerplus', sub: 'eelaway', compare: 'puffbig', mult: 'mantarray', div: 'starsplit' } },
 };
 const WORLD1_AREAS = ['meadow', 'shore', 'canyon', 'snow', 'cave'];
 const WORLD2_AREAS = ['forest', 'river', 'swamp', 'treetops', 'waterfall'];
 const WORLD3_AREAS = ['park', 'rooftops', 'subway', 'harbor', 'clocktower'];
-const AREA_ORDER = [...WORLD1_AREAS, ...WORLD2_AREAS, ...WORLD3_AREAS];
+const WORLD4_AREAS = ['reef', 'kelp', 'wreck', 'trench', 'temple'];
+const AREA_ORDER = [...WORLD1_AREAS, ...WORLD2_AREAS, ...WORLD3_AREAS, ...WORLD4_AREAS];
 
 // Every Legend once, in the order you meet them.
 // Every Legend once, in the order you meet them, with the rare ones at the end.
@@ -251,6 +280,36 @@ const BOSSES = {
     win: ['Right on time! The Clockwork Badge is yours.', 'You\'ve beaten all of Brightport City!'],
     after: ['The city is proud of you, {name}!', 'A portal glows by the tower.'],
   },
+  reef: {
+    name: 'Diver Dot', badge: 'Coral Badge', flag: 'badge16',
+    intro: ['Blub! I mean, hi! I\'m Diver Dot.', 'The reef is full of colors and puzzles.', 'Let\'s dive in!'],
+    win: ['Fin-tastic! The Coral Badge is yours.', 'The path to the Kelp Forest is open.'],
+    after: ['Keep swimming, {name}!', 'The Kelp Forest is north.'],
+  },
+  kelp: {
+    name: 'Ranger Kip', badge: 'Kelp Badge', flag: 'badge17',
+    intro: ['Shh, the kelp is swaying.', 'I\'m Ranger Kip. I look after this forest.', 'Show me your calm thinking!'],
+    win: ['Wonderful! The Kelp Badge is yours.', 'The way to the Sunken Ship is open.'],
+    after: ['Sway with the kelp, {name}!', 'The Sunken Ship is north.'],
+  },
+  wreck: {
+    name: 'Captain Barnacle', badge: 'Treasure Badge', flag: 'badge18',
+    intro: ['Arr! Welcome to my old ship!', 'I\'m Captain Barnacle.', 'My treasure is puzzles. Can you win it?'],
+    win: ['Treasure found! The Treasure Badge is yours.', 'The way down to the Dark Trench is open.'],
+    after: ['Arr, well done, {name}!', 'The Dark Trench is north. Bring a light!'],
+  },
+  trench: {
+    name: 'Explorer Nyx', badge: 'Abyss Badge', flag: 'badge19',
+    intro: ['Whoa, you found me down here!', 'I\'m Explorer Nyx.', 'Let\'s see if your mind shines in the dark!'],
+    win: ['Brilliant! The Abyss Badge is yours.', 'The Sunken Temple is open now.'],
+    after: ['Shine on, {name}!', 'The Sunken Temple is north.'],
+  },
+  temple: {
+    name: 'Oracle Pearl', badge: 'Pearl Badge', flag: 'badge20',
+    intro: ['I saw you coming in a dream.', 'I\'m Oracle Pearl.', 'Show me everything the sea has taught you!'],
+    win: ['Wise and brave! The Pearl Badge is yours.', 'You\'ve beaten all of Coral Deep!'],
+    after: ['The sea sings your name, {name}!', 'A portal glows in the temple.'],
+  },
 };
 const BADGE_FLAGS = AREA_ORDER.map((a) => BOSSES[a].flag);
 
@@ -268,7 +327,7 @@ const WORLDS = [
   { id: 1, name: 'Pinecrest Valley', color: '#5fb84a', areas: WORLD1_AREAS, start: { map: 'route1', x: 9, y: 16, dir: 'up' }, done: 'badge5' },
   { id: 2, name: 'Whisperwood', color: '#2f8f5a', areas: WORLD2_AREAS, start: { map: 'forest', x: 9, y: 16, dir: 'up' }, done: 'badge10' },
   { id: 3, name: 'Brightport City', color: '#e0a030', areas: WORLD3_AREAS, start: { map: 'park', x: 9, y: 16, dir: 'up' }, done: 'badge15' },
-  { id: 4, name: 'Coral Deep', color: '#3ac4c8', areas: [], start: null, done: null },
+  { id: 4, name: 'Coral Deep', color: '#3ac4c8', areas: WORLD4_AREAS, start: { map: 'reef', x: 9, y: 16, dir: 'up' }, done: 'badge20' },
   { id: 5, name: 'Sky Isles', color: '#a07ae8', areas: [], start: null, done: null },
 ];
 
@@ -293,6 +352,11 @@ const LOOKS = {
   conductor: { id: 'conductor', hat: '#2a3a6a', hair: '#c8c8d4', shirt: '#2a3a6a', pants: '#2a3a6a' },
   skipper: { id: 'skipper', hat: '#f4f4f8', hair: '#a8582a', shirt: '#3a78c4', pants: '#f4f4f8', long: true },
   mayor: { id: 'mayor', hat: '#2b2840', hair: '#8a8a9a', shirt: '#7a3a5a', pants: '#2b2840' },
+  diver: { id: 'diver', hat: '#f2c84b', hair: '#3a2a1a', shirt: '#e8502a', pants: '#2a3a5a', long: true },
+  kip: { id: 'kip', hat: '#2f7a5a', hair: '#5a3418', shirt: '#4fa84a', pants: '#2a4a3a' },
+  barnacle: { id: 'barnacle', hat: '#2b2840', hair: '#e8e8f0', shirt: '#a8402a', pants: '#3a2a1a' },
+  nyx: { id: 'nyx', hat: '#f2c84b', hair: '#2b2840', shirt: '#3a4a6a', pants: '#2b2840', long: true },
+  oracle: { id: 'oracle', hair: '#f4f0ff', shirt: '#3ac4c8', pants: '#2a6a7a', long: true },
   sage: { id: 'sage', hair: '#f4f4f8', shirt: '#3ac4c8', pants: '#2a5a7a', long: true },
   warden: { id: 'warden', hat: '#2f6b3a', hair: '#7a4a2a', shirt: '#5a8a3a', pants: '#4a3a2a', long: true },
   fisher: { id: 'fisher', hat: '#f2c84b', hair: '#3a2a1a', shirt: '#3a78c4', pants: '#5a4a3a' },
@@ -318,13 +382,16 @@ const LOOKS = {
 //           ι brick  κ windows  λ roof  μ air vent  ν roof garden  ξ subway tiles  ο rails
 //           σ platform  τ puddles  υ dock  φ harbor water  χ crates  ψ nets  Γ cobbles
 //           Δ tower wall  Λ ivy  Ξ lamppost
+//   sea     § sand  ð sand trail  ¢ anemones  ¤ coral  £ rock  µ kelp  ¥ kelp wall  © ship deck
+//           ® hull  ° barrels  ± seaweed  ¶ trench floor  Ø glow plants  ¿ vent  ß dark rock
+//           Æ temple floor  Þ glyph tiles  Ð temple pillar
 //   shrine  j stone floor  Y standing stone  (portals are drawn on top from each map's `portals` list)
 //   bosses  four house styles, each roof / roof with emblem / wall / door:
 //           cabin D E N S   tent < > ? /   tower # ! [ ]   dome a y $ +
 //   inside  x wall  o floor  b shelf  t table  1/2/3 buddy beds  c counter  m exit mat
-const SOLID = new Set('T~srRCVwWxbt123c PKMAQXF-zJZU|45678Y#![]DENS<>?/ay$+ζηθικμοφχΔΞ'.split(''));
+const SOLID = new Set('T~srRCVwWxbt123c PKMAQXF-zJZU|45678Y#![]DENS<>?/ay$+ζηθικμοφχΔΞ¤£¥®°¿ßÐ'.split(''));
 // Legends hide in these.
-const ENCOUNTER = new Set([',', ';', '"', '^', '%', 'e', 'L', 'v', 'l', '&', 'ε', 'ν', 'τ', 'ψ', 'Λ']);
+const ENCOUNTER = new Set([',', ';', '"', '^', '%', 'e', 'L', 'v', 'l', '&', 'ε', 'ν', 'τ', 'ψ', 'Λ', '¢', 'µ', '±', 'Ø', 'Þ']);
 
 // Rest Center doors take you to the shared Rest Center and bring you back.
 const centerDoor = (x, y) => ({ x, y, to: 'center', tx: 4, ty: 5, dir: 'up', ret: [x, y + 1] });
@@ -999,6 +1066,205 @@ const MAPS = {
     signs: { '11,10': ['CLOCK TOWER SQUARE', 'The clock strikes every hour.'] },
   },
 
+  // ---------- World 4: Coral Deep
+  reef: {
+    name: 'Rainbow Reef',
+    area: 'reef',
+    border: '¤',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      '¤¤¤¤¤¤¤¤¤gG¤¤¤¤¤¤¤¤¤',
+      '¤§§§§aya§ðð§§§§§§§§¤',
+      '¤§§§§$+$§ðð§CC4CC§§¤',
+      '¤§§§§§§§§ðð§wWdWw§§¤',
+      '¤§§§§§§§§ðð§§§ð§§£§¤',
+      '¤§§§§§§§£ðððððð§§§§¤',
+      '¤§¢¢¢¢¢¢§ðð§¢¢¢¢¢¢§¤',
+      '¤§¢¢¢¢¢¢§ðð§¢¢¢¢¢¢§¤',
+      '¤§¢¢¢¢¢¢§ðð§¢¢¢¢¢¢§¤',
+      '¤§§§§§§s§ðð¤§§§§§§§¤',
+      '¤§§£§§§§§ðð§§§§§¤§§¤',
+      '¤§¢¢¢¢¢§§ðð§§¢¢¢¢¢§¤',
+      '¤§¢¢¢¢¢§§ðð§§¢¢¢¢¢§¤',
+      '¤§¢¢¢¢¢§§ðð§§¢¢¢¢¢§¤',
+      '¤¢¢¢§§§§§ðð§§§§§§§§¤',
+      '¤¢¢¢§§§§§ðð§§§§§§§§¤',
+      '¤§§§§§¤§§ðð§§£§§§§§¤',
+      '¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'diver', script: 'boss', arg: 'reef' },
+      { x: 15, y: 9, dir: 'left', look: 'swimmer', script: 'reefKid' },
+    ],
+    warps: [
+      gate(9, 0, 'kelp', 9, 16, 'badge16'),
+      gate(10, 0, 'kelp', 10, 16, 'badge16'),
+      centerDoor(14, 3),
+    ],
+    portals: [{ x: 12, y: 16, world: 1, home: true }],
+    signs: { '7,9': ['RAINBOW REEF', 'Swim gently. Coral is alive!'] },
+  },
+
+  kelp: {
+    name: 'Kelp Forest',
+    area: 'kelp',
+    border: '¥',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      '¥¥¥¥¥¥¥¥¥gG¥¥¥¥¥¥¥¥¥',
+      '¥§§§§DED§ðð§§§§§§§§¥',
+      '¥§§§§NSN§ðð§CC4CC§§¥',
+      '¥§§§§§§§§ðð§wWdWw§§¥',
+      '¥§§§§§§§§ðð§§§ð§£§§¥',
+      '¥§§§§§£§§ðððððð§§§§¥',
+      '¥µµµµ§§§§ðð§§§§µµµµ¥',
+      '¥µµµµ§§§§ðð£§§§µµµµ¥',
+      '¥µµµµ§§§§ðð§§§§§§§§¥',
+      '¥µµµµ§§§§ðð§§§µµµµµ¥',
+      '¥§§§§§§§£ððs§§µµµµµ¥',
+      '¥§£§§§§§§ðð§§§µµµµµ¥',
+      '¥§§µµµµµ§ðð§§§µµµµµ¥',
+      '¥§§µµµµµ§ðð§µµµµµ§§¥',
+      '¥§§µµµµµ§ðð§µµµµµ§§¥',
+      '¥§§µµµµµ§ðð§µµµµµ£§¥',
+      '¥§§§§§§£§ðð§§§§§§§§¥',
+      '¥¥¥¥¥¥¥¥¥ðð¥¥¥¥¥¥¥¥¥',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'kip', script: 'boss', arg: 'kelp' },
+      { x: 5, y: 10, dir: 'left', look: 'kid', script: 'kelpKid' },
+    ],
+    warps: [
+      back(9, 17, 'reef', 9, 1),
+      back(10, 17, 'reef', 10, 1),
+      gate(9, 0, 'wreck', 9, 16, 'badge17'),
+      gate(10, 0, 'wreck', 10, 16, 'badge17'),
+      centerDoor(14, 3),
+    ],
+    signs: { '11,10': ['KELP FOREST', 'Kelp grows taller than a house!'] },
+  },
+
+  wreck: {
+    name: 'Sunken Ship',
+    area: 'wreck',
+    border: '®',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      '®®®®®®®®®gG®®®®®®®®®',
+      '®©©©©<><©ðð©©©©©©©©®',
+      '®©©©©?/?©ðð©CC4CC©©®',
+      '®©©©©©©©©ðð©wWdWw©©®',
+      '®©©©©©©©©ðð©©©ð©©°©®',
+      '®©©©©°©s©ðððððð©©©©®',
+      '®±±±±©©©©ðð©©©©±±±±®',
+      '®±±±±©©©©ðð©©©©±±±±®',
+      '®±±±±©©©©ðð©©©°±±±±®',
+      '®®®®®®®®®ðð®®®®®®®®®',
+      '®©±±±±±±±ðð±±±±±±±©®',
+      '®©±±±±±±±ðð±±±±±±±©®',
+      '®©±±±±±±±ðð±±±±±±±©®',
+      '®©±±±±±±±ðð±±±±±±±©®',
+      '®©±±±±±±±ðð±±±±±±±©®',
+      '®©°©©©©©°ðð°©©©©©©©®',
+      '®©©©©©©©©ðð©©©©©©°©®',
+      '®®®®®®®®®ðð®®®®®®®®®',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'barnacle', script: 'boss', arg: 'wreck' },
+      { x: 13, y: 8, dir: 'left', look: 'hiker', script: 'wreckKid' },
+    ],
+    warps: [
+      back(9, 17, 'kelp', 9, 1),
+      back(10, 17, 'kelp', 10, 1),
+      gate(9, 0, 'trench', 9, 16, 'badge18'),
+      gate(10, 0, 'trench', 10, 16, 'badge18'),
+      centerDoor(14, 3),
+    ],
+    signs: { '7,5': ['SUNKEN SHIP', 'This ship sank long ago.'] },
+  },
+
+  trench: {
+    name: 'Dark Trench',
+    area: 'trench',
+    border: 'ß',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      'ßßßßßßßßßgGßßßßßßßßß',
+      'ß¶¶¶¶#!#¶ðð¶¶¶¶¶¶¶¶ß',
+      'ß¶¶¶¶[][¶ðð¶CC4CC¶¶ß',
+      'ß¶¶¶¶¶¶¶¶ðð¶wWdWw¶¶ß',
+      'ß¶¶¶¶¶¶¶¶ðð¶¶¶ð¶¶¿¶ß',
+      'ß¶¶¶¶¶¶¶¿ðððððð¶¶¶¶ß',
+      'ß¶ØØØØØØ¶ðð¶ØØØØØØ¶ß',
+      'ß¶ØØØØØØ¶ðð¶ØØØØØØ¶ß',
+      'ß¶ØØØØØØ¶ðð¶ØØØØØØ¶ß',
+      'ß¶¶¶¶¶¶s¶ðð¿¶¶¶¶¶¶¶ß',
+      'ß¶¶¿¶¶¶¶¶ðð¶¶¶¶¶¿¶¶ß',
+      'ß¶ØØØØØ¶¶ðð¶¶ØØØØØ¶ß',
+      'ß¶ØØØØØ¶¶ðð¶¶ØØØØØ¶ß',
+      'ß¶ØØØØØ¶¶ðð¶¶ØØØØØ¶ß',
+      'ßØØØ¶¶¶¶¶ðð¶¶¶¶¶¶¶¶ß',
+      'ßØØØ¶¶¶¶¶ðð¶¶¶¶¶¶¶¶ß',
+      'ß¶¶¶¶¶¿¶¶ðð¶¶¿¶¶¶¶¶ß',
+      'ßßßßßßßßßððßßßßßßßßß',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'nyx', script: 'boss', arg: 'trench' },
+      { x: 15, y: 9, dir: 'left', look: 'girl', script: 'trenchKid' },
+    ],
+    warps: [
+      back(9, 17, 'wreck', 9, 1),
+      back(10, 17, 'wreck', 10, 1),
+      gate(9, 0, 'temple', 9, 16, 'badge19'),
+      gate(10, 0, 'temple', 10, 16, 'badge19'),
+      centerDoor(14, 3),
+    ],
+    signs: { '7,9': ['DARK TRENCH', 'It\'s dark, but the plants glow!'] },
+  },
+
+  temple: {
+    name: 'Sunken Temple',
+    area: 'temple',
+    border: 'Ð',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      'ÐÐÐÐÐÐÐÐÐÐÐÐÐÐÐÐÐÐÐÐ',
+      'ÐÆÆÆÆayaÆððÆÆÆÆÆÆÆÆÐ',
+      'ÐÆÆÆÆ$+$ÆððÆCC4CCÆÆÐ',
+      'ÐÆÆÆÆÆÆÆÆððÆwWdWwÆÆÐ',
+      'ÐÆÆÆÆÆÆÆÆððÆÆÆðÆÐÆÆÐ',
+      'ÐÆÆÆÆÆÐÆÆððððððÆÆÆÆÐ',
+      'ÐÞÞÞÞÆÆÆÆððÆÆÆÆÞÞÞÞÐ',
+      'ÐÞÞÞÞÆÆÆÆððÐÆÆÆÞÞÞÞÐ',
+      'ÐÞÞÞÞÆÆÆÆððÆÆÆÆÆÆÆÆÐ',
+      'ÐÞÞÞÞÆÆÆÆððÆÆÆÞÞÞÞÞÐ',
+      'ÐÆÆÆÆÆÆÆÐððsÆÆÞÞÞÞÞÐ',
+      'ÐÆÐÆÆÆÆÆÆððÆÆÆÞÞÞÞÞÐ',
+      'ÐÆÆÞÞÞÞÞÆððÆÆÆÞÞÞÞÞÐ',
+      'ÐÆÆÞÞÞÞÞÆððÆÞÞÞÞÞÆÆÐ',
+      'ÐÆÆÞÞÞÞÞÆððÆÞÞÞÞÞÆÆÐ',
+      'ÐÆÆÞÞÞÞÞÆððÆÞÞÞÞÞÐÆÐ',
+      'ÐÆÆÆÆÆÆÐÆððÆÆÆÆÆÆÆÆÐ',
+      'ÐÐÐÐÐÐÐÐÐððÐÐÐÐÐÐÐÐÐ',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'oracle', script: 'boss', arg: 'temple' },
+      { x: 5, y: 10, dir: 'left', look: 'swimmer', script: 'templeKid' },
+    ],
+    warps: [
+      back(9, 17, 'trench', 9, 1),
+      back(10, 17, 'trench', 10, 1),
+      centerDoor(14, 3),
+    ],
+    portals: [{ x: 12, y: 1, world: 5, show: 'badge20' }],
+    signs: { '11,10': ['SUNKEN TEMPLE', 'The old glyphs are math puzzles!'] },
+  },
+
   // An open clearing west of town: standing stones in a ring around five portals.
   shrine: {
     name: 'Portal Shrine',
@@ -1069,6 +1335,7 @@ const SPECIALS = [
   { id: 'equalion', kind: 'world', world: 1, need: 'badge5', map: 'cave', x: 18, y: 3 },
   { id: 'whisperstag', kind: 'world', world: 2, need: 'badge10', map: 'waterfall', x: 18, y: 15 },
   { id: 'brightwing', kind: 'world', world: 3, need: 'badge15', map: 'clocktower', x: 2, y: 16 },
+  { id: 'leviathorn', kind: 'world', world: 4, need: 'badge20', map: 'temple', x: 2, y: 16 },
   { id: 'infinix', kind: 'mythical', map: 'shrine', x: 6, y: 3 },
 ];
 
@@ -1089,4 +1356,9 @@ const TRAVEL = [
   { world: 3, map: 'subway', label: 'Subway Station', mx: 116, my: 80 },
   { world: 3, map: 'harbor', label: 'Harbor Docks', mx: 52, my: 44 },
   { world: 3, map: 'clocktower', label: 'Clock Tower Square', mx: 96, my: 14 },
+  { world: 4, map: 'reef', label: 'Rainbow Reef', mx: 80, my: 116 },
+  { world: 4, map: 'kelp', label: 'Kelp Forest', mx: 40, my: 96 },
+  { world: 4, map: 'wreck', label: 'Sunken Ship', mx: 116, my: 72 },
+  { world: 4, map: 'trench', label: 'Dark Trench', mx: 52, my: 42 },
+  { world: 4, map: 'temple', label: 'Sunken Temple', mx: 96, my: 14 },
 ];

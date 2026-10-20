@@ -1316,6 +1316,11 @@
     subwayKid: () => say(['Traintrio has cars in groups of three.', 'Count by 3s to count the cars!']),
     harborKid: () => say(['Lighthousey shines on the bigger number.', 'Look at the biggest place first!']),
     clocktowerKid: () => say(['Balloonsplit splits into equal balloons.', 'Sharing equally is dividing!']),
+    reefKid: () => say(['Schoolio swims in groups of fish.', '4 groups of 5 fish is 20 fish!']),
+    kelpKid: () => say(['Seamore is a seahorse who picks the bigger number.', 'Look at the biggest place first!']),
+    wreckKid: () => say(['Prawnpairs always swim in pairs.', 'Doubles are pairs: 6 + 6 is 12!']),
+    trenchKid: () => say(['Narwhalf splits things in half.', 'Half of 20 is 10!']),
+    templeKid: () => say(['Mantarray has spots in neat rows.', 'Rows times spots in each row tells how many!']),
     waterfallKid: () => say(['The falls are loud, so think quietly.', 'Mistsplit splits into drops that are all the same size.']),
 
     // The way to the next area is closed until you beat this area's boss.
@@ -1468,6 +1473,11 @@
     swamp: ['#e6eadc', '#c4cca8', '#6a8a4a', '#8aaa6a'],
     treetops: ['#e8f6ff', '#cfe8b8', '#a0703a', '#c89a5a'],
     waterfall: ['#e6f2fa', '#cfdce6', '#7a8a98', '#a8b8c4'],
+    reef: ['#d8f4f8', '#b8e4ec', '#e8a868', '#f2c88a'],
+    kelp: ['#d4f0e4', '#b4dcc8', '#5a9a5a', '#7cb87a'],
+    wreck: ['#d8e8f0', '#b8c8d4', '#8a6a4a', '#a8885a'],
+    trench: ['#1e2a40', '#2a3a58', '#3a5a7a', '#5a7aa0'],
+    temple: ['#e0ecf0', '#c4d4dc', '#7a9aa8', '#9ab8c4'],
     park: ['#f2f8ea', '#d8ecc4', '#7cc060', '#a0d884'],
     rooftops: ['#e8f0fa', '#c8ccd8', '#8a8a9a', '#a8a8b8'],
     subway: ['#e4e4ec', '#c8c8d4', '#6a6a7a', '#8a8a9a'],
@@ -1967,6 +1977,16 @@
       'οοοοσοοοοο',
       'ιλλναλμλλι',
       'ζδεεαδηδδζ',
+    ],
+    4: [
+      'ÐÆÆÞÆÆÞÆÆÐ',
+      'ßØ¶¶ð¶¶Øßß',
+      'ß¶Ø¶ð¶¿¶Øß',
+      '®©©±ð©©°©®',
+      '¥µµ§ð§µµ§¥',
+      '¥§µµð§§µµ¥',
+      '¤§¢¢ð§£¢§¤',
+      '¤¢§§ð§¢¢¤¤',
     ],
   };
   function drawWorldMap(world) {
