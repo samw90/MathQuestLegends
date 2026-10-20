@@ -31,9 +31,9 @@ A pixel-art adventure for Kindergarten to Grade 5 in the style of classic handhe
   | Glowcap Cave (crystal cave) | Keeper Onyx | Crystal Badge |
 
   Every boss opens with the Legend for the skill you need most. Wild Legends get stronger in each new area.
-- **53 Legends:** 3 buddies, 30 in Pinecrest Valley and 20 in Whisperwood. Every area has a Legend for adding, taking away, numbers, groups and sharing, plus a boss partner.
+- **137 Legends:** 3 buddies, 30 in Pinecrest Valley, 20 in each of the other four worlds, 18 grade ultra rares, 5 world Legends and 1 mythical. Every area has a Legend for adding, taking away, numbers, groups and sharing, plus a boss partner.
 - **Map:** MENU → Map shows the world and lets you quick-travel to any place you've visited.
-- **Worlds and the Portal Shrine:** Pinecrest Valley is World 1 (Route 1 to Glowcap Cave). Beating Keeper Onyx wakes a portal to World 2, and the Portal Shrine, a ring of standing stones down the path west of Pinecrest Town, has a portal to all five worlds. Sleeping portals are dark until the world before them is beaten. Worlds 3–5 (Brightport City, Coral Deep, Sky Isles: working names) are still being built.
+- **Worlds and the Portal Shrine:** Pinecrest Valley is World 1 (Route 1 to Glowcap Cave). Beating Keeper Onyx wakes a portal to World 2, and the Portal Shrine, a ring of standing stones down the path west of Pinecrest Town, has a portal to all five worlds. Sleeping portals are dark until the world before them is beaten. Every world's first area has a portal home to the shrine.
 - **World 2, Whisperwood:** Whisper Forest, Mirror River, Bogwater Swamp, Treetop Trail and Thunder Falls, with 20 new Legends and five bosses (Warden Fern, Fisher Finn, Marsh Mae, Scout Wren, Elder Brook). A portal by the forest entrance goes back to the shrine.
 
   | Puzzles | Whisper Forest | Mirror River | Bogwater Swamp | Treetop Trail | Thunder Falls |
@@ -44,12 +44,17 @@ A pixel-art adventure for Kindergarten to Grade 5 in the style of classic handhe
   | Groups | Mushgroup | Dragonfleet | Dragonfleet | Chimpairs | Chimpairs |
   | Sharing | Hedgeshare | Lilysplit | Lilysplit | Hedgeshare | Mistsplit |
   | Boss partner | Oakulus | Hippomath | Crocalc | Owlgebra | Cascoi |
-- **Rare Legends (74 Legends in all):**
+- **Rare Legends (137 Legends in all):**
   - *Ultra rares:* 18, three for each grade. Each waits at a fixed spot and appears only while playing its grade, once the player is getting strong at its skill (82% or better over at least 6 tries). For example, Glimmerdot on Route 1 shows up for Kindergarten counters, and Griffinity on Treetop Trail for Grade 5 two-digit multipliers. The Legendex says which skill wakes each one.
   - *World Legends:* Equalion waits in Glowcap Cave after the Crystal Badge, and Whisperstag at Thunder Falls after the Cascade Badge.
   - *Golden Legends:* answer 10 puzzles in a row on the first try and the next wild Legend is golden. Golden friends stay gold in your team and the Legendex.
   - *The mythical:* Infinix appears in the stone circle once every boss of a world has been beaten at every grade (K–5).
   - Rare and golden Legends always want to be friends once calmed. If you say no or run, they wait right where they were.
+- **Worlds 3–5:**
+  - *Brightport City:* Sunny Park, Rooftop Run, Subway Station, Harbor Docks, Clock Tower Square. Bosses: Gardener Rose, Courier Kai, Conductor Lou, Skipper Jo, Mayor Bell. World Legend: Brightwing.
+  - *Coral Deep:* Rainbow Reef, Kelp Forest, Sunken Ship, Dark Trench, Sunken Temple. Bosses: Diver Dot, Ranger Kip, Captain Barnacle, Explorer Nyx, Oracle Pearl. World Legend: Leviathorn.
+  - *Sky Isles:* Cloud Meadow, Windmill Isle, Rainbow Bridge, Storm Peak, Sky Castle. Bosses: Shepherd Sky, Miller Mo, Painter Iris, Captain Bolt, Queen Aria. World Legend: Celestail. Beating Queen Aria finishes the journey, and a portal by the castle leads home.
+  - Each world has 20 Legends of its own (15 wild, 5 boss partners). Wild Legends get stronger world by world.
 - **Battles:** the two Legends face each other, bounce on their toes and blink now and then.
 - **Boss houses:** every boss guards the door of a log cabin, striped tent, stone tower or domed hall. Rest Centers have a heart on the roof, Professor Pi's lab has a π badge, and your home has a teal roof and a chimney.
 - **Badge colors:** each badge's color shows the grade it was won at: Bronze (K), Silver (1), Gold (2), Emerald (3), Sapphire (4), Crystal (5). Start a harder grade and every boss offers a rematch to upgrade its badge.

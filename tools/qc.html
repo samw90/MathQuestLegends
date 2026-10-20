@@ -80,7 +80,7 @@ async function loadScriptNames() {
   const src = await (await fetch('../js/game.js')).text();
   const start = src.indexOf('const SCRIPTS = {');
   const block = src.slice(start, src.indexOf('\n  };', start));
-  SCRIPT_NAMES = new Set([...block.matchAll(/^ {4}(?:async )?([a-zA-Z]+)(?:\(|: )/gm)].map((m) => m[1]));
+  SCRIPT_NAMES = new Set([...block.matchAll(/^ {4}(?:async )?([a-zA-Z0-9]+)(?:\(|: )/gm)].map((m) => m[1]));
   return src;
 }
 

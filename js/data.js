@@ -121,6 +121,29 @@ const SPECIES = {
   abyssaur: { name: 'Abyssaur', hp: 50, atk: 15, family: 'mixed', moves: ['Deep Roar', 'Glow Bite'], dex: 'Explorer Nyx\'s partner. A dinosaur from the deepest sea.' },
   tritonix: { name: 'Tritonix', hp: 52, atk: 16, family: 'mixed', moves: ['Trident Strike', 'Tide Turn'], dex: 'Oracle Pearl\'s partner. Guardian of the Sunken Temple.' },
   leviathorn: { name: 'Leviathorn', hp: 56, atk: 16, family: 'mixed', rarity: 'world', moves: ['Tidal Crash', 'Coral Crown'], dex: 'The Legend of Coral Deep. A sea serpent with a crown of coral.' },
+
+  // ---------- World 5: Sky Isles
+  fluffadd: { name: 'Fluffadd', hp: 26, atk: 12, family: 'add', moves: ['Fluff Puff', 'Cloud Hop'], dex: 'A cloud sheep. Its wool grows one more puff at a time.' },
+  zapadd: { name: 'Zapadd', hp: 24, atk: 13, family: 'add', moves: ['Spark', 'Zap Dash'], dex: 'Every spark adds up. Zap, zap, zap makes three!' },
+  gustplus: { name: 'Gustplus', hp: 24, atk: 13, family: 'add', moves: ['Gust', 'Swirl'], dex: 'A wind spirit that gathers leaves: one more, one more!' },
+  drizzless: { name: 'Drizzless', hp: 24, atk: 13, family: 'sub', moves: ['Drizzle', 'Splash Down'], dex: 'A rain cloud that gets smaller with every drop.' },
+  plumeless: { name: 'Plumeless', hp: 26, atk: 13, family: 'sub', moves: ['Feather Drop', 'Wing Flap'], dex: 'It drops feathers as it flies. How many are left?' },
+  fadebow: { name: 'Fadebow', hp: 24, atk: 13, family: 'sub', moves: ['Color Fade', 'Arc Swing'], dex: 'A little rainbow that loses a color each time it hides.' },
+  kitebig: { name: 'Kitebig', hp: 24, atk: 13, family: 'compare', moves: ['Tail Flick', 'Dive'], dex: 'A kite that always flies toward the bigger number.' },
+  starmore: { name: 'Starmore', hp: 26, atk: 12, family: 'compare', moves: ['Twinkle', 'Star Fall'], dex: 'It twinkles brightest on the bigger number.' },
+  boltbig: { name: 'Boltbig', hp: 26, atk: 14, family: 'compare', moves: ['Bolt Strike', 'Rumble'], dex: 'It zaps the bigger number with a lightning bolt.' },
+  goosegroup: { name: 'Goosegroup', hp: 26, atk: 13, family: 'mult', moves: ['Honk Squad', 'V Formation'], dex: 'Geese that fly in equal groups. Count by fives!' },
+  pinwheelie: { name: 'Pinwheelie', hp: 24, atk: 13, family: 'mult', moves: ['Spin', 'Breeze'], dex: 'Its blades come in equal groups. Spin, spin!' },
+  hailgroup: { name: 'Hailgroup', hp: 28, atk: 13, family: 'mult', moves: ['Hail Storm', 'Ice Pebble'], dex: 'Little balls of ice fall from it in neat rows.' },
+  cloudsplit: { name: 'Cloudsplit', hp: 24, atk: 13, family: 'div', moves: ['Split Puff', 'Mist'], dex: 'One big cloud that splits into equal little clouds.' },
+  prismshare: { name: 'Prismshare', hp: 26, atk: 13, family: 'div', moves: ['Prism Beam', 'Light Split'], dex: 'It splits light into equal colors and shares them.' },
+  sailsplit: { name: 'Sailsplit', hp: 26, atk: 13, family: 'div', moves: ['Sail Swoop', 'Wind Share'], dex: 'A sky boat that shares the wind with every sail.' },
+  cloudram: { name: 'Cloudram', hp: 52, atk: 16, family: 'mixed', moves: ['Thunder Horns', 'Wool Wall'], dex: 'Shepherd Sky\'s partner. The biggest cloud sheep of all.' },
+  gustgiant: { name: 'Gustgiant', hp: 54, atk: 16, family: 'mixed', moves: ['Tornado', 'Big Breath'], dex: 'Miller Mo\'s partner. Its breath turns every windmill.' },
+  prismadon: { name: 'Prismadon', hp: 54, atk: 17, family: 'mixed', moves: ['Rainbow Roar', 'Crystal Spikes'], dex: 'Painter Iris\'s partner. A dinosaur made of rainbow crystal.' },
+  thundroar: { name: 'Thundroar', hp: 56, atk: 17, family: 'mixed', moves: ['Thunder Roar', 'Storm Claw'], dex: 'Captain Bolt\'s partner. Its roar is the thunder.' },
+  crowncrane: { name: 'Crowncrane', hp: 58, atk: 17, family: 'mixed', moves: ['Royal Dance', 'Crown Shine'], dex: 'Queen Aria\'s partner. It dances above the clouds.' },
+  celestail: { name: 'Celestail', hp: 62, atk: 18, family: 'mixed', rarity: 'world', moves: ['Starlight', 'Sky Spiral'], dex: 'The Legend of the Sky Isles. Its tail leaves a trail of stars.' },
   // ---------- Grade ultra rares: 3 per grade. Each waits in one spot and wakes up
   // when you're getting strong at its skill (see SPECIALS below).
   glimmerdot: { name: 'Glimmerdot', hp: 30, atk: 11, family: 'compare', rarity: 'ultra', moves: ['Dot Dazzle', 'Glow Flutter'], dex: 'A rare ladybug with exactly ten dots. It glows when you count them all.' },
@@ -175,12 +198,18 @@ const AREAS = {
   wreck: { name: 'Sunken Ship', world: 4, base: 74, boss: 'krakenumb', species: { add: 'barnaplus', sub: 'urchless', compare: 'seamore', mult: 'prawnpairs', div: 'clamshare' } },
   trench: { name: 'Dark Trench', world: 4, base: 78, boss: 'abyssaur', species: { add: 'anglerplus', sub: 'squidrop', compare: 'lanternfin', mult: 'prawnpairs', div: 'narwhalf' } },
   temple: { name: 'Sunken Temple', world: 4, base: 82, boss: 'tritonix', species: { add: 'anglerplus', sub: 'eelaway', compare: 'puffbig', mult: 'mantarray', div: 'starsplit' } },
+  meadow2: { name: 'Cloud Meadow', world: 5, base: 86, boss: 'cloudram', species: { add: 'fluffadd', sub: 'drizzless', compare: 'kitebig', mult: 'goosegroup', div: 'cloudsplit' } },
+  windmill: { name: 'Windmill Isle', world: 5, base: 90, boss: 'gustgiant', species: { add: 'gustplus', sub: 'plumeless', compare: 'kitebig', mult: 'pinwheelie', div: 'sailsplit' } },
+  rainbow: { name: 'Rainbow Bridge', world: 5, base: 94, boss: 'prismadon', species: { add: 'fluffadd', sub: 'fadebow', compare: 'starmore', mult: 'pinwheelie', div: 'prismshare' } },
+  storm: { name: 'Storm Peak', world: 5, base: 98, boss: 'thundroar', species: { add: 'zapadd', sub: 'drizzless', compare: 'boltbig', mult: 'hailgroup', div: 'cloudsplit' } },
+  castle: { name: 'Sky Castle', world: 5, base: 102, boss: 'crowncrane', species: { add: 'zapadd', sub: 'plumeless', compare: 'starmore', mult: 'goosegroup', div: 'prismshare' } },
 };
 const WORLD1_AREAS = ['meadow', 'shore', 'canyon', 'snow', 'cave'];
 const WORLD2_AREAS = ['forest', 'river', 'swamp', 'treetops', 'waterfall'];
 const WORLD3_AREAS = ['park', 'rooftops', 'subway', 'harbor', 'clocktower'];
 const WORLD4_AREAS = ['reef', 'kelp', 'wreck', 'trench', 'temple'];
-const AREA_ORDER = [...WORLD1_AREAS, ...WORLD2_AREAS, ...WORLD3_AREAS, ...WORLD4_AREAS];
+const WORLD5_AREAS = ['meadow2', 'windmill', 'rainbow', 'storm', 'castle'];
+const AREA_ORDER = [...WORLD1_AREAS, ...WORLD2_AREAS, ...WORLD3_AREAS, ...WORLD4_AREAS, ...WORLD5_AREAS];
 
 // Every Legend once, in the order you meet them.
 // Every Legend once, in the order you meet them, with the rare ones at the end.
@@ -310,6 +339,36 @@ const BOSSES = {
     win: ['Wise and brave! The Pearl Badge is yours.', 'You\'ve beaten all of Coral Deep!'],
     after: ['The sea sings your name, {name}!', 'A portal glows in the temple.'],
   },
+  meadow2: {
+    name: 'Shepherd Sky', badge: 'Cloud Badge', flag: 'badge21',
+    intro: ['Welcome to the clouds! I\'m Shepherd Sky.', 'I count my cloud sheep every day.', 'Can you count on yourself?'],
+    win: ['Wonderful! The Cloud Badge is yours.', 'The breeze to Windmill Isle is open.'],
+    after: ['Float on, {name}!', 'Windmill Isle is north.'],
+  },
+  windmill: {
+    name: 'Miller Mo', badge: 'Wind Badge', flag: 'badge22',
+    intro: ['Hello! I\'m Miller Mo.', 'My windmills turn wheat into bread.', 'Let\'s turn puzzles into answers!'],
+    win: ['Breezy! The Wind Badge is yours.', 'The Rainbow Bridge is open now.'],
+    after: ['Keep spinning, {name}!', 'The Rainbow Bridge is north.'],
+  },
+  rainbow: {
+    name: 'Painter Iris', badge: 'Rainbow Badge', flag: 'badge23',
+    intro: ['Oh, hello! I\'m Painter Iris.', 'I paint the rainbow every morning.', 'Let\'s add some color to your math!'],
+    win: ['Beautiful! The Rainbow Badge is yours.', 'The way up to Storm Peak is open.'],
+    after: ['Stay colorful, {name}!', 'Storm Peak is north. It\'s loud up there!'],
+  },
+  storm: {
+    name: 'Captain Bolt', badge: 'Thunder Badge', flag: 'badge24',
+    intro: ['BOOM! Ha, did I scare you?', 'I\'m Captain Bolt.', 'Think fast, like lightning!'],
+    win: ['Electric! The Thunder Badge is yours.', 'The gates of the Sky Castle are open.'],
+    after: ['You\'re a lightning thinker, {name}!', 'The Sky Castle is north.'],
+  },
+  castle: {
+    name: 'Queen Aria', badge: 'Crown Badge', flag: 'badge25',
+    intro: ['Welcome to my castle in the sky.', 'I\'m Queen Aria.', 'Only a true Math Quest Legend can win my crown!'],
+    win: ['Amazing! The Crown Badge is yours.', 'You\'ve beaten every world! You are a true Math Quest Legend!'],
+    after: ['All hail {name}, the Math Quest Legend!', 'A portal by the castle leads home.'],
+  },
 };
 const BADGE_FLAGS = AREA_ORDER.map((a) => BOSSES[a].flag);
 
@@ -328,7 +387,7 @@ const WORLDS = [
   { id: 2, name: 'Whisperwood', color: '#2f8f5a', areas: WORLD2_AREAS, start: { map: 'forest', x: 9, y: 16, dir: 'up' }, done: 'badge10' },
   { id: 3, name: 'Brightport City', color: '#e0a030', areas: WORLD3_AREAS, start: { map: 'park', x: 9, y: 16, dir: 'up' }, done: 'badge15' },
   { id: 4, name: 'Coral Deep', color: '#3ac4c8', areas: WORLD4_AREAS, start: { map: 'reef', x: 9, y: 16, dir: 'up' }, done: 'badge20' },
-  { id: 5, name: 'Sky Isles', color: '#a07ae8', areas: [], start: null, done: null },
+  { id: 5, name: 'Sky Isles', color: '#a07ae8', areas: WORLD5_AREAS, start: { map: 'meadow2', x: 9, y: 16, dir: 'up' }, done: 'badge25' },
 ];
 
 const LOOKS = {
@@ -357,6 +416,11 @@ const LOOKS = {
   barnacle: { id: 'barnacle', hat: '#2b2840', hair: '#e8e8f0', shirt: '#a8402a', pants: '#3a2a1a' },
   nyx: { id: 'nyx', hat: '#f2c84b', hair: '#2b2840', shirt: '#3a4a6a', pants: '#2b2840', long: true },
   oracle: { id: 'oracle', hair: '#f4f0ff', shirt: '#3ac4c8', pants: '#2a6a7a', long: true },
+  shepherd: { id: 'shepherd', hat: '#f4f4f8', hair: '#a8582a', shirt: '#9ad47a', pants: '#5a4a3a' },
+  miller: { id: 'miller', hat: '#e8d8a8', hair: '#5a3418', shirt: '#c8843a', pants: '#3a4a6a' },
+  painter: { id: 'painter', hat: '#e8506a', hair: '#2b2840', shirt: '#f2c84b', pants: '#7a5ad8', long: true },
+  bolt: { id: 'bolt', hat: '#f2c84b', hair: '#2b2840', shirt: '#3a3a58', pants: '#2b2840' },
+  queen: { id: 'queen', hat: '#f2c84b', hair: '#e8e0ff', shirt: '#a07ae8', pants: '#5a3a94', long: true },
   sage: { id: 'sage', hair: '#f4f4f8', shirt: '#3ac4c8', pants: '#2a5a7a', long: true },
   warden: { id: 'warden', hat: '#2f6b3a', hair: '#7a4a2a', shirt: '#5a8a3a', pants: '#4a3a2a', long: true },
   fisher: { id: 'fisher', hat: '#f2c84b', hair: '#3a2a1a', shirt: '#3a78c4', pants: '#5a4a3a' },
@@ -385,13 +449,16 @@ const LOOKS = {
 //   sea     § sand  ð sand trail  ¢ anemones  ¤ coral  £ rock  µ kelp  ¥ kelp wall  © ship deck
 //           ® hull  ° barrels  ± seaweed  ¶ trench floor  Ø glow plants  ¿ vent  ß dark rock
 //           Æ temple floor  Þ glyph tiles  Ð temple pillar
+//   sky     À cloud  Á cloud wall  Ã sky grass  Ä sky flowers  Å floating rock  Ç windmill
+//           È wheat  Ê golden path  Ë rainbow  Ì rainbow sparkles  Í storm cloud  Î lightning rod
+//           Ï storm grass  Ñ castle floor  Ò castle wall  Ó star patch  Ô banner  Õ open sky
 //   shrine  j stone floor  Y standing stone  (portals are drawn on top from each map's `portals` list)
 //   bosses  four house styles, each roof / roof with emblem / wall / door:
 //           cabin D E N S   tent < > ? /   tower # ! [ ]   dome a y $ +
 //   inside  x wall  o floor  b shelf  t table  1/2/3 buddy beds  c counter  m exit mat
-const SOLID = new Set('T~srRCVwWxbt123c PKMAQXF-zJZU|45678Y#![]DENS<>?/ay$+ζηθικμοφχΔΞ¤£¥®°¿ßÐ'.split(''));
+const SOLID = new Set('T~srRCVwWxbt123c PKMAQXF-zJZU|45678Y#![]DENS<>?/ay$+ζηθικμοφχΔΞ¤£¥®°¿ßÐÅÇÎÒÔÕÁ'.split(''));
 // Legends hide in these.
-const ENCOUNTER = new Set([',', ';', '"', '^', '%', 'e', 'L', 'v', 'l', '&', 'ε', 'ν', 'τ', 'ψ', 'Λ', '¢', 'µ', '±', 'Ø', 'Þ']);
+const ENCOUNTER = new Set([',', ';', '"', '^', '%', 'e', 'L', 'v', 'l', '&', 'ε', 'ν', 'τ', 'ψ', 'Λ', '¢', 'µ', '±', 'Ø', 'Þ', 'Ä', 'È', 'Ì', 'Ï', 'Ó']);
 
 // Rest Center doors take you to the shared Rest Center and bring you back.
 const centerDoor = (x, y) => ({ x, y, to: 'center', tx: 4, ty: 5, dir: 'up', ret: [x, y + 1] });
@@ -1265,6 +1332,205 @@ const MAPS = {
     signs: { '11,10': ['SUNKEN TEMPLE', 'The old glyphs are math puzzles!'] },
   },
 
+  // ---------- World 5: Sky Isles
+  meadow2: {
+    name: 'Cloud Meadow',
+    area: 'meadow2',
+    border: 'Õ',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      'ÕÕÕÕÕÕÕÕÕgGÕÕÕÕÕÕÕÕÕ',
+      'ÕÃÃÃÃDEDÃÊÊÃÃÃÃÃÃÃÃÕ',
+      'ÕÃÃÃÃNSNÃÊÊÃCC4CCÃÃÕ',
+      'ÕÃÃÃÃÃÃÃÃÊÊÃwWdWwÃÃÕ',
+      'ÕÃÃÃÃÃÃÃÃÊÊÃÃÃÊÃÃÅÃÕ',
+      'ÕÃÃÃÃÃÃÃÅÊÊÊÊÊÊÃÃÃÃÕ',
+      'ÕÃÄÄÄÄÄÄÃÊÊÃÄÄÄÄÄÄÃÕ',
+      'ÕÃÄÄÄÄÄÄÃÊÊÃÄÄÄÄÄÄÃÕ',
+      'ÕÃÄÄÄÄÄÄÃÊÊÃÄÄÄÄÄÄÃÕ',
+      'ÕÃÃÃÃÃÃsÃÊÊÅÃÃÃÃÃÃÃÕ',
+      'ÕÃÃÅÃÃÃÃÃÊÊÃÃÃÃÃÅÃÃÕ',
+      'ÕÃÄÄÄÄÄÃÃÊÊÃÃÄÄÄÄÄÃÕ',
+      'ÕÃÄÄÄÄÄÃÃÊÊÃÃÄÄÄÄÄÃÕ',
+      'ÕÃÄÄÄÄÄÃÃÊÊÃÃÄÄÄÄÄÃÕ',
+      'ÕÄÄÄÃÃÃÃÃÊÊÃÃÃÃÃÃÃÃÕ',
+      'ÕÄÄÄÃÃÃÃÃÊÊÃÃÃÃÃÃÃÃÕ',
+      'ÕÃÃÃÃÃÅÃÃÊÊÃÃÅÃÃÃÃÃÕ',
+      'ÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕ',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'shepherd', script: 'boss', arg: 'meadow2' },
+      { x: 15, y: 9, dir: 'left', look: 'kid', script: 'meadow2Kid' },
+    ],
+    warps: [
+      gate(9, 0, 'windmill', 9, 16, 'badge21'),
+      gate(10, 0, 'windmill', 10, 16, 'badge21'),
+      centerDoor(14, 3),
+    ],
+    portals: [{ x: 12, y: 16, world: 1, home: true }],
+    signs: { '7,9': ['CLOUD MEADOW', 'Don\'t look down!'] },
+  },
+
+  windmill: {
+    name: 'Windmill Isle',
+    area: 'windmill',
+    border: 'Õ',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      'ÕÕÕÕÕÕÕÕÕgGÕÕÕÕÕÕÕÕÕ',
+      'ÕÃÃÃÃ<><ÃÊÊÃÃÃÃÃÃÃÃÕ',
+      'ÕÃÃÃÃ?/?ÃÊÊÃCC4CCÃÃÕ',
+      'ÕÃÃÃÃÃÃÃÃÊÊÃwWdWwÃÃÕ',
+      'ÕÃÃÃÃÃÃÃÃÊÊÃÃÃÊÃÇÃÃÕ',
+      'ÕÃÃÃÃÃÇÃÃÊÊÊÊÊÊÃÃÃÃÕ',
+      'ÕÈÈÈÈÃÃÃÃÊÊÃÃÃÃÈÈÈÈÕ',
+      'ÕÈÈÈÈÃÃÃÃÊÊÇÃÃÃÈÈÈÈÕ',
+      'ÕÈÈÈÈÃÃÃÃÊÊÃÃÃÃÃÃÃÃÕ',
+      'ÕÈÈÈÈÃÃÃÃÊÊÃÃÃÈÈÈÈÈÕ',
+      'ÕÃÃÃÃÃÃÃÇÊÊsÃÃÈÈÈÈÈÕ',
+      'ÕÃÇÃÃÃÃÃÃÊÊÃÃÃÈÈÈÈÈÕ',
+      'ÕÃÃÈÈÈÈÈÃÊÊÃÃÃÈÈÈÈÈÕ',
+      'ÕÃÃÈÈÈÈÈÃÊÊÃÈÈÈÈÈÃÃÕ',
+      'ÕÃÃÈÈÈÈÈÃÊÊÃÈÈÈÈÈÃÃÕ',
+      'ÕÃÃÈÈÈÈÈÃÊÊÃÈÈÈÈÈÇÃÕ',
+      'ÕÃÃÃÃÃÃÇÃÊÊÃÃÃÃÃÃÃÃÕ',
+      'ÕÕÕÕÕÕÕÕÕÊÊÕÕÕÕÕÕÕÕÕ',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'miller', script: 'boss', arg: 'windmill' },
+      { x: 5, y: 10, dir: 'left', look: 'girl', script: 'windmillKid' },
+    ],
+    warps: [
+      back(9, 17, 'meadow2', 9, 1),
+      back(10, 17, 'meadow2', 10, 1),
+      gate(9, 0, 'rainbow', 9, 16, 'badge22'),
+      gate(10, 0, 'rainbow', 10, 16, 'badge22'),
+      centerDoor(14, 3),
+    ],
+    signs: { '11,10': ['WINDMILL ISLE', 'The wind always blows here.'] },
+  },
+
+  rainbow: {
+    name: 'Rainbow Bridge',
+    area: 'rainbow',
+    border: 'Õ',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      'ÕÕÕÕÕÕÕÕÕgGÕÕÕÕÕÕÕÕÕ',
+      'ÕÀÀÀÀayaÀËËÀÀÀÀÀÀÀÀÕ',
+      'ÕÀÀÀÀ$+$ÀËËÀCC4CCÀÀÕ',
+      'ÕÀÀÀÀÀÀÀÀËËÀwWdWwÀÀÕ',
+      'ÕÀÀÀÀÀÀÀÀËËÀÀÀËÀÀÅÀÕ',
+      'ÕÀÀÀÀÅÀsÀËËËËËËÀÀÀÀÕ',
+      'ÕÌÌÌÌÀÀÀÀËËÀÀÀÀÌÌÌÌÕ',
+      'ÕÌÌÌÌÀÀÀÀËËÀÀÀÀÌÌÌÌÕ',
+      'ÕÌÌÌÌÀÀÀÀËËÀÀÀÅÌÌÌÌÕ',
+      'ÕÀÀÀÀÀÀÀÀËËÀÀÀÀÀÀÀÀÕ',
+      'ÕÀÌÌÌÌÌÌÌËËÌÌÌÌÌÌÌÀÕ',
+      'ÕÀÌÌÌÌÌÌÌËËÌÌÌÌÌÌÌÀÕ',
+      'ÕÀÌÌÌÌÌÌÌËËÌÌÌÌÌÌÌÀÕ',
+      'ÕÀÌÌÌÌÌÌÌËËÌÌÌÌÌÌÌÀÕ',
+      'ÕÀÌÌÌÌÌÌÌËËÌÌÌÌÌÌÌÀÕ',
+      'ÕÀÅÀÀÀÀÀÅËËÅÀÀÀÀÀÀÀÕ',
+      'ÕÀÀÀÀÀÀÀÀËËÀÀÀÀÀÀÅÀÕ',
+      'ÕÕÕÕÕÕÕÕÕËËÕÕÕÕÕÕÕÕÕ',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'painter', script: 'boss', arg: 'rainbow' },
+      { x: 13, y: 8, dir: 'left', look: 'hiker', script: 'rainbowKid' },
+    ],
+    warps: [
+      back(9, 17, 'windmill', 9, 1),
+      back(10, 17, 'windmill', 10, 1),
+      gate(9, 0, 'storm', 9, 16, 'badge23'),
+      gate(10, 0, 'storm', 10, 16, 'badge23'),
+      centerDoor(14, 3),
+    ],
+    signs: { '7,5': ['RAINBOW BRIDGE', 'Seven colors, one bridge.'] },
+  },
+
+  storm: {
+    name: 'Storm Peak',
+    area: 'storm',
+    border: 'Á',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      'ÁÁÁÁÁÁÁÁÁgGÁÁÁÁÁÁÁÁÁ',
+      'ÁÍÍÍÍ#!#ÍÊÊÍÍÍÍÍÍÍÍÁ',
+      'ÁÍÍÍÍ[][ÍÊÊÍCC4CCÍÍÁ',
+      'ÁÍÍÍÍÍÍÍÍÊÊÍwWdWwÍÍÁ',
+      'ÁÍÍÍÍÍÍÍÍÊÊÍÍÍÊÍÍÎÍÁ',
+      'ÁÍÍÍÍÍÍÍÎÊÊÊÊÊÊÍÍÍÍÁ',
+      'ÁÍÏÏÏÏÏÏÍÊÊÍÏÏÏÏÏÏÍÁ',
+      'ÁÍÏÏÏÏÏÏÍÊÊÍÏÏÏÏÏÏÍÁ',
+      'ÁÍÏÏÏÏÏÏÍÊÊÍÏÏÏÏÏÏÍÁ',
+      'ÁÍÍÍÍÍÍsÍÊÊÎÍÍÍÍÍÍÍÁ',
+      'ÁÍÍÎÍÍÍÍÍÊÊÍÍÍÍÍÎÍÍÁ',
+      'ÁÍÏÏÏÏÏÍÍÊÊÍÍÏÏÏÏÏÍÁ',
+      'ÁÍÏÏÏÏÏÍÍÊÊÍÍÏÏÏÏÏÍÁ',
+      'ÁÍÏÏÏÏÏÍÍÊÊÍÍÏÏÏÏÏÍÁ',
+      'ÁÏÏÏÍÍÍÍÍÊÊÍÍÍÍÍÍÍÍÁ',
+      'ÁÏÏÏÍÍÍÍÍÊÊÍÍÍÍÍÍÍÍÁ',
+      'ÁÍÍÍÍÍÎÍÍÊÊÍÍÎÍÍÍÍÍÁ',
+      'ÁÁÁÁÁÁÁÁÁÊÊÁÁÁÁÁÁÁÁÁ',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'bolt', script: 'boss', arg: 'storm' },
+      { x: 15, y: 9, dir: 'left', look: 'kid', script: 'stormKid' },
+    ],
+    warps: [
+      back(9, 17, 'rainbow', 9, 1),
+      back(10, 17, 'rainbow', 10, 1),
+      gate(9, 0, 'castle', 9, 16, 'badge24'),
+      gate(10, 0, 'castle', 10, 16, 'badge24'),
+      centerDoor(14, 3),
+    ],
+    signs: { '7,9': ['STORM PEAK', 'Thunder ahead. Stay brave!'] },
+  },
+
+  castle: {
+    name: 'Sky Castle',
+    area: 'castle',
+    border: 'Ò',
+    wild: true,
+    heal: [14, 4],
+    tiles: [
+      'ÒÒÒÒÒÒÒÒÒÒÒÒÒÒÒÒÒÒÒÒ',
+      'ÒÑÑÑÑayaÑÊÊÑÑÑÑÑÑÑÑÒ',
+      'ÒÑÑÑÑ$+$ÑÊÊÑCC4CCÑÑÒ',
+      'ÒÑÑÑÑÑÑÑÑÊÊÑwWdWwÑÑÒ',
+      'ÒÑÑÑÑÑÑÑÑÊÊÑÑÑÊÑÔÑÑÒ',
+      'ÒÑÑÑÑÑÔÑÑÊÊÊÊÊÊÑÑÑÑÒ',
+      'ÒÓÓÓÓÑÑÑÑÊÊÑÑÑÑÓÓÓÓÒ',
+      'ÒÓÓÓÓÑÑÑÑÊÊÔÑÑÑÓÓÓÓÒ',
+      'ÒÓÓÓÓÑÑÑÑÊÊÑÑÑÑÑÑÑÑÒ',
+      'ÒÓÓÓÓÑÑÑÑÊÊÑÑÑÓÓÓÓÓÒ',
+      'ÒÑÑÑÑÑÑÑÔÊÊsÑÑÓÓÓÓÓÒ',
+      'ÒÑÔÑÑÑÑÑÑÊÊÑÑÑÓÓÓÓÓÒ',
+      'ÒÑÑÓÓÓÓÓÑÊÊÑÑÑÓÓÓÓÓÒ',
+      'ÒÑÑÓÓÓÓÓÑÊÊÑÓÓÓÓÓÑÑÒ',
+      'ÒÑÑÓÓÓÓÓÑÊÊÑÓÓÓÓÓÑÑÒ',
+      'ÒÑÑÓÓÓÓÓÑÊÊÑÓÓÓÓÓÔÑÒ',
+      'ÒÑÑÑÑÑÑÔÑÊÊÑÑÑÑÑÑÑÑÒ',
+      'ÒÒÒÒÒÒÒÒÒÊÊÒÒÒÒÒÒÒÒÒ',
+    ],
+    npcs: [
+      { x: 6, y: 3, dir: 'down', look: 'queen', script: 'boss', arg: 'castle' },
+      { x: 5, y: 10, dir: 'left', look: 'girl', script: 'castleKid' },
+    ],
+    warps: [
+      back(9, 17, 'storm', 9, 1),
+      back(10, 17, 'storm', 10, 1),
+      centerDoor(14, 3),
+    ],
+    portals: [{ x: 12, y: 1, world: 1, home: true, show: 'badge25' }],
+    signs: { '11,10': ['SKY CASTLE', 'The highest place in all the worlds.'] },
+  },
+
   // An open clearing west of town: standing stones in a ring around five portals.
   shrine: {
     name: 'Portal Shrine',
@@ -1336,6 +1602,7 @@ const SPECIALS = [
   { id: 'whisperstag', kind: 'world', world: 2, need: 'badge10', map: 'waterfall', x: 18, y: 15 },
   { id: 'brightwing', kind: 'world', world: 3, need: 'badge15', map: 'clocktower', x: 2, y: 16 },
   { id: 'leviathorn', kind: 'world', world: 4, need: 'badge20', map: 'temple', x: 2, y: 16 },
+  { id: 'celestail', kind: 'world', world: 5, need: 'badge25', map: 'castle', x: 2, y: 16 },
   { id: 'infinix', kind: 'mythical', map: 'shrine', x: 6, y: 3 },
 ];
 
@@ -1361,4 +1628,9 @@ const TRAVEL = [
   { world: 4, map: 'wreck', label: 'Sunken Ship', mx: 116, my: 72 },
   { world: 4, map: 'trench', label: 'Dark Trench', mx: 52, my: 42 },
   { world: 4, map: 'temple', label: 'Sunken Temple', mx: 96, my: 14 },
+  { world: 5, map: 'meadow2', label: 'Cloud Meadow', mx: 80, my: 116 },
+  { world: 5, map: 'windmill', label: 'Windmill Isle', mx: 40, my: 96 },
+  { world: 5, map: 'rainbow', label: 'Rainbow Bridge', mx: 116, my: 72 },
+  { world: 5, map: 'storm', label: 'Storm Peak', mx: 52, my: 42 },
+  { world: 5, map: 'castle', label: 'Sky Castle', mx: 96, my: 14 },
 ];

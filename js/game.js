@@ -1321,6 +1321,11 @@
     wreckKid: () => say(['Prawnpairs always swim in pairs.', 'Doubles are pairs: 6 + 6 is 12!']),
     trenchKid: () => say(['Narwhalf splits things in half.', 'Half of 20 is 10!']),
     templeKid: () => say(['Mantarray has spots in neat rows.', 'Rows times spots in each row tells how many!']),
+    meadow2Kid: () => say(['Goosegroup flies in a V of equal groups.', '2 groups of 5 geese is 10 geese!']),
+    windmillKid: () => say(['Pinwheelie has blades in equal groups.', '4 blades times 3 pinwheels is 12 blades!']),
+    rainbowKid: () => say(['Prismshare splits light into equal colors.', 'Sharing equally is dividing!']),
+    stormKid: () => say(['Boltbig zaps the bigger number.', 'Compare the biggest place first!']),
+    castleKid: () => say(['Starmore twinkles on the bigger number.', 'Every star you see is a number!']),
     waterfallKid: () => say(['The falls are loud, so think quietly.', 'Mistsplit splits into drops that are all the same size.']),
 
     // The way to the next area is closed until you beat this area's boss.
@@ -1473,6 +1478,11 @@
     swamp: ['#e6eadc', '#c4cca8', '#6a8a4a', '#8aaa6a'],
     treetops: ['#e8f6ff', '#cfe8b8', '#a0703a', '#c89a5a'],
     waterfall: ['#e6f2fa', '#cfdce6', '#7a8a98', '#a8b8c4'],
+    meadow2: ['#eef4ff', '#d8e6fa', '#9ad47a', '#bce8a0'],
+    windmill: ['#f2f6ff', '#e8e4c8', '#c8a050', '#e2c070'],
+    rainbow: ['#fff4fa', '#f0e4f8', '#c8a8e8', '#e4d0f8'],
+    storm: ['#3a3a58', '#4a4a6a', '#6a6a8a', '#8a8aaa'],
+    castle: ['#f6f0ff', '#e4dcf4', '#b8a8d8', '#d4c8ec'],
     reef: ['#d8f4f8', '#b8e4ec', '#e8a868', '#f2c88a'],
     kelp: ['#d4f0e4', '#b4dcc8', '#5a9a5a', '#7cb87a'],
     wreck: ['#d8e8f0', '#b8c8d4', '#8a6a4a', '#a8885a'],
@@ -1987,6 +1997,16 @@
       '¥§µµð§§µµ¥',
       '¤§¢¢ð§£¢§¤',
       '¤¢§§ð§¢¢¤¤',
+    ],
+    5: [
+      'ÒÑÑÓÊÑÔÑÑÒ',
+      'ÁÍÏÍÊÍÎÍÏÁ',
+      'ÕÀÌÀËÀÌÀÕÕ',
+      'ÕÀÀÌËÌÀÀÀÕ',
+      'ÕÃÈÈÊÃÇÈÕÕ',
+      'ÕÃÈÃÊÈÈÃÃÕ',
+      'ÕÃÄÄÊÃÅÄÃÕ',
+      'ÕÄÃÃÊÃÄÄÕÕ',
     ],
   };
   function drawWorldMap(world) {
