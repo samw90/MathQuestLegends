@@ -219,9 +219,11 @@ const LOOKS = {
 //   swamp   z bog water  v bog grass  p boardwalk  J dead tree
 //   trees   Z leafy canopy  H deck  l leaf piles  I rope bridge
 //   falls   U waterfall  O wet stone  & wet moss  | cliff
-//   shrine  j stone floor  (portals are drawn on top from each map's `portals` list)
+//   shrine  j stone floor  Y standing stone  (portals are drawn on top from each map's `portals` list)
+//   bosses  four house styles, each roof / roof with emblem / wall / door:
+//           cabin D E N S   tent < > ? /   tower # ! [ ]   dome a y $ +
 //   inside  x wall  o floor  b shelf  t table  1/2/3 buddy beds  c counter  m exit mat
-const SOLID = new Set('T~srRCVwWxbt123c PKMAQXF-zJZU|45678'.split(''));
+const SOLID = new Set('T~srRCVwWxbt123c PKMAQXF-zJZU|45678Y#![]DENS<>?/ay$+'.split(''));
 // Legends hide in these.
 const ENCOUNTER = new Set([',', ';', '"', '^', '%', 'e', 'L', 'v', 'l', '&']);
 
@@ -246,9 +248,9 @@ const MAPS = {
       'T.f..s...==...f....T',
       'T........==..CC4CC.T',
       'T........==..wWdWw.T',
-      'TVVV.....==....=...T',
-      'TwdW.....=========.T',
-      'T...s.f..==.....f..T',
+      'T~~~.....==....=...T',
+      'T~~~.....=========.T',
+      '===.s.f..==.....f..T',
       'T........==........T',
       'TTTTTTTTTTTTTTTTTTTT',
     ],
@@ -260,11 +262,11 @@ const MAPS = {
       { x: 3, y: 3, to: 'house', tx: 3, ty: 5, dir: 'up' },
       { x: 15, y: 3, to: 'lab', tx: 4, ty: 6, dir: 'up' },
       centerDoor(15, 9),
-      { x: 2, y: 11, to: 'shrine', tx: 5, ty: 7, dir: 'up' },
+      { x: 0, y: 12, to: 'shrine', tx: 11, ty: 5, dir: 'left' },
       { x: 9, y: 0, to: 'route1', tx: 9, ty: 16, dir: 'up', need: 'starter', block: 'kidBlock' },
       { x: 10, y: 0, to: 'route1', tx: 10, ty: 16, dir: 'up', need: 'starter', block: 'kidBlock' },
     ],
-    signs: { '5,7': ['PINECREST TOWN', 'Every legend starts with 1 + 1.'], '4,12': ['PORTAL SHRINE', 'Portals to every world wait inside.'] },
+    signs: { '5,7': ['PINECREST TOWN', 'Every legend starts with 1 + 1.'], '4,12': ['PORTAL SHRINE', 'Follow the path west to the stone circle.'] },
   },
 
   route1: {
@@ -274,8 +276,8 @@ const MAPS = {
     wild: true,
     tiles: [
       'TTTTTTTTTgGTTTTTTTTT',
-      'T........==........T',
-      'T.,,,,...==...,,,,.T',
+      'T.....DED==........T',
+      'T.,,,,NSN==...,,,,.T',
       'T.,,,,...==...,,,,.T',
       'T.,,,,...==...,,,,.T',
       'T........==........T',
@@ -293,7 +295,7 @@ const MAPS = {
       'TTTTTTTTT==TTTTTTTTT',
     ],
     npcs: [
-      { x: 8, y: 1, dir: 'down', look: 'ranger', script: 'boss', arg: 'meadow' },
+      { x: 7, y: 3, dir: 'down', look: 'ranger', script: 'boss', arg: 'meadow' },
       { x: 4, y: 10, dir: 'right', look: 'hiker', script: 'hiker' },
       { x: 12, y: 5, dir: 'left', look: 'kid', script: 'routeKid' },
     ],
@@ -314,8 +316,8 @@ const MAPS = {
     heal: [16, 4],
     tiles: [
       'PPPPPPPPPgGPPPPPPPPP',
-      'P~~~_____________h_P',
-      'P~~~__;;;;____CC4CCP',
+      'P~~~_______<><___h_P',
+      'P~~~__;;;;_?/?CC4CCP',
       'P~~~__;;;;____wWdWwP',
       'P~~~_______________P',
       'P~~_____P_____P____P',
@@ -333,7 +335,7 @@ const MAPS = {
       'PPPPPPPPP__PPPPPPPPP',
     ],
     npcs: [
-      { x: 11, y: 1, dir: 'down', look: 'captain', script: 'boss', arg: 'shore' },
+      { x: 12, y: 3, dir: 'down', look: 'captain', script: 'boss', arg: 'shore' },
       { x: 6, y: 4, dir: 'down', look: 'swimmer', script: 'shoreKid' },
     ],
     warps: [
@@ -354,8 +356,8 @@ const MAPS = {
     heal: [15, 4],
     tiles: [
       'MMMMMMMMMgGMMMMMMMMM',
-      'M::::::::::::::::::M',
-      'M::KK::""""::CC4CC:M',
+      'M::::#!#:::::::::::M',
+      'M::KK[]["""::CC4CC:M',
       'M::::::""""::wWdWw:M',
       'M:::::::::::::::K::M',
       'M:MMM::::::::MMM:::M',
@@ -373,7 +375,7 @@ const MAPS = {
       'MMMMMMMMM::MMMMMMMMM',
     ],
     npcs: [
-      { x: 11, y: 1, dir: 'down', look: 'sheriff', script: 'boss', arg: 'canyon' },
+      { x: 6, y: 3, dir: 'down', look: 'sheriff', script: 'boss', arg: 'canyon' },
       { x: 5, y: 4, dir: 'down', look: 'hiker', script: 'canyonHiker' },
     ],
     warps: [
@@ -395,8 +397,8 @@ const MAPS = {
     tiles: [
       'AAAAAAAAAgGAAAAAAAAA',
       'A******************A',
-      'A*CC4CC***^^^^****iA',
-      'A*wWdWw***^^^^****iA',
+      'A*CC4CCaya^^^^****iA',
+      'A*wWdWw$+$^^^^****iA',
       'A******************A',
       'A**AA*****ii****AA*A',
       'A^^^^^**********^^^A',
@@ -413,7 +415,7 @@ const MAPS = {
       'AAAAAAAAA**AAAAAAAAA',
     ],
     npcs: [
-      { x: 11, y: 1, dir: 'down', look: 'coach', script: 'boss', arg: 'snow' },
+      { x: 8, y: 4, dir: 'down', look: 'coach', script: 'boss', arg: 'snow' },
       { x: 15, y: 4, dir: 'left', look: 'skier', script: 'snowKid' },
     ],
     warps: [
@@ -434,8 +436,8 @@ const MAPS = {
     heal: [14, 4],
     tiles: [
       'QQQQQQQQQQQQQQQQQQQQ',
-      'QXqqqqqqqqqqqqqqqqXQ',
-      'QqqqqqqXXqqqCC4CCqqQ',
+      'QXqq#!#qqqqqqqqqqqXQ',
+      'Qqqq[][XXqqqCC4CCqqQ',
       'Qq%%%%qqqqqqwWdWwqqQ',
       'Qq%%%%qqquqqqqqqqqqQ',
       'QqqqqqqQQQQqqqqqqXqQ',
@@ -453,7 +455,7 @@ const MAPS = {
       'QQQQQQQQQqqQQQQQQQQQ',
     ],
     npcs: [
-      { x: 9, y: 1, dir: 'down', look: 'keeper', script: 'boss', arg: 'cave' },
+      { x: 5, y: 3, dir: 'down', look: 'keeper', script: 'boss', arg: 'cave' },
       { x: 4, y: 15, dir: 'right', look: 'miner', script: 'caveKid' },
     ],
     portals: [{ x: 11, y: 1, world: 2, show: 'badge5' }],
@@ -509,8 +511,8 @@ const MAPS = {
     heal: [14, 4],
     tiles: [
       'FFFFFFFFFgGFFFFFFFFF',
-      'Fnnnnnnnn==nnnnnnnnF',
-      'Fneeeennn==nCC4CCnnF',
+      'FnnnnnDED==nnnnnnnnF',
+      'FneeeeNSN==nCC4CCnnF',
       'Fneeeenkn==nwWdWwnnF',
       'Fnnnnnnnn==nnn=nnnnF',
       'FFFnnFnnn======nnFFF',
@@ -528,7 +530,7 @@ const MAPS = {
       'FFFFFFFFFFFFFFFFFFFF',
     ],
     npcs: [
-      { x: 8, y: 1, dir: 'down', look: 'warden', script: 'boss', arg: 'forest' },
+      { x: 7, y: 3, dir: 'down', look: 'warden', script: 'boss', arg: 'forest' },
       { x: 15, y: 9, dir: 'left', look: 'hiker', script: 'forestKid' },
     ],
     warps: [
@@ -548,8 +550,8 @@ const MAPS = {
     heal: [14, 4],
     tiles: [
       'FFFFFFFFFgGFFFFFFFFF',
-      'Fnnnnnnnn==nnnnnnnnF',
-      'FnLLLLnnn==nCC4CCnnF',
+      'Fnnnnn<><==nnnnnnnnF',
+      'FnLLLL?/?==nCC4CCnnF',
       'FnLLLLnnn==nwWdWwnnF',
       'Fnnnnnnnn==nnn=nnnnF',
       '---------BB---------',
@@ -567,7 +569,7 @@ const MAPS = {
       'FFFFFFFFF==FFFFFFFFF',
     ],
     npcs: [
-      { x: 8, y: 1, dir: 'down', look: 'fisher', script: 'boss', arg: 'river' },
+      { x: 7, y: 3, dir: 'down', look: 'fisher', script: 'boss', arg: 'river' },
       { x: 3, y: 9, dir: 'right', look: 'swimmer', script: 'riverKid' },
     ],
     warps: [
@@ -588,8 +590,8 @@ const MAPS = {
     heal: [14, 4],
     tiles: [
       'JJJJJJJJJgGJJJJJJJJJ',
-      'JvvvvvvvvppvvvvvvvvJ',
-      'JvzzzvvvvppvCC4CCvvJ',
+      'JvvvvvayappvvvvvvvvJ',
+      'Jvzzzv$+$ppvCC4CCvvJ',
       'JvzzzvvvvppvwWdWwvvJ',
       'JvvvvvvvvppvvvpvvvvJ',
       'JzzzzzzzzppzzzzzzzzJ',
@@ -607,7 +609,7 @@ const MAPS = {
       'JJJJJJJJJppJJJJJJJJJ',
     ],
     npcs: [
-      { x: 8, y: 1, dir: 'down', look: 'marsh', script: 'boss', arg: 'swamp' },
+      { x: 7, y: 3, dir: 'down', look: 'marsh', script: 'boss', arg: 'swamp' },
       { x: 12, y: 8, dir: 'left', look: 'kid', script: 'swampKid' },
     ],
     warps: [
@@ -628,8 +630,8 @@ const MAPS = {
     heal: [13, 4],
     tiles: [
       'ZZZZZZZZZgGZZZZZZZZZ',
-      'ZHHHHHHHHHHHHHHHHHHZ',
-      'ZHllllHHHHHCC4CCHHHZ',
+      'ZHHHHHDEDHHHHHHHHHHZ',
+      'ZHllllNSNHHCC4CCHHHZ',
       'ZHllllHHHHHwWdWwHHHZ',
       'ZHHHHHHHHHHHHHHHHHHZ',
       'ZZZZIZZZZIIZZZZZIZZZ',
@@ -647,7 +649,7 @@ const MAPS = {
       'ZZZZZZZZZIIZZZZZZZZZ',
     ],
     npcs: [
-      { x: 8, y: 1, dir: 'down', look: 'scout', script: 'boss', arg: 'treetops' },
+      { x: 7, y: 3, dir: 'down', look: 'scout', script: 'boss', arg: 'treetops' },
       { x: 16, y: 9, dir: 'left', look: 'girl', script: 'treetopsKid' },
     ],
     warps: [
@@ -668,8 +670,8 @@ const MAPS = {
     heal: [8, 8],
     tiles: [
       '||||||||||||||||||||',
-      '|UUUUUOOOOOOOOUUUUU|',
-      '|UUUUUOOOOOOOOUUUUU|',
+      '|UUUUUO#!#OOOOUUUUU|',
+      '|UUUUUO[][OOOOUUUUU|',
       '|-----OOOOOOOO-----|',
       '|-----OO&&&&OO-----|',
       '|O&&&OOOOOOOOOO&&&O|',
@@ -687,7 +689,7 @@ const MAPS = {
       '|||||||||OO|||||||||',
     ],
     npcs: [
-      { x: 9, y: 1, dir: 'down', look: 'elder', script: 'boss', arg: 'waterfall' },
+      { x: 8, y: 3, dir: 'down', look: 'elder', script: 'boss', arg: 'waterfall' },
       { x: 16, y: 8, dir: 'left', look: 'hiker', script: 'waterfallKid' },
     ],
     warps: [
@@ -699,26 +701,28 @@ const MAPS = {
     signs: { '2,11': ['THUNDER FALLS', 'Listen to the roar of the water!'] },
   },
 
-  // Five portals in a ring, one for each world. Locked ones are dark.
+  // An open clearing west of town: standing stones in a ring around five portals.
   shrine: {
     name: 'Portal Shrine',
-    border: ' ',
+    border: 'T',
     tiles: [
-      'xxxxxxxxxxx',
-      'xbjjjjjjjbx',
-      'xjjjjjjjjjx',
-      'xjjjjjjjjjx',
-      'xjjjjjjjjjx',
-      'xjjjjjjjjjx',
-      'xjjjjjjjjjx',
-      'xjjjjjjjjjx',
-      'xxxxxmxxxxx',
+      'TTTTTTTTTTTTT',
+      'Tf...Y.Y...fT',
+      'T..Y.jjj.Y..T',
+      'T...jjjjj...T',
+      'TY.jjjjjjj.YT',
+      'T..jjjjjjj..=',
+      'TY.jjjjjjj.YT',
+      'T...jjjjj...T',
+      'T..Y.jjj.Y..T',
+      'Tf...Y.Y...fT',
+      'TTTTTTTTTTTTT',
     ],
-    npcs: [{ x: 5, y: 4, dir: 'down', look: 'sage', script: 'sage' }],
-    warps: [{ x: 5, y: 8, to: 'town', tx: 2, ty: 12, dir: 'down' }],
+    npcs: [{ x: 6, y: 5, dir: 'down', look: 'sage', script: 'sage' }],
+    warps: [{ x: 12, y: 5, to: 'town', tx: 1, ty: 12, dir: 'right' }],
     portals: [
-      { x: 5, y: 2, world: 1 }, { x: 8, y: 3, world: 2 }, { x: 7, y: 6, world: 3 },
-      { x: 3, y: 6, world: 4 }, { x: 2, y: 3, world: 5 },
+      { x: 6, y: 2, world: 1 }, { x: 9, y: 4, world: 2 }, { x: 8, y: 7, world: 3 },
+      { x: 4, y: 7, world: 4 }, { x: 3, y: 4, world: 5 },
     ],
     signs: {},
   },

@@ -129,6 +129,42 @@ const Art = (() => {
     k.rect(0, 0, 16, 16, '#f4f8ff');
     for (const [x, y] of [[3, 4], [11, 2], [7, 11], [13, 13], [2, 13]]) k.px(x, y, '#d0dcef');
   }
+  function logWall(k) {
+    k.rect(0, 0, 16, 16, '#9a6438');
+    for (const y of [3, 7, 11, 15]) k.rect(0, y, 16, 1, '#6a4020');
+    k.px(2, 1, '#b8804a'); k.px(10, 5, '#b8804a'); k.px(5, 9, '#b8804a'); k.px(13, 13, '#b8804a');
+  }
+  function tentTop(k) {
+    for (let x = 0; x < 16; x += 4) { k.rect(x, 0, 2, 16, '#e8506a'); k.rect(x + 2, 0, 2, 16, '#f6e8e8'); }
+    k.rect(0, 14, 16, 2, '#a8324a');
+  }
+  function tentSide(k) {
+    for (let x = 0; x < 16; x += 4) { k.rect(x, 0, 2, 16, '#d84a62'); k.rect(x + 2, 0, 2, 16, '#ece0e0'); }
+    k.rect(0, 15, 16, 1, '#8a2a3a');
+  }
+  function towerTop(k) {
+    stoneWall(k);
+    k.rect(0, 0, 16, 4, '#4a4a5a');
+    k.rect(0, 0, 4, 4, '#9a9aaa'); k.rect(8, 0, 4, 4, '#9a9aaa');
+    k.rect(4, 2, 4, 2, '#7a7a8a'); k.rect(12, 2, 4, 2, '#7a7a8a');
+    k.rect(0, 4, 16, 1, '#5a5a6a');
+  }
+  function stoneWall(k) {
+    k.rect(0, 0, 16, 16, '#9a9aaa');
+    for (const y of [4, 9, 14]) k.rect(0, y, 16, 1, '#6a6a7a');
+    for (const [x, y] of [[5, 0], [12, 0], [2, 5], [9, 5], [6, 10], [13, 10]]) k.rect(x, y, 1, 4, '#6a6a7a');
+    k.px(3, 2, '#b8b8c8'); k.px(10, 7, '#b8b8c8');
+  }
+  function domeTop(k) {
+    k.rect(0, 0, 16, 16, '#3a6ab8');
+    for (let x = 0; x < 16; x += 8) { k.ell(x + 4, 16, 4, 6, '#4a7ad0'); k.ell(x + 4, 16, 2.5, 4, '#3a6ab8'); }
+    k.rect(0, 0, 16, 2, '#5a8ae0'); k.rect(0, 14, 16, 2, '#26457a');
+  }
+  function marbleWall(k) {
+    k.rect(0, 0, 16, 16, '#f4f0ea');
+    k.rect(1, 0, 3, 16, '#e4ddd2'); k.rect(12, 0, 3, 16, '#e4ddd2');
+    k.rect(0, 0, 16, 2, '#d8d0c4'); k.rect(0, 14, 16, 2, '#c8bca8');
+  }
   function forestFloor(k) {
     k.rect(0, 0, 16, 16, '#5a9a48');
     k.px(3, 4, '#4a8a3c'); k.px(11, 2, '#4a8a3c'); k.px(7, 10, '#4a8a3c'); k.px(13, 13, '#4a8a3c');
@@ -235,6 +271,73 @@ const Art = (() => {
       k.rect(7, 4, 1, 6, '#5a4030');
       k.rect(4, 7, 8, 1, '#5a4030');
     },
+    // Portal Shrine standing stone.
+    Y: (k) => {
+      grass(k);
+      k.ell(8, 14, 6, 2, '#4a8a3c');
+      k.rect(4, 2, 8, 12, '#8a8a9a');
+      k.ell(8, 2.5, 4, 2.5, '#8a8a9a');
+      k.rect(4, 2, 2, 12, '#a8a8b8');
+      k.rect(10, 4, 2, 10, '#6a6a7a');
+      k.rect(6, 6, 3, 1, '#5fd8e8'); k.rect(7, 5, 1, 3, '#5fd8e8');
+      k.ell(5, 12, 2, 1.5, '#4fa84a');
+    },
+
+    // ---------- boss houses: four styles shared by the bosses
+    // Log cabin
+    D: (k) => roof(k, '#3f6a3a', '#2a4a28'),
+    E: (k) => {
+      roof(k, '#3f6a3a', '#2a4a28');
+      k.tri(8, 2, 5, 10, 11, 10, '#f2c84b'); k.tri(4, 5, 12, 5, 8, 9, '#f2c84b');
+    },
+    N: logWall,
+    S: (k) => {
+      logWall(k);
+      k.rect(4, 3, 8, 13, '#4a2a14'); k.rect(5, 4, 6, 12, '#7a4a24');
+      k.rect(6, 6, 4, 3, '#f2c84b'); k.px(9, 11, '#ffd23c');
+    },
+    // Striped tent
+    '<': (k) => tentTop(k),
+    '>': (k) => {
+      tentTop(k);
+      k.rect(7, 0, 1, 9, '#5a3418');
+      k.tri(8, 0, 14, 2, 8, 4, '#3a78c4');
+    },
+    '?': tentSide,
+    '/': (k) => {
+      tentSide(k);
+      k.tri(8, 2, 3, 16, 13, 16, '#3a2a3a');
+      k.tri(8, 2, 3, 16, 5, 16, '#f6e8e8'); k.tri(8, 2, 13, 16, 11, 16, '#e8506a');
+    },
+    // Stone tower
+    '#': (k) => towerTop(k),
+    '!': (k) => {
+      towerTop(k);
+      k.rect(7, 0, 1, 10, '#3a3a4a');
+      k.tri(8, 0, 15, 2, 8, 5, '#e8506a');
+    },
+    '[': stoneWall,
+    ']': (k) => {
+      stoneWall(k);
+      k.rect(4, 5, 8, 11, '#3a3a4a');
+      k.ell(8, 5.5, 4, 3, '#3a3a4a');
+      k.rect(5, 6, 6, 10, '#8a5a32'); k.ell(8, 6, 3, 2, '#8a5a32');
+      k.rect(8, 6, 1, 10, '#6a4020'); k.px(10, 11, '#ffd23c');
+    },
+    // Domed hall
+    a: domeTop,
+    y: (k) => {
+      domeTop(k);
+      k.rect(7, 0, 2, 5, '#c89a2a'); k.ell(8, 2, 2.5, 2.5, '#f2c84b'); k.px(7, 1, '#fff6d6');
+    },
+    $: marbleWall,
+    '+': (k) => {
+      marbleWall(k);
+      k.rect(4, 5, 8, 11, '#26457a'); k.ell(8, 5.5, 4, 3, '#26457a');
+      k.rect(5, 6, 6, 10, '#3a6ab8'); k.ell(8, 6, 3, 2, '#3a6ab8');
+      k.px(10, 11, '#f2c84b');
+    },
+
     // Rest Center emblem: a heart on the pink roof.
     4: (k) => {
       roof(k, '#e86a8a', '#b8405e');

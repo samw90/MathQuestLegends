@@ -1248,7 +1248,7 @@
     }
     sfx('level');
     if (pt.home) {
-      await fade(() => { placePlayer('shrine', 5, 7, 'down'); writeSave(); });
+      await fade(() => { placePlayer('shrine', 6, 7, 'up'); writeSave(); });
       return say('Back at the Portal Shrine!');
     }
     await fade(() => { placePlayer(w.start.map, w.start.x, w.start.y, w.start.dir); writeSave(); });
@@ -1705,7 +1705,7 @@
           await say('Done! Everything is unlocked.');
         }
       } else if (devItem === 1) {
-        await fade(() => { placePlayer('shrine', 5, 7, 'up'); writeSave(); });
+        await fade(() => { placePlayer('shrine', 6, 7, 'up'); writeSave(); });
         return 'closed';
       } else {
         writeSave();
