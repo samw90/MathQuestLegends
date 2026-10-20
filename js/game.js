@@ -11,13 +11,26 @@
   const DAY = 24 * 60 * 60 * 1000;
   // How each kind of puzzle is named in battle: "It loves take-away puzzles!"
   const FAMILY_PHRASE = {
-    add: 'adding', sub: 'take-away', compare: 'bigger-number',
-    mult: 'equal-groups', div: 'sharing', mixed: 'all kinds of',
+    add: 'adding', sub: 'take-away', compare: 'number',
+    mult: 'grouping', div: 'sharing', mixed: 'all kinds of',
   };
   const FAMILY_LABEL = {
-    add: 'Adding', sub: 'Taking away', compare: 'Comparing numbers',
-    mult: 'Equal groups and times', div: 'Sharing equally', mixed: 'All kinds of math',
+    add: 'Adding', sub: 'Taking away', compare: 'Numbers: counting, comparing, place value',
+    mult: 'Groups: skip counting, doubles, times', div: 'Sharing: parts, halves, division, fractions', mixed: 'All kinds of math',
   };
+  // Praise the strategy, not the kid (Mueller & Dweck): name what worked.
+  const STRATEGY = {
+    'count-10': 'Counting carefully', 'compare-10': 'Using the number line', 'add-10': 'Counting on', 'sub-10': 'Counting back',
+    'skip-10': 'Finding the pattern', 'parts-10': 'Finding the missing part', 'add-20': 'Making a ten', 'sub-20': 'Thinking adding',
+    compare: 'Checking the tens', 'place-tens': 'Counting the tens', doubles: 'Knowing your doubles', 'missing-20': 'Finding the mystery number',
+    'add-100': 'Lining up the places', 'sub-100': 'Borrowing carefully', 'place-100': 'Thinking about places', 'equal-groups': 'Skip counting',
+    halves: 'Splitting it in half', 'add-1000': 'Adding column by column', 'sub-1000': 'Subtracting column by column', round: 'Checking the next digit',
+    'mult-facts': 'Using a times fact', 'div-facts': 'Thinking multiplication', 'add-multi': 'Lining up the places', 'sub-multi': 'Borrowing carefully',
+    'round-big': 'Checking the next digit', 'mult-1digit': 'Splitting it up', 'div-1digit': 'Going one digit at a time', 'equiv-frac': 'Growing the fraction',
+    'dec-add': 'Lining up the points', 'dec-sub': 'Lining up the points', 'dec-place': 'Thinking about tenths', 'mult-2digit': 'Splitting it up',
+    'div-long': 'Going one digit at a time', 'frac-add': 'Matching the bottoms',
+  };
+  const praiseFor = (p) => pick([`${STRATEGY[p.skillId] || 'Careful thinking'} worked!`, `Nice! ${STRATEGY[p.skillId] || 'Careful thinking'} did it.`]);
 
   const cv = document.getElementById('cv');
   const ctx = cv.getContext('2d');
@@ -213,7 +226,7 @@
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     if (keyInput) {
-      const code = /^[0-9]$/.test(key) ? key : key === 'Backspace' ? 'del' : key === 'Enter' ? 'ok' : null;
+      const code = /^[0-9.]$/.test(key) ? key : key === 'Backspace' ? 'del' : key === 'Enter' ? 'ok' : null;
       if (code) { e.preventDefault(); document.body.classList.add('kb'); keyInput(code); return; }
     }
     const btn = key === 'Enter' ? (handler ? 'a' : 'start') : KEYS[key];
@@ -247,11 +260,11 @@
   const keypad = (() => {
     const k = el('div', 'keypad');
     k.hidden = true;
-    for (const key of ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'del', '0', 'ok']) {
+    for (const key of ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'del', '0', 'ok', '.']) {
       const label = key === 'del' ? '⌫' : key === 'ok' ? '✓' : key;
-      const b = el('button', 'key' + (key === 'del' || key === 'ok' ? ' ' + key : ''), label);
+      const b = el('button', 'key' + (key === 'del' ? ' del' : key === 'ok' ? ' ok' : key === '.' ? ' dot' : ''), label);
       b.type = 'button';
-      b.setAttribute('aria-label', key === 'del' ? 'Erase' : key === 'ok' ? 'Check my answer' : key);
+      b.setAttribute('aria-label', key === 'del' ? 'Erase' : key === 'ok' ? 'Check my answer' : key === '.' ? 'Decimal point' : key);
       b.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         b.classList.add('on');
@@ -286,7 +299,7 @@
     return wide.matches ? 'Auto (sides)' : 'Auto (below)';
   }
 
-  function showKeypad(fn) { keyInput = fn; keypad.hidden = false; consoleEl.classList.add('typing'); }
+  function showKeypad(fn, dec = false) { keyInput = fn; keypad.hidden = false; keypad.classList.toggle('dec', dec); consoleEl.classList.add('typing'); }
   function hideKeypad() { keyInput = null; keypad.hidden = true; consoleEl.classList.remove('typing'); }
 
   // Grades 1-3 type their answers (recall builds memory better than picking);
@@ -476,6 +489,40 @@
       }
       return wrap;
     }
+    if (v.kind === 'numberline') {
+      // Ticks every `step`, labels at the ends and at the marked numbers.
+      const n = Math.round((v.to - v.from) / v.step);
+      if (n < 1 || n > 20) return null;
+      const track = el('div', 'track');
+      const pos = (x) => ((x - v.from) / (v.to - v.from)) * 100 + '%';
+      for (let i = 0; i <= n; i++) {
+        const t = el('span', 'tick' + (i === 0 || i === n ? ' end' : ''));
+        t.style.left = pos(v.from + i * v.step);
+        track.append(t);
+      }
+      const labeled = new Set(v.marks.map((m) => m.at));
+      for (const at of [v.from, v.to]) if (!labeled.has(at)) v.marks = [...v.marks, { at, label: at, cls: 'end' }];
+      for (const m of v.marks) {
+        const dot = el('span', 'mark ' + (m.cls || ''));
+        dot.style.left = pos(m.at);
+        dot.append(el('b', null, String(m.label)));
+        track.append(dot);
+      }
+      wrap.append(track);
+      return wrap;
+    }
+    if (v.kind === 'bars') {
+      // Fraction bars: each row split into equal parts, some shaded.
+      for (const row of v.rows) {
+        const bar = el('div', 'bar');
+        bar.append(el('span', 'lbl', `${row.filled}/${row.parts}`));
+        const cells = el('div', 'cells');
+        for (let i = 0; i < row.parts; i++) cells.append(el('span', 'cell' + (i < row.filled ? ' on' : '')));
+        bar.append(cells);
+        wrap.append(bar);
+      }
+      return wrap;
+    }
     if (v.kind === 'baseten') {
       if (v.a >= 100 || v.b >= 100) return null;
       const group = (n, cls) => {
@@ -486,7 +533,8 @@
         g.append(ones);
         return g;
       };
-      wrap.append(group(v.a, 'a'), el('span', 'sign', v.mode === 'add' ? '+' : '−'), group(v.b, v.mode === 'add' ? 'b' : 'x'));
+      if (v.mode === 'show') wrap.append(group(v.a, 'a'));
+      else wrap.append(group(v.a, 'a'), el('span', 'sign', v.mode === 'add' ? '+' : '−'), group(v.b, v.mode === 'add' ? 'b' : 'x'));
       return wrap;
     }
     if (v.kind === 'array') {
@@ -557,7 +605,7 @@
       let sel = 0, tries = 0, hints = 0, locked = false;
       const t0 = performance.now();
       const btns = typing ? [] : p.choices.map((c, i) => {
-        const b = el('button', 'ans', String(c));
+        const b = el('button', 'ans', MathEngine.show(c));
         b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); answer(i); });
         grid.append(b);
         return b;
@@ -578,10 +626,25 @@
         handler = null;
         hideKeypad();
         box.remove();
-        const lesson = MathEngine.teach(p);
-        if (lesson) await teachPanel(lesson);
+        S.lessons = S.lessons || {};
+        const seen = S.lessons[p.skillId] || 0;
+        S.lessons[p.skillId] = seen + 1;
+        const lesson = MathEngine.teach(p, seen);
+        let lead = `${buddyName()}: Your turn! Try one just like it.`;
+        if (lesson) {
+          await teachPanel(lesson);
+          // Naming the strategy helps it stick (self-explanation). Grade 1 and up.
+          if (S.grade > 0) {
+            const others = MathEngine.TRICKS.filter((x) => x !== lesson.title).sort(() => Math.random() - 0.5).slice(0, 2);
+            const opts = [lesson.title, ...others].sort(() => Math.random() - 0.5);
+            const i = await choose(opts, { cls: 'start-menu', head: 'Which trick did we use?', cancel: false });
+            lead = opts[i] === lesson.title
+              ? `${buddyName()}: Yes! ${lesson.title}. Use it on this one!`
+              : `${buddyName()}: We used "${lesson.title}". Try it on this one!`;
+          }
+        }
         const t = MathEngine.twin(p);
-        await say(`${buddyName()}: Your turn! Try one just like it.`);
+        await say(lead);
         const r = await ask(t, { canTeach: false, head: 'Your turn!' });
         res({ result: r.result === 'miss' ? 'miss' : 'helped', ms: performance.now() - t0, taught: true });
       }
@@ -646,7 +709,7 @@
           await sleep(500);
           entry.classList.remove('wrong', 'empty');
           entry.classList.add('right');
-          entry.textContent = String(p.answer);
+          entry.textContent = MathEngine.show(p.answer);
         } else {
           btns[p.choices.indexOf(p.answer)].classList.add('right');
           btns.forEach((b) => { b.disabled = true; });
@@ -674,12 +737,13 @@
       if (typing) {
         showKeypad((k) => {
           if (locked) return;
-          if (k === 'ok') { if (typed) answer(-1, Number(typed)); return; }
+          if (k === 'ok') { if (typed && typed !== '.') answer(-1, Number(typed)); return; }
           if (k === 'del') typed = typed.slice(0, -1);
-          else if (typed.length < 5) typed = (typed === '0' ? '' : typed) + k;
+          else if (k === '.') { if (!p.dec || typed.includes('.')) return; typed = (typed || '0') + '.'; }
+          else if (typed.length < 7) typed = (typed === '0' ? '' : typed) + k;
           sfx('move');
           setEntry();
-        });
+        }, !!p.dec);
         handler = (btn) => { if (btn === 'b') hint(); else if (btn === 'a' && typed) answer(-1, Number(typed)); };
         return;
       }
@@ -729,7 +793,7 @@
         grid.className = 'answers ' + (s.choices.length === 2 ? 'two' : 'three');
         box.scrollTop = 0;
         btns = s.choices.map((c, i) => {
-          const b = el('button', 'ans', String(c));
+          const b = el('button', 'ans', MathEngine.show(c));
           b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); pickStep(i); });
           grid.append(b);
           return b;
@@ -801,11 +865,7 @@
         else existing.due = Date.now() + [1, 3, 7][existing.box - 1] * DAY;
       }
     } else if (!existing) {
-      S.review.push({
-        key, skillId: p.skillId, a: p.a, b: p.b, op: p.op, answer: p.answer,
-        missing: p.missing, total: p.total, visual: p.visual, visualMode: p.visualMode,
-        box: 1, due: Date.now() + DAY,
-      });
+      S.review.push({ ...MathEngine.saveable(p), key, box: 1, due: Date.now() + DAY });
       if (S.review.length > 30) S.review.shift();
     }
   }
@@ -959,7 +1019,7 @@
     const legend = SPECIES[speciesFor(fam)].name;
     const allMastered = MathEngine.gradeSkills(S.grade).every((id) => MathEngine.stretchLevel(S.skills[id]) === 2);
     if (allMastered) {
-      await say([`${buddyName()}: You're a math star!`, 'Maybe ask a grown-up about trying the next grade.']);
+      await say([`${buddyName()}: All that practice paid off! Every skill is strong.`, 'Maybe ask a grown-up about trying the next grade.']);
       return;
     }
     await say([
@@ -1201,7 +1261,7 @@
 
   // Time limit for the "so fast" bonus. Slow answers are never punished.
   function fastLimit(p) {
-    return (p.story ? 20000 : 9000) + (['+', '−'].includes(p.op) && S.grade >= 2 ? 5000 : 0);
+    return (p.story ? 20000 : 9000) + (['+', '−'].includes(p.op) && S.grade >= 2 ? 5000 : 0) + (S.grade >= 4 ? 10000 : 0);
   }
 
   async function encounterFlash() {
@@ -1285,8 +1345,8 @@
     const mult = r.result === 'first' ? (fast ? 1.5 : 1) : 0.6;
     await say(`${nameOf(B.me)} uses ${move}!`);
     await hurt(B.enemy, damage(40, atkOf(B.me), mult), 'e');
-    if (r.result === 'first') await say(fast ? 'Wow, so fast! Extra power!' : 'Nice work!');
-    else await say('You figured it out!');
+    if (r.result === 'first') await say(fast ? 'Quick thinking! Extra power!' : praiseFor(p));
+    else await say('You kept trying and figured it out!');
     if (!alive(B.enemy)) return foeCalmed();
     return foeTurn(true);
   }

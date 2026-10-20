@@ -23,6 +23,15 @@ window.layoutQC = async function () {
     ['G3 sharing story', 3, make('div-facts', 3, (p) => p.story && p.visual.rows >= 9 && p.visual.cols >= 9)],
     ['G3 times 10x10', 3, make('mult-facts', 3, (p) => !p.story && p.a >= 9 && p.b >= 9)],
     ['G3 take-away story', 3, make('sub-1000', 3, (p) => p.story)],
+    ['K counting', 0, make('count-10', 0, (p) => p.answer >= 8)],
+    ['K pattern (number line)', 0, make('skip-10', 0, (p) => p.step === 10)],
+    ['G3 rounding (number line)', 3, make('round', 3, (p) => p.b === 100)],
+    ['G4 rounding big numbers', 4, make('round-big', 4, (p) => p.b === 1000)],
+    ['G4 equal fractions (bars)', 4, make('equiv-frac', 4, (p) => p.d >= 10)],
+    ['G4 multiplying story', 4, make('mult-1digit', 4, (p) => p.story)],
+    ['G5 adding decimals', 5, make('dec-add', 5, () => true)],
+    ['G5 adding fractions (bars)', 5, make('frac-add', 5, (p) => p.d >= 12)],
+    ['G5 decimal compare', 5, make('dec-place', 5, (p) => p.op === 'or')],
   ];
   for (const [name, grade, p] of cases) {
     S.grade = grade;
@@ -40,13 +49,14 @@ window.layoutQC = async function () {
     if (box.scrollHeight > box.clientHeight + 6) issues.push(`${name}: needs scrolling (${box.scrollHeight} > ${box.clientHeight})`);
     if (!inView(box)) issues.push(`${name}: question box off screen`);
     if (typing) {
-      for (const k of document.querySelectorAll('.keypad .key')) if (!inView(k)) { issues.push(`${name}: keypad off screen`); break; }
+      for (const k of document.querySelectorAll('.keypad .key')) if (k.offsetParent && !inView(k)) { issues.push(`${name}: keypad off screen`); break; }
+      if (p.dec && document.querySelector('.keypad .key.dot').offsetParent === null) issues.push(`${name}: no decimal point key`);
       for (const d of String(p.answer)) press(d);
       press('Enter');
     } else {
       const btns = [...box.querySelectorAll('.ans')];
       if (btns.some((b) => !inView(b))) issues.push(`${name}: answer button off screen`);
-      btns.find((b) => Number(b.textContent) === p.answer).dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      btns.find((b) => Number(b.textContent.replace(/,/g, '')) === p.answer).dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
     }
     await done;
     await wait(150);

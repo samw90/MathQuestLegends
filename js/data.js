@@ -1,6 +1,6 @@
 // Game data: Legends, areas, bosses, people and maps.
 
-const GRADES = ['Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3'];
+const GRADES = ['Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'];
 
 // Every wild Legend asks one kind of math puzzle (its `family`), so kids learn
 // "Snipsnap means taking away". Each area has its own Legend for every kind of

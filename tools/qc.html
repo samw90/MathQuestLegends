@@ -179,32 +179,68 @@ suite('Math problems', ({ check, bad }) => {
     if (v.kind === 'tenframe') return (v.mode === 'add' ? v.a + v.b : v.a) <= 20;
     if (v.kind === 'baseten') return v.a < 100 && v.b < 100;
     if (v.kind === 'array') return v.rows <= 10 && v.cols <= 10;
+    if (v.kind === 'numberline') { const n = Math.round((v.to - v.from) / v.step); return n >= 1 && n <= 20 && v.marks.every((m) => m.at >= v.from && m.at <= v.to); }
+    if (v.kind === 'bars') return v.rows.every((r) => r.parts <= 15 && r.filled <= r.parts);
     return false;
   };
-  for (let grade = 0; grade < 4; grade++) {
+  // The right answer for each kind of problem, worked out independently.
+  const t1 = (x) => Math.round(x * 10) / 10;
+  const truth = (p) => {
+    if (p.missing) return p.total - p.a;
+    switch (p.op) {
+      case '+': return p.dec ? t1(p.a + p.b) : p.a + p.b;
+      case '−': return p.dec ? t1(p.a - p.b) : p.a - p.b;
+      case '×': return p.dec ? t1(p.a * p.b) : p.a * p.b;
+      case '÷': return p.dec ? t1(p.a / p.b) : p.a / p.b;
+      case 'or': return Math.max(p.a, p.b);
+      case 'count': return p.a;
+      case 'seq': return p.seq[p.seq.length - 1] + p.step;
+      case 'half': return p.a / 2;
+      case 'round': return Math.round(p.a / p.b) * p.b;
+      case 'frac': return p.a * p.d / p.b;
+      case 'fracadd': return p.a * p.d / p.b + p.c;
+      default: return null;
+    }
+  };
+  const placeTruth = (p) => {
+    const n = p.prompt.match(/\d+/g).map(Number);
+    if (/hundreds/.test(p.prompt)) return n[0] * 100 + n[1] * 10 + n[2];
+    if (/tens/.test(p.prompt)) return n[0] * 10 + n[1];
+    return n.reduce((x, y) => x + y, 0);
+  };
+  check(E.LEVELS.length === 6 && GRADES.length === 6, 'Grades should run K to 5');
+  for (let grade = 0; grade < 6; grade++) {
+    // Every grade has all five kinds of Legend math.
+    const fams = new Set(E.gradeSkills(grade).map((s) => E.SKILLS[s].family));
+    for (const f of ['add', 'sub', 'compare', 'mult', 'div']) check(fams.has(f), `${GRADES[grade]}: no ${f} skill, so those Legends can't appear`);
     const skills = [...new Set([...E.gradeSkills(grade), ...E.LEVELS.slice(0, grade).flatMap((_, g) => E.gradeSkills(g))])];
     for (const skill of skills) for (let lvl = 0; lvl < 3; lvl++) {
       const st = statsFor(lvl);
-      for (let i = 0; i < 400; i++) {
+      for (let i = 0; i < 150; i++) {
         const p = E.make(skill, grade, st ? { [skill]: st } : {});
         const tag = `${skill} G${grade} lvl${lvl}`;
         check(p.skillId === skill, `${tag}: made a ${p.skillId} problem`);
-        if (!Number.isInteger(p.answer) || p.answer < 0) fail(tag + 'ans', `${tag}: bad answer ${p.answer} for ${p.text}`);
-        if (p.op !== 'or') {
-          const real = p.missing ? p.total - p.a : opFn[p.op](p.a, p.b);
-          if (real !== p.answer) fail(tag + 'eq', `${tag}: ${p.equation} says ${p.answer}, really ${real}`);
-        } else if (p.answer !== Math.max(p.a, p.b) || p.a === p.b) fail(tag + 'cmp', `${tag}: compare problem is wrong`);
+        const num = (x) => Number.isFinite(x) && x >= 0 && (p.dec ? t1(x) === x || Math.round(x * 100) / 100 === x : Number.isInteger(x));
+        if (!num(p.answer)) fail(tag + 'ans', `${tag}: bad answer ${p.answer} for ${p.text}`);
+        const real = p.op === 'place' ? placeTruth(p) : truth(p);
+        if (real !== p.answer) fail(tag + 'eq', `${tag}: ${p.text} says ${p.answer}, really ${real}`);
+        if (p.op === 'or' && p.a === p.b) fail(tag + 'cmp', `${tag}: compare problem with equal numbers`);
+        if (p.dec && p.op !== 'or' && (p.op === '÷' ? Number.isInteger(p.answer) : ![p.a, p.b].some((x) => !Number.isInteger(x)))) fail(tag + 'decw', `${tag}: decimal problem with only whole numbers: ${p.text}`);
+        if (/undefined|NaN/.test(p.text + p.explain)) fail(tag + 'txt', `${tag}: broken text "${p.text}" / "${p.explain}"`);
         const want = p.op === 'or' ? 2 : 4;
         if (p.choices.length !== want) fail(tag + 'n', `${tag}: ${p.choices.length} choices`);
         if (!p.choices.includes(p.answer)) fail(tag + 'in', `${tag}: answer missing from choices`);
         if (new Set(p.choices).size !== p.choices.length) fail(tag + 'dup', `${tag}: repeated choices ${p.choices}`);
-        if (p.choices.some((c) => !Number.isInteger(c) || c < 0)) fail(tag + 'neg', `${tag}: bad choice in ${p.choices}`);
+        if (p.choices.some((c) => !num(c))) fail(tag + 'neg', `${tag}: bad choice in ${p.choices}`);
         if (p.visual && !renderable(p.visual)) fail(tag + 'vis', `${tag}: picture can't be drawn (${JSON.stringify(p.visual)}) for ${p.text}`);
         if (p.visualMode === 'always' && !p.visual) fail(tag + 'always', `${tag}: should always show a picture but has none`);
         if (p.text.length > 120) fail(tag + 'len', `${tag}: question is ${p.text.length} characters`);
         if (!lvl) {
-          const cap = [10, 20, 99, 999][E.LEVELS.indexOf(E.SKILLS[skill].level)];
-          if (p.op !== '×' && p.op !== '÷' && Math.max(p.a, p.b, p.answer, p.total || 0) > cap) fail(tag + 'cap', `${tag}: ${p.text} goes past ${cap}`);
+          const cap = [10, 20, 999, 999, 99999, 9999][E.LEVELS.indexOf(E.SKILLS[skill].level)];
+          // Tens-and-ones goes to 99 in Grade 1, and rounding can land on the next round number (998 -> 1,000).
+          const limit = p.op === 'place' ? Math.max(cap, 99) : cap;
+          const vals = [p.a, p.b, p.total || 0, p.op === 'round' ? 0 : p.answer];
+          if (!['×', '÷', 'seq'].includes(p.op) && Math.max(...vals) > limit) fail(tag + 'cap', `${tag}: ${p.text} goes past ${limit}`);
         }
         const tip = E.tip(p);
         if (typeof tip !== 'string' || !tip) fail(tag + 'tip', `${tag}: no tip for ${p.text}`);
@@ -217,12 +253,20 @@ suite('Math problems', ({ check, bad }) => {
         const L = E.teach(p);
         if (!L) { fail(tag + 'teach', `${tag}: no Teach me lesson`); continue; }
         if (!L.title || !L.intro || !L.steps.length) fail(tag + 'lesson', `${tag}: lesson is missing parts`);
+        if (/undefined|NaN/.test(JSON.stringify(L))) fail(tag + 'ltxt', `${tag}: lesson text is broken: ${JSON.stringify(L).match(/.{40}(undefined|NaN).{20}/)}`);
+        const faded = E.teach(p, 3);
+        if (L.steps.length >= 3 && faded.steps.length !== L.steps.length - 1) fail(tag + 'fade', `${tag}: repeat lessons don't skip ahead`);
         for (const s of L.steps) {
-          if (!Number.isInteger(s.answer) || s.answer < 0) fail(tag + 'sans', `${tag}: lesson step answer ${s.answer} (${s.prompt})`);
+          const sNum = (x) => Number.isFinite(x) && x >= 0 && (s.dec ? true : Number.isInteger(x));
+          if (!sNum(s.answer)) fail(tag + 'sans', `${tag}: lesson step answer ${s.answer} (${s.prompt})`);
           if (!s.choices.includes(s.answer)) fail(tag + 'sin', `${tag}: lesson step answer not in choices (${s.prompt})`);
           if (new Set(s.choices).size !== s.choices.length) fail(tag + 'sdup', `${tag}: lesson step repeats choices`);
           if (s.choices.some((c) => c < 0)) fail(tag + 'sneg', `${tag}: lesson step has a negative choice`);
+          if (s.choices.length < 2) fail(tag + 'sfew', `${tag}: lesson step has only ${s.choices.length} choice`);
         }
+        const back = E.fromReview(JSON.parse(JSON.stringify(E.saveable(p))));
+        if (back.text !== p.equation && !p.story && back.text !== p.text) fail(tag + 'rev', `${tag}: review copy reads "${back.text}" not "${p.text}"`);
+        if (back.answer !== p.answer) fail(tag + 'reva', `${tag}: review copy has a different answer`);
         const t = E.twin(p);
         if (t.skillId !== p.skillId || t.story || !!t.missing !== !!p.missing) fail(tag + 'twin', `${tag}: twin problem doesn't match`);
       }

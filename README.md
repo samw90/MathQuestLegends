@@ -1,6 +1,6 @@
 # Math Quest Legends
 
-A pixel-art adventure for Kindergarten to Grade 3 in the style of classic handheld RPGs. You explore with your buddy, solve wild Legends' math puzzles to calm them down, and make friends along the way. It's a sister game to Math Quest and uses the same math.
+A pixel-art adventure for Kindergarten to Grade 5 in the style of classic handheld RPGs. You explore with your buddy, solve wild Legends' math puzzles to calm them down, and make friends along the way. It's a sister game to Math Quest and uses the same math.
 
 ## How to play
 
@@ -11,12 +11,14 @@ A pixel-art adventure for Kindergarten to Grade 3 in the style of classic handhe
   | --- | --- | --- | --- | --- | --- |
   | Adding | Hootsum | Tallytoise | Cactotal | Pengplus | Batsum |
   | Taking away | Snipsnap | Gulpgull | Minusnake | Meltling | Molemin |
-  | Which is bigger | Pebblit | Starbig | Lizardo | Yetiny | Crystling |
-  | Equal groups and times | Buzzlet | Octogroup | Arraydillo | Flurrfox | Webbit |
-  | Sharing (division) | Shareling | Jellishare | Coyshare | Harefrost | Glowsplit |
+  | Numbers (counting, comparing, place value, rounding) | Pebblit | Starbig | Lizardo | Yetiny | Crystling |
+  | Groups (skip counting, doubles, times) | Buzzlet | Octogroup | Arraydillo | Flurrfox | Webbit |
+  | Sharing (parts, halves, division, fractions) | Shareling | Jellishare | Coyshare | Harefrost | Glowsplit |
+
+  Every kind of puzzle has math for every grade, so every Legend shows up at every grade.
 
 - In battle, choose **SOLVE**. A right answer powers your buddy's move, and a fast first try gives extra power.
-- **Answers:** in Grades 1–3 you type answers. During a question, the D-pad and buttons turn into a big number keypad (typing an answer builds memory better than picking one). Kindergarten picks from big choices. Grown-ups can change this in MENU → Settings → Answers.
+- **Answers:** in Grades 1–5 you type answers (Grade 5 gets a decimal point key). During a question, the D-pad and buttons turn into a big number keypad (typing an answer builds memory better than picking one). Kindergarten picks from big choices. Grown-ups can change this in MENU → Settings → Answers.
 - Solve enough puzzles and the wild Legend **calms down**. Legends you solved on the first try often want to be your friend and join your team.
 - Each area has a boss guarding the way north. Beat them to earn five badges:
 
@@ -39,22 +41,26 @@ A pixel-art adventure for Kindergarten to Grade 3 in the style of classic handhe
 
 The buddy helps the way Math Quest's tutor does:
 
-1. **💡 Hint:** a short strategy tip ("Make a ten!", "Think addition: 7 + ? = 15") and the picture (ten-frame, base-ten blocks or array).
+1. **💡 Hint:** a short strategy tip ("Make a ten!", "Think addition: 7 + ? = 15") and a picture: ten-frame, base-ten blocks, array, number line or fraction bars.
 2. **A second try:** after a wrong answer, a hint about the likely mistake ("Careful! This one is taking away, not adding.", "Did you remember to borrow?").
-3. **🦉 Teach me:** a step-by-step lesson (count on, make a ten, count back, column adding, borrowing, skip counting, friendly fives, think multiplication), then a similar problem to try yourself.
+3. **🦉 Teach me:** a step-by-step lesson (count on, make a ten, count back, column adding, borrowing, skip counting, friendly fives, think multiplication, rounding on a number line, split and multiply, long division, matching fraction bottoms, lining up decimal points and more). From Grade 1 the buddy then asks "Which trick did we use?", and a similar problem follows to try yourself. After a kid has seen a lesson twice, it skips the first worked step.
 
 ## The math
 
-Skills, number ranges and difficulty follow Math Quest's grade scheme (Common Core K–3):
+Skills, number ranges and difficulty follow Math Quest's grade scheme (Common Core K–5). Each grade has all five kinds of Legend math:
 
-| Grade | Skills |
-| --- | --- |
-| Kindergarten | Add and take away within 10, with ten-frames |
-| Grade 1 | Add and take away within 20 (with ten-frames and missing numbers), comparing numbers |
-| Grade 2 | Two-digit adding and taking away (base-ten blocks), equal groups |
-| Grade 3 | Times tables, division facts, adding and taking away within 1,000 |
+| Grade | Adding | Taking away | Numbers | Groups | Sharing |
+| --- | --- | --- | --- | --- | --- |
+| Kindergarten | within 10 | within 10 | counting, which is more | counting on, by 10s | parts of a number (5 = 2 + ?) |
+| Grade 1 | within 20 | within 20 | comparing, tens and ones | doubles | mystery numbers (6 + ? = 13) |
+| Grade 2 | two-digit | two-digit | place value, skip counting | equal groups | halves |
+| Grade 3 | within 1,000 | within 1,000 | rounding | times tables | division facts |
+| Grade 4 | to 10,000 | to 10,000 | rounding big numbers | multi-digit × one digit | dividing by one digit, equal fractions |
+| Grade 5 | decimals | decimals | decimal place value | two-digit × two-digit | long division, adding fractions |
 
-Also from Math Quest: weak skills come up more often, mastered skills stretch to bigger numbers, 15% of problems review earlier grades, Grades 2–3 include short story problems, and missed problems come back after 1, 3 and 7 days.
+Also from Math Quest: weak skills come up more often, mastered skills stretch to bigger numbers, 15% of problems review earlier grades, Grades 2–4 include short story problems, and missed problems come back after 1, 3 and 7 days.
+
+**Research behind it:** typed answers use retrieval practice; review after 1, 3 and 7 days is spaced practice; wrong-answer hints give specific feedback; pictures (ten-frames, blocks, arrays, number lines, fraction bars) come before symbols; Teach me uses worked examples that fade as a kid gets familiar; number lines build number sense (Siegler & Booth); asking which trick was used prompts self-explanation; and praise names the strategy that worked, not the child ("Making a ten worked!").
 
 On top of that, wild encounters follow the player's needs: while one skill is clearly weak, extra encounters bring the Legend that practices it. As the skill improves, that Legend shows up at higher levels with bigger numbers.
 

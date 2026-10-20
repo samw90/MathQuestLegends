@@ -16,7 +16,7 @@ window.flowQC = async function () {
       for (const d of String(wrongs[0])) press(d);
       press('Enter');
     } else {
-      const b = [...document.querySelectorAll('.quiz .ans')].find((x) => !x.disabled && Number(x.textContent) !== p.answer);
+      const b = [...document.querySelectorAll('.quiz .ans')].find((x) => !x.disabled && Number(x.textContent.replace(/,/g, '')) !== p.answer);
       if (!b) return false; // two-choice question: no second wrong answer left
       tap(b);
     }
@@ -25,9 +25,10 @@ window.flowQC = async function () {
   }
   async function answerRight(p) {
     if (document.querySelector('.quiz .entry')) { for (const d of String(p.answer)) press(d); press('Enter'); }
-    else tap([...document.querySelectorAll('.quiz .ans')].find((x) => Number(x.textContent) === p.answer));
+    else tap([...document.querySelectorAll('.quiz .ans')].find((x) => Number(x.textContent.replace(/,/g, '')) === p.answer));
   }
-  const cases = [['add-10', 0], ['sub-10', 0], ['add-20', 1], ['sub-20', 1], ['compare', 1], ['add-100', 2], ['sub-100', 2], ['equal-groups', 2], ['mult-facts', 3], ['div-facts', 3], ['add-1000', 3], ['sub-1000', 3]];
+  // Every skill at its own grade.
+  const cases = MQL.MathEngine.LEVELS.flatMap((_, g) => MQL.MathEngine.gradeSkills(g).map((s) => [s, g]));
   for (const [skill, grade] of cases) {
     S.grade = grade;
     const p = MQL.MathEngine.make(skill, grade, {});
@@ -62,8 +63,13 @@ window.flowQC = async function () {
       }
     }
     // "Your turn!" line, then the twin problem.
-    for (let i = 0; i < 6 && !document.querySelector('.quiz'); i++) { press('z'); await wait(350); }
+    let askedTrick = false;
+    for (let i = 0; i < 8 && !document.querySelector('.quiz'); i++) {
+      if (/Which trick/.test(ui())) askedTrick = true;
+      press('z'); await wait(350);
+    }
     const twin = MQL.problem;
+    if (grade > 0 && !askedTrick) issues.push(`${skill}: no "Which trick" question`);
     if (!document.querySelector('.quiz') || twin === p) issues.push(`${skill}: no "Your turn" problem`);
     else await answerRight(twin);
     const r = await Promise.race([done, wait(4000).then(() => null)]);

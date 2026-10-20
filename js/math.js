@@ -1,12 +1,11 @@
-// Math engine. Follows Math Quest's grade scheme (Common Core K-3) so both
-// games teach the same skills at the same difficulty:
-//   K   add/sub within 10, with ten-frames always shown        (K.OA.A)
-//   G1  add/sub within 20 with ten-frames, comparing            (1.OA.C)
-//   G2  two-digit add/sub with base-ten blocks, equal groups    (2.NBT.B, 2.OA.C)
-//   G3  times tables, division facts, add/sub within 1,000      (3.OA.C, 3.NBT.A)
-// Also ported from Math Quest: weak skills come up more often, strong skills
+// Math engine. Follows Math Quest's grade scheme (Common Core K-5) so both
+// games teach the same skills at the same difficulty. Every grade has all five
+// kinds of Legend math, so any Legend can show up at any grade:
+//   add (Adders)     sub (Takers)     compare (Counters: number sense)
+//   mult (Groupers)  div (Sharers: parts, halves, division, fractions)
+// Also from Math Quest: weak skills come up more often, strong skills
 // "stretch" to bigger numbers, 15% review of earlier grades, story problems
-// in Grades 2-3, mistake-aware hints and step-by-step "Teach me" lessons.
+// in Grades 2-4, mistake-aware hints and step-by-step "Teach me" lessons.
 const MathEngine = (() => {
   const r = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -18,22 +17,56 @@ const MathEngine = (() => {
     return a;
   };
 
-  const LEVELS = ['k', 'g1', 'g2', 'g3'];
+  const LEVELS = ['k', 'g1', 'g2', 'g3', 'g4', 'g5'];
 
   const SKILLS = {
+    // Kindergarten
+    'count-10': { label: 'Counting to 10', level: 'k', family: 'compare' },
+    'compare-10': { label: 'Which is more (to 10)', level: 'k', family: 'compare' },
     'add-10': { label: 'Adding within 10', level: 'k', family: 'add' },
     'sub-10': { label: 'Taking away within 10', level: 'k', family: 'sub' },
+    'skip-10': { label: 'Counting on and by 10s', level: 'k', family: 'mult' },
+    'parts-10': { label: 'Parts of a number', level: 'k', family: 'div' },
+    // Grade 1
     'add-20': { label: 'Adding within 20', level: 'g1', family: 'add' },
     'sub-20': { label: 'Taking away within 20', level: 'g1', family: 'sub' },
     compare: { label: 'Comparing numbers', level: 'g1', family: 'compare' },
+    'place-tens': { label: 'Tens and ones', level: 'g1', family: 'compare' },
+    doubles: { label: 'Doubles', level: 'g1', family: 'mult' },
+    'missing-20': { label: 'Mystery numbers', level: 'g1', family: 'div' },
+    // Grade 2
     'add-100': { label: 'Two-digit adding', level: 'g2', family: 'add' },
     'sub-100': { label: 'Two-digit taking away', level: 'g2', family: 'sub' },
+    'place-100': { label: 'Place value and skip counting', level: 'g2', family: 'compare' },
     'equal-groups': { label: 'Equal groups', level: 'g2', family: 'mult' },
-    'mult-facts': { label: 'Times tables', level: 'g3', family: 'mult' },
-    'div-facts': { label: 'Division facts', level: 'g3', family: 'div' },
+    halves: { label: 'Halves', level: 'g2', family: 'div' },
+    // Grade 3
     'add-1000': { label: 'Adding within 1,000', level: 'g3', family: 'add' },
     'sub-1000': { label: 'Taking away within 1,000', level: 'g3', family: 'sub' },
+    round: { label: 'Rounding', level: 'g3', family: 'compare' },
+    'mult-facts': { label: 'Times tables', level: 'g3', family: 'mult' },
+    'div-facts': { label: 'Division facts', level: 'g3', family: 'div' },
+    // Grade 4
+    'add-multi': { label: 'Adding big numbers', level: 'g4', family: 'add' },
+    'sub-multi': { label: 'Taking away big numbers', level: 'g4', family: 'sub' },
+    'round-big': { label: 'Rounding big numbers', level: 'g4', family: 'compare' },
+    'mult-1digit': { label: 'Multiplying by one digit', level: 'g4', family: 'mult' },
+    'div-1digit': { label: 'Dividing by one digit', level: 'g4', family: 'div' },
+    'equiv-frac': { label: 'Equal fractions', level: 'g4', family: 'div' },
+    // Grade 5
+    'dec-add': { label: 'Adding decimals', level: 'g5', family: 'add' },
+    'dec-sub': { label: 'Taking away decimals', level: 'g5', family: 'sub' },
+    'dec-place': { label: 'Decimal place value', level: 'g5', family: 'compare' },
+    'mult-2digit': { label: 'Two-digit multiplying', level: 'g5', family: 'mult' },
+    'div-long': { label: 'Long division', level: 'g5', family: 'div' },
+    'frac-add': { label: 'Adding fractions', level: 'g5', family: 'div' },
   };
+
+  const tenth = (x) => Math.round(x * 10) / 10;
+  // A whole number from lo to hi that doesn't end in 0 (so x / 10 always has tenths).
+  const rNot10 = (lo, hi) => { let x = r(lo, hi); while (x % 10 === 0) x = r(lo, hi); return x; };
+  // Big numbers get commas (10,987) so they're easier to read.
+  const show = (n) => (typeof n === 'number' && Math.abs(n) >= 1000 ? n.toLocaleString('en-US', { maximumFractionDigits: 2 }) : String(n));
 
   function base(skillId, a, b, op, answer, visual, visualMode) {
     return { skillId, a, b, op, answer, visual, visualMode };
@@ -51,45 +84,118 @@ const MathEngine = (() => {
     let n2 = pick(NAMES);
     while (n2 === n1) n2 = pick(NAMES);
     const t = pick(THINGS);
+    const A = show(p.a), B = show(p.b);
     const text = {
-      add: `${n1} has ${p.a} ${t}. ${n2} gives ${n1} ${p.b} more. How many ${t} does ${n1} have now?`,
-      sub: `${n1} has ${p.a} ${t}. ${n1} gives ${p.b} to ${n2}. How many ${t} are left?`,
-      mult: `${n1} fills ${p.a} bags. Each bag has ${p.b} ${t}. How many ${t} in all?`,
-      div: `${n1} puts ${p.a} ${t} into ${p.b} equal groups. How many ${t} are in each group?`,
+      add: `${n1} has ${A} ${t}. ${n2} gives ${n1} ${B} more. How many ${t} does ${n1} have now?`,
+      sub: `${n1} has ${A} ${t}. ${n1} gives ${B} to ${n2}. How many ${t} are left?`,
+      mult: `${n1} fills ${A} bags. Each bag has ${B} ${t}. How many ${t} in all?`,
+      div: `${n1} puts ${A} ${t} into ${B} equal groups. How many ${t} are in each group?`,
     }[kind];
     return { ...p, story: text, visualMode: p.visual ? 'hint' : p.visualMode };
   }
 
-  // 25% of Grade 1 adding problems hide a number: 6 + ? = 13.
-  function missingAddend(p) {
-    if (p.story || Math.random() > 0.25) return p;
-    return { ...p, missing: true, total: p.a + p.b, answer: p.b, visual: null, visualMode: 'none' };
+  // A hidden-number problem: 6 + ? = 13.
+  function missingOf(skill, a, b, visual) {
+    return { ...base(skill, a, b, '+', b, visual, visual ? 'hint' : 'none'), missing: true, total: a + b };
   }
+
+  // Number lines (Siegler & Booth): marks are { at, label, cls }.
+  const line = (from, to, step, marks) => ({ kind: 'numberline', from, to, step, marks });
 
   // ---------------------------------------------------------------- templates (from Math Quest)
 
   const TEMPLATES = {
     k: [
-      { skill: 'add-10', weight: 55, gen() { const a = r(1, 9), b = r(1, 10 - a); return base('add-10', a, b, '+', a + b, { kind: 'tenframe', a, b, mode: 'add' }, 'always'); } },
-      { skill: 'sub-10', weight: 45, gen() { const a = r(2, 10), b = r(1, a - 1); return base('sub-10', a, b, '−', a - b, { kind: 'tenframe', a, b, mode: 'sub' }, 'always'); } },
+      { skill: 'count-10', weight: 18, gen() { const a = r(3, 10); return base('count-10', a, 0, 'count', a, { kind: 'tenframe', a, b: 0, mode: 'add' }, 'always'); } },
+      { skill: 'compare-10', weight: 12, gen() { const a = r(1, 10); let b = r(1, 10); while (b === a) b = r(1, 10); return base('compare-10', a, b, 'or', Math.max(a, b), line(0, 10, 1, [{ at: a, label: a }, { at: b, label: b }]), 'hint'); } },
+      { skill: 'add-10', weight: 25, gen() { const a = r(1, 9), b = r(1, 10 - a); return base('add-10', a, b, '+', a + b, { kind: 'tenframe', a, b, mode: 'add' }, 'always'); } },
+      { skill: 'sub-10', weight: 21, gen() { const a = r(2, 10), b = r(1, a - 1); return base('sub-10', a, b, '−', a - b, { kind: 'tenframe', a, b, mode: 'sub' }, 'always'); } },
+      { skill: 'skip-10', weight: 12, gen() {
+        const step = Math.random() < 0.5 ? 1 : 10;
+        const start = step === 1 ? r(1, 16) : 10 * r(1, 6);
+        const seq = [start, start + step, start + 2 * step];
+        const ans = start + 3 * step;
+        return { ...base('skip-10', start, step, 'seq', ans, line(start, ans, step, [...seq.map((v) => ({ at: v, label: v })), { at: ans, label: '?', cls: 'q' }]), 'hint'), seq, step };
+      } },
+      { skill: 'parts-10', weight: 12, gen() { const t = r(3, 10), a = r(1, t - 1); return missingOf('parts-10', a, t - a, { kind: 'tenframe', a, b: t - a, mode: 'add' }); } },
     ],
     g1: [
-      { skill: 'add-20', weight: 55, gen() { const a = r(3, 15), b = r(2, Math.min(20 - a, 12)); return missingAddend(base('add-20', a, b, '+', a + b, { kind: 'tenframe', a, b, mode: 'add' }, 'always')); } },
-      { skill: 'sub-20', weight: 45, gen() { const a = r(5, 20), b = r(2, a - 1); return base('sub-20', a, b, '−', a - b, { kind: 'tenframe', a, b, mode: 'sub' }, 'always'); } },
-      { skill: 'compare', weight: 10, gen() { const a = r(5, 20); let b = r(5, 20); while (b === a) b = r(5, 20); return base('compare', a, b, 'or', Math.max(a, b), null, 'none'); } },
+      { skill: 'add-20', weight: 40, gen() { const a = r(3, 15), b = r(2, Math.min(20 - a, 12)); return base('add-20', a, b, '+', a + b, { kind: 'tenframe', a, b, mode: 'add' }, 'always'); } },
+      { skill: 'sub-20', weight: 30, gen() { const a = r(5, 20), b = r(2, a - 1); return base('sub-20', a, b, '−', a - b, { kind: 'tenframe', a, b, mode: 'sub' }, 'always'); } },
+      { skill: 'compare', weight: 8, gen() { const a = r(5, 20); let b = r(5, 20); while (b === a) b = r(5, 20); return base('compare', a, b, 'or', Math.max(a, b), line(0, 20, 2, [{ at: a, label: a }, { at: b, label: b }]), 'hint'); } },
+      { skill: 'place-tens', weight: 7, gen() { const t = r(1, 9), o = r(0, 9), n = 10 * t + o; return { ...base('place-tens', t, o, 'place', n, { kind: 'baseten', a: n, b: 0, mode: 'show' }, 'hint'), prompt: `${t} tens and ${o} ones = ?` }; } },
+      { skill: 'doubles', weight: 7, gen() { const a = r(2, 9); return base('doubles', a, a, '+', 2 * a, { kind: 'tenframe', a, b: a, mode: 'add' }, 'hint'); } },
+      { skill: 'missing-20', weight: 8, gen() { const a = r(3, 15), b = r(2, Math.min(20 - a, 12)); return missingOf('missing-20', a, b, null); } },
     ],
     g2: [
-      { skill: 'add-100', weight: 40, gen() { const a = r(12, 70), b = r(11, 99 - a); return story(base('add-100', a, b, '+', a + b, { kind: 'baseten', a, b, mode: 'add' }, 'hint'), 'add'); } },
-      { skill: 'sub-100', weight: 35, gen() { const a = r(25, 99), b = r(11, a - 10); return story(base('sub-100', a, b, '−', a - b, { kind: 'baseten', a, b, mode: 'sub' }, 'hint'), 'sub'); } },
-      { skill: 'equal-groups', weight: 25, gen() { const a = r(2, 5), b = r(2, 5); return story(base('equal-groups', a, b, '×', a * b, { kind: 'array', rows: a, cols: b }, 'always'), 'mult'); } },
+      { skill: 'add-100', weight: 30, gen() { const a = r(12, 70), b = r(11, 99 - a); return story(base('add-100', a, b, '+', a + b, { kind: 'baseten', a, b, mode: 'add' }, 'hint'), 'add'); } },
+      { skill: 'sub-100', weight: 28, gen() { const a = r(25, 99), b = r(11, a - 10); return story(base('sub-100', a, b, '−', a - b, { kind: 'baseten', a, b, mode: 'sub' }, 'hint'), 'sub'); } },
+      { skill: 'place-100', weight: 12, gen() {
+        if (Math.random() < 0.5) {
+          const h = r(1, 9), t = r(0, 9), o = r(0, 9), n = 100 * h + 10 * t + o;
+          const prompt = Math.random() < 0.5 ? `${h} hundreds, ${t} tens and ${o} ones = ?` : `${100 * h} + ${10 * t} + ${o} = ?`;
+          return { ...base('place-100', h, t, 'place', n, null, 'none'), prompt, o };
+        }
+        const step = pick([5, 10, 100]);
+        const start = step * (step === 100 ? r(1, 6) : r(1, 15));
+        const seq = [start, start + step, start + 2 * step], ans = start + 3 * step;
+        return { ...base('place-100', start, step, 'seq', ans, line(start, ans, step, [...seq.map((v) => ({ at: v, label: v })), { at: ans, label: '?', cls: 'q' }]), 'hint'), seq, step };
+      } },
+      { skill: 'equal-groups', weight: 20, gen() { const a = r(2, 5), b = r(2, 5); return story(base('equal-groups', a, b, '×', a * b, { kind: 'array', rows: a, cols: b }, 'always'), 'mult'); } },
+      { skill: 'halves', weight: 10, gen() { const h = r(2, 20), a = 2 * h; return base('halves', a, 2, 'half', h, h <= 10 ? { kind: 'array', rows: 2, cols: h } : null, h <= 10 ? 'hint' : 'none'); } },
     ],
     g3: [
-      { skill: 'mult-facts', weight: 35, gen() { const a = r(2, 10), b = r(2, 10); return story(base('mult-facts', a, b, '×', a * b, { kind: 'array', rows: a, cols: b }, 'hint'), 'mult'); } },
-      { skill: 'div-facts', weight: 30, gen() { const t = r(2, 10), n = r(2, 10); return story(base('div-facts', t * n, t, '÷', n, { kind: 'array', rows: t, cols: n }, 'hint'), 'div'); } },
-      { skill: 'add-1000', weight: 20, gen() { const a = r(120, 700), b = r(100, 999 - a); return story(base('add-1000', a, b, '+', a + b, null, 'none'), 'add'); } },
-      { skill: 'sub-1000', weight: 15, gen() { const a = r(300, 999), b = r(100, a - 50); return story(base('sub-1000', a, b, '−', a - b, null, 'none'), 'sub'); } },
+      { skill: 'mult-facts', weight: 30, gen() { const a = r(2, 10), b = r(2, 10); return story(base('mult-facts', a, b, '×', a * b, { kind: 'array', rows: a, cols: b }, 'hint'), 'mult'); } },
+      { skill: 'div-facts', weight: 25, gen() { const t = r(2, 10), n = r(2, 10); return story(base('div-facts', t * n, t, '÷', n, { kind: 'array', rows: t, cols: n }, 'hint'), 'div'); } },
+      { skill: 'add-1000', weight: 17, gen() { const a = r(120, 700), b = r(100, 999 - a); return story(base('add-1000', a, b, '+', a + b, null, 'none'), 'add'); } },
+      { skill: 'sub-1000', weight: 13, gen() { const a = r(300, 999), b = r(100, a - 50); return story(base('sub-1000', a, b, '−', a - b, null, 'none'), 'sub'); } },
+      { skill: 'round', weight: 15, gen() { return roundProblem('round', Math.random() < 0.6 ? 10 : 100, 101, 999); } },
+    ],
+    g4: [
+      { skill: 'add-multi', weight: 20, gen() { const a = r(1200, 6000), b = r(1000, 9999 - a); return story(base('add-multi', a, b, '+', a + b, null, 'none'), 'add'); } },
+      { skill: 'sub-multi', weight: 20, gen() { const a = r(2000, 9999), b = r(1000, a - 500); return story(base('sub-multi', a, b, '−', a - b, null, 'none'), 'sub'); } },
+      { skill: 'round-big', weight: 10, gen() { return Math.random() < 0.5 ? roundProblem('round-big', 100, 1001, 9999) : roundProblem('round-big', 1000, 10001, 99999); } },
+      { skill: 'mult-1digit', weight: 25, gen() { const a = Math.random() < 0.5 ? r(120, 999) : r(12, 99), b = r(3, 9); return story(base('mult-1digit', a, b, '×', a * b, null, 'none'), 'mult'); } },
+      { skill: 'div-1digit', weight: 15, gen() { const t = r(3, 9), n = r(11, 99); return story(base('div-1digit', t * n, t, '÷', n, null, 'none'), 'div'); } },
+      { skill: 'equiv-frac', weight: 10, gen() {
+        const b = r(2, 6), a = r(1, b - 1), k = r(2, b <= 3 ? 4 : 2), d = b * k;
+        return { ...base('equiv-frac', a, b, 'frac', a * k, { kind: 'bars', rows: [{ parts: b, filled: a }, { parts: d, filled: a * k }] }, 'hint'), d };
+      } },
+    ],
+    g5: [
+      { skill: 'dec-add', weight: 22, gen() { const a = rNot10(11, 899) / 10, b = rNot10(11, 899) / 10; return { ...base('dec-add', a, b, '+', tenth(a + b), null, 'none'), dec: true }; } },
+      { skill: 'dec-sub', weight: 20, gen() { const x = rNot10(300, 999), y = rNot10(100, x - 50); return { ...base('dec-sub', x / 10, y / 10, '−', tenth((x - y) / 10), null, 'none'), dec: true }; } },
+      { skill: 'dec-place', weight: 12, gen() {
+        const roll = Math.random();
+        if (roll < 0.4) {
+          // The classic mix-up: 0.45 looks bigger than 0.7 because it has more digits.
+          const ai = r(1, 9);
+          let bi = r(11, 99);
+          while (bi % 10 === 0 || Math.abs(bi - ai * 10) < 5) bi = r(11, 99);
+          const a = ai / 10, b = bi / 100;
+          return { ...base('dec-place', a, b, 'or', Math.max(a, b), null, 'none'), dec: true };
+        }
+        if (roll < 0.7) { const a = rNot10(11, 999) / 10; return { ...base('dec-place', a, 10, '×', Math.round(a * 10), null, 'none'), dec: true }; }
+        const a = rNot10(11, 999); return { ...base('dec-place', a, 10, '÷', tenth(a / 10), null, 'none'), dec: true };
+      } },
+      { skill: 'mult-2digit', weight: 20, gen() { const a = r(12, 99), b = r(12, 99); return base('mult-2digit', a, b, '×', a * b, null, 'none'); } },
+      { skill: 'div-long', weight: 14, gen() { const t = r(3, 9), n = r(101, 999); return base('div-long', t * n, t, '÷', n, null, 'none'); } },
+      { skill: 'frac-add', weight: 12, gen() {
+        const b = r(2, 5), k = r(2, 3), d = b * k, a = r(1, b - 1), c = r(1, d - 1 - a * k);
+        return { ...base('frac-add', a, b, 'fracadd', a * k + c, { kind: 'bars', rows: [{ parts: b, filled: a }, { parts: d, filled: c }] }, 'hint'), c, d };
+      } },
     ],
   };
+
+  // Round n (between lo and hi, not already round) to the nearest `unit`.
+  function roundProblem(skill, unit, lo, hi) {
+    let n = r(lo, hi);
+    while (n % unit === 0) n = r(lo, hi);
+    const down = Math.floor(n / unit) * unit, ans = Math.round(n / unit) * unit;
+    const step = unit / 10;
+    const marks = [{ at: down, label: show(down) }, { at: down + unit, label: show(down + unit) }, { at: n, label: show(n), cls: 'q' }];
+    return base(skill, n, unit, 'round', ans, line(down, down + unit, step, marks), 'hint');
+  }
   const ALL = Object.values(TEMPLATES).flat();
   const templateFor = (skill) => ALL.find((t) => t.skill === skill);
 
@@ -122,13 +228,15 @@ const MathEngine = (() => {
   }
 
   // Strong skills sometimes get bigger numbers.
+  const STRETCHY = new Set(['add-10', 'sub-10', 'add-20', 'sub-20', 'add-100', 'sub-100', 'equal-groups', 'mult-facts', 'div-facts',
+    'add-1000', 'sub-1000', 'add-multi', 'sub-multi', 'mult-1digit', 'div-1digit', 'mult-2digit', 'div-long']);
   function stretch(p, level, grade) {
-    if (!level || p.story || p.missing) return p;
+    if (!level || p.story || p.missing || p.dec || !STRETCHY.has(p.skillId)) return p;
     if (Math.random() > (level === 2 ? 0.85 : 0.5)) return p;
     const L = LEVELS[grade];
-    const cap = { k: 10, g1: 20, g2: 99, g3: 999 }[L];
+    const cap = { k: 10, g1: 20, g2: 99, g3: 999, g4: 9999, g5: 9999 }[L];
     const f = level === 2 ? 2.5 : 1.7;
-    const M = Math.min(Math.round(cap * f), { k: 20, g1: 99, g2: 999, g3: 9999 }[L]);
+    const M = Math.min(Math.round(cap * f), { k: 20, g1: 99, g2: 999, g3: 9999, g4: 99999, g5: 99999 }[L]);
     if (p.op === '+') {
       const a = r(Math.max(2, Math.round(0.6 * cap)), Math.max(3, M - 1));
       const b = r(1, Math.max(1, M - a));
@@ -178,30 +286,71 @@ const MathEngine = (() => {
 
   // ---------------------------------------------------------------- building a problem
 
-  const fmt = (p) => (p.missing ? `${p.a} + ? = ${p.total}` : `${p.a} ${p.op} ${p.b} = ?`);
+  // The question line for each kind of problem.
+  function fmt(p) {
+    const { a, b } = p;
+    switch (p.op) {
+      case 'count': return 'How many dots?';
+      case 'seq': return `${p.seq.join(', ')}, ?`;
+      case 'place': return p.prompt;
+      case 'half': return `Half of ${a} = ?`;
+      case 'round': return `Round ${show(a)} to the nearest ${show(b)}.`;
+      case 'frac': return `${a}/${b} = ?/${p.d}`;
+      case 'fracadd': return `${a}/${b} + ${p.c}/${p.d} = ?/${p.d}`;
+      default: return p.missing ? `${a} + ? = ${p.total}` : `${show(a)} ${p.op} ${show(b)} = ?`;
+    }
+  }
+  function explainOf(p) {
+    const ans = p.answer;
+    switch (p.op) {
+      case 'count': return `There are ${ans} dots.`;
+      case 'seq': return `${p.seq.join(', ')}, ${ans}. It goes up by ${p.step} each time.`;
+      case 'place': return p.prompt.replace('?', ans);
+      case 'half': return `Half of ${p.a} is ${ans}, because ${ans} + ${ans} = ${p.a}.`;
+      case 'round': return `${show(p.a)} rounds to ${show(ans)}.`;
+      case 'frac': return `${p.a}/${p.b} = ${ans}/${p.d}`;
+      case 'fracadd': return `${p.a}/${p.b} + ${p.c}/${p.d} = ${ans}/${p.d}`;
+      default: return p.missing ? `${p.a} + ${ans} = ${p.total}` : `${show(p.a)} ${p.op} ${show(p.b)} = ${show(ans)}`;
+    }
+  }
 
+  // Wrong choices come from real mistakes kids make, then near misses.
   function choicesFor(p) {
     const ans = p.answer;
     if (p.op === 'or') return shuffle([p.a, p.b]);
-    const cands = [ans + 1, ans - 1];
-    if (p.missing) cands.push(p.total, p.total + p.a);
-    else if (p.op === '+') { cands.push(p.a - p.b); if (ans >= 20) cands.push(ans - 10, ans + 10); }
+    const near = p.dec && !Number.isInteger(ans) ? 0.1 : 1;
+    const cands = [ans + near, ans - near];
+    const { a, b } = p;
+    if (p.missing) cands.push(p.total, p.total + a);
+    else if (p.dec) {
+      if (p.op === '×') cands.push(a, tenth(a * 100) / 1, tenth(ans / 100));
+      else if (p.op === '÷') cands.push(a * 10, tenth(ans / 10), a);
+      else cands.push(tenth(ans * 10), tenth(ans / 10), p.op === '+' ? tenth(a + b * 10) : tenth(a - b + 1));
+    } else if (p.op === '+') { cands.push(a - b); if (ans >= 20) cands.push(ans - 10, ans + 10); }
     else if (p.op === '−') {
-      cands.push(p.a + p.b);
-      if (p.a >= 20) {
+      cands.push(a + b);
+      if (a >= 20) {
         // "Smaller from larger" in each column: the classic no-borrow mistake.
-        const A = String(p.a), B = String(p.b).padStart(A.length, '0');
+        const A = String(a), B = String(b).padStart(A.length, '0');
         const wrong = Number([...A].map((d, i) => Math.abs(Number(d) - Number(B[i]))).join(''));
         cands.push(wrong, ans + 10);
       }
-    } else if (p.op === '×') cands.push(p.a + p.b, ans + p.b, ans - p.b, ans + p.a);
-    else if (p.op === '÷') cands.push(ans + 2, p.b, ans * 2);
+    } else if (p.op === '×') cands.push(a + b, ans + b, ans - b, ans + a);
+    else if (p.op === '÷') cands.push(ans + 2, b, ans * 2, ans + 10);
+    else if (p.op === 'count') cands.push(ans + 2, ans - 2);
+    else if (p.op === 'seq') cands.push(ans + p.step, p.seq[2], ans - p.step + 1);
+    else if (p.op === 'place') cands.push(Number(String(ans).split('').reverse().join('')), String(ans).split('').reduce((x, y) => x + Number(y), 0), ans + 10);
+    else if (p.op === 'half') cands.push(a, a - 2, ans + 5);
+    else if (p.op === 'round') cands.push(ans === Math.floor(a / b) * b ? ans + b : ans - b, a, ans + 10 * b);
+    else if (p.op === 'frac') cands.push(a, p.d - ans, ans * 2);
+    else if (p.op === 'fracadd') cands.push(a + p.c, ans + 1, p.d);
+    const ok = (c) => Number.isFinite(c) && c >= 0 && (p.dec ? tenth(c) === c : Number.isInteger(c));
     const set = new Set([ans]);
     for (const c of shuffle(cands.slice(2)).concat(cands.slice(0, 2))) {
       if (set.size >= 4) break;
-      if (Number.isInteger(c) && c >= 0) set.add(c);
+      if (ok(c)) set.add(c);
     }
-    for (let k = 2; set.size < 4; k++) set.add(ans + k);
+    for (let k = 2; set.size < 4; k++) set.add(p.dec && !Number.isInteger(ans) ? tenth(ans + k / 10) : ans + k);
     return shuffle([...set]);
   }
 
@@ -212,7 +361,7 @@ const MathEngine = (() => {
     } else {
       p.equation = fmt(p);
       p.text = p.story || p.equation;
-      p.explain = p.missing ? `${p.a} + ${p.answer} = ${p.total}` : `${p.a} ${p.op} ${p.b} = ${p.answer}`;
+      p.explain = explainOf(p);
     }
     p.choices = choicesFor(p);
     p.label = SKILLS[p.skillId].label;
@@ -237,6 +386,14 @@ const MathEngine = (() => {
     return finish(t.gen());
   }
 
+  // The fields a problem needs to be rebuilt later (for the review bank).
+  function saveable(p) {
+    const keep = {};
+    for (const k of ['skillId', 'a', 'b', 'c', 'd', 'op', 'answer', 'missing', 'total', 'visual', 'visualMode', 'dec', 'seq', 'step', 'prompt']) {
+      if (p[k] !== undefined) keep[k] = p[k];
+    }
+    return keep;
+  }
   function fromReview(item) {
     return finish(fitVisual({ ...item, story: null }));
   }
@@ -277,6 +434,50 @@ const MathEngine = (() => {
         return a <= 5 ? `Count by ${b}s, ${a} times.` : `Split it up: 5 × ${b}, plus ${a - 5} × ${b}.`;
       case 'div-facts':
         return `Think: ${b} × ? = ${a}.`;
+      case 'count-10':
+        return a > 5 ? 'The top row holds 5. Count on from 5 in the bottom row.' : 'Touch each dot as you count it.';
+      case 'compare-10':
+        return 'Find both numbers on the number line. The one farther right is bigger.';
+      case 'skip-10':
+      case 'place-100':
+        if (p.op === 'seq') return `Each number goes up by ${p.step}. What comes after ${p.seq[2]}?`;
+        return 'Each place tells how many. Write the hundreds, then the tens, then the ones.';
+      case 'place-tens':
+        return `${a} tens is ${a * 10}. Then add ${b} ones.`;
+      case 'doubles':
+        return `Doubles! ${a} + ${a} is two groups of ${a}.${a >= 5 ? ` Think: 5 + 5 = 10, plus ${a - 5} + ${a - 5}.` : ''}`;
+      case 'halves':
+        return `Half means 2 equal groups. What number plus itself makes ${a}?`;
+      case 'round':
+      case 'round-big': {
+        const lo = Math.floor(a / b) * b, place = { 10: 'ones', 100: 'tens', 1000: 'hundreds' }[b];
+        return `Is ${show(a)} closer to ${show(lo)} or ${show(lo + b)}? Look at the ${place} digit. 5 or more rounds up.`;
+      }
+      case 'add-multi':
+        return 'Line up the places. Add the ones, tens, hundreds, then thousands. Carry when a column makes 10 or more.';
+      case 'sub-multi':
+        return 'Line up the places and subtract from right to left. Borrow when the top digit is smaller.';
+      case 'mult-1digit':
+      case 'mult-2digit': {
+        const parts = expand(p.skillId === 'mult-2digit' ? b : a);
+        return p.skillId === 'mult-2digit'
+          ? `Split ${b} into ${parts.join(' + ')}. Do ${a} × each part, then add them.`
+          : `Split ${a} into ${parts.join(' + ')}. Multiply each part by ${b}, then add.`;
+      }
+      case 'div-1digit':
+      case 'div-long':
+        return `Think: ${b} × ? = ${a}. Try ${b} × 10 = ${b * 10} first to see how big the answer is.`;
+      case 'equiv-frac':
+        return `How many times bigger is ${p.d} than ${b}? Multiply the top by that number too.`;
+      case 'frac-add':
+        return `Make the bottoms match first: ${a}/${b} = ?/${p.d}. Then add the tops.`;
+      case 'dec-add':
+      case 'dec-sub':
+        return `Line up the decimal points. Then ${p.op === '+' ? 'add' : 'subtract'} like whole numbers.`;
+      case 'dec-place':
+        if (p.op === '×') return 'Times 10 makes it 10 times bigger. Each digit moves one place to the left.';
+        if (p.op === '÷') return 'Divide by 10 and each digit moves one place to the right.';
+        return 'Compare the tenths first: the first digit after the point.';
       default:
         return 'Take your time. You can do it!';
     }
@@ -284,7 +485,29 @@ const MathEngine = (() => {
 
   // After a wrong answer: a hint about the likely mistake (Math Quest's rules).
   function mistakeHint(p, given) {
-    if (p.missing || p.op === 'or') return null;
+    if (p.op === 'or') {
+      if (p.dec && given === Math.min(p.a, p.b)) return 'More digits doesn\'t mean bigger! Compare the tenths first.';
+      return null;
+    }
+    if (p.missing) return null;
+    if (p.dec) {
+      if (given === tenth(p.answer * 10) || given === tenth(p.answer / 10) || given === Math.round(p.answer * 100) / 100) return 'So close! Check where the decimal point goes.';
+      // Added or subtracted with the points out of line: 3.5 + 59.9 treated as 3.5 + 599.
+      const off = p.op === '+' ? [tenth(p.a + p.b * 10), tenth(p.a * 10 + p.b)] : [tenth(p.a - p.b * 10), tenth(p.a * 10 - p.b)];
+      if (off.includes(given)) return 'Line up the decimal points first, so tenths sit under tenths.';
+      if (Math.abs(given - p.answer) < 1) return 'Almost! Line up the decimal points and try again.';
+      return null;
+    }
+    if (p.op === 'round') {
+      const lo = Math.floor(p.a / p.b) * p.b;
+      if (given === lo || given === lo + p.b) return 'Check the digit to the right of the place you\'re rounding to. 5 or more rounds up. 4 or less rounds down.';
+      if (given === p.a) return 'Rounding changes the number to a nearby round number.';
+      return null;
+    }
+    if (p.op === 'frac' && given === p.a) return 'The bottom got bigger, so the top has to grow by the same amount.';
+    if (p.op === 'fracadd' && given === p.a + p.c) return 'Make the bottom numbers match before you add the tops.';
+    if (p.op === 'half' && given === p.a * 2) return 'Half means splitting into 2 equal groups. The answer is smaller.';
+    if (p.op === 'seq' && given === p.seq[2] + 1 && p.step !== 1) return `Look again. It goes up by ${p.step} each time, not 1.`;
     const d = Math.abs(given - p.answer);
     if (d === 0) return null;
     if (d === 1) return 'So close! You\'re just one off. Count again carefully.';
@@ -308,7 +531,13 @@ const MathEngine = (() => {
 
   // ---------------------------------------------------------------- Teach me (step by step)
 
-  const PLACES = ['ones', 'tens', 'hundreds', 'thousands'];
+  // 347 -> [300, 40, 7] (skips zeros).
+  function expand(n) {
+    const ds = String(n).split('');
+    return ds.map((d, i) => Number(d) * 10 ** (ds.length - 1 - i)).filter((x) => x > 0);
+  }
+
+  const PLACES = ['ones', 'tens', 'hundreds', 'thousands', 'ten thousands', 'hundred thousands'];
   const cap = (w) => w[0].toUpperCase() + w.slice(1);
   const digits = (n) => String(n).split('').reverse().map(Number);
 
@@ -551,22 +780,195 @@ const MathEngine = (() => {
     return { title: 'Think multiplication', intro: 'Division is multiplication backwards. Find the missing number.', steps };
   }
 
-  function teach(p) {
+
+  function teachCount(p) {
+    const a = p.answer;
+    if (a <= 5) {
+      return { title: 'Touch and count', intro: 'Touch each dot one time as you count it.', steps: [
+        { work: ['1, 2, 3, ...'], prompt: 'Touch each dot and count. How many dots?', answer: a, hint: 'Say one number for each dot.', after: `The last number you say is how many: ${a}.` },
+      ] };
+    }
+    return { title: 'Count on from 5', intro: 'A ten-frame row holds 5. Start at 5 and count on.', steps: [
+      { work: ['Top row: full'], prompt: 'How many dots fill a whole row?', answer: 5, hint: 'Count the top row.', after: 'A full row is 5.' },
+      { work: ['Top row: 5', `Bottom row: ${a - 5}`], prompt: `Count on from 5: 5 + ${a - 5} = ?`, answer: a, hint: `Say 5, then count up ${a - 5} more.`, after: `There are ${a} dots. Counting on from 5 is fast!` },
+    ] };
+  }
+
+  function teachSeq(p) {
+    const { seq, step } = p, last = seq[seq.length - 1];
+    return { title: 'Find the pattern', intro: 'Each number goes up by the same amount. Find out how much, then keep going.', steps: [
+      { work: [`${seq.join(', ')}, ?`], prompt: `How much does it go up each time? ${seq[0]} to ${seq[1]} is +?`, answer: step, hint: `Count up from ${seq[0]} to ${seq[1]}.`, after: `It goes up by ${step} each time.` },
+      { work: [`${seq.join(', ')}, ?`, `+${step} each time`], prompt: `So what comes next? ${last} + ${step} = ?`, answer: p.answer, hint: `Count up ${step} from ${last}.`, after: `${seq.join(', ')}, ${p.answer}!` },
+    ] };
+  }
+
+  function teachPlace(p) {
+    if (p.skillId === 'place-tens') {
+      const t = p.a, o = p.b;
+      return { title: 'Tens and ones', intro: 'Each ten is a stick of 10. Count the tens by 10s, then add the ones.', steps: [
+        { work: [`${t} tens, ${o} ones`], prompt: `Count ${t} tens by 10s. ${t} tens = ?`, answer: 10 * t, hint: `10, 20, 30... say ${t} numbers.`, after: `${t} tens is ${10 * t}.` },
+        { work: [`${t} tens = ${10 * t}`, `${o} ones = ${o}`], prompt: `${10 * t} + ${o} = ?`, answer: p.answer, hint: `Start at ${10 * t} and count up ${o}.`, after: `${t} tens and ${o} ones is ${p.answer}.` },
+      ] };
+    }
+    const h = p.a, t = p.b, o = p.o;
+    return { title: 'Hundreds, tens and ones', intro: 'Build the number one place at a time: hundreds, then tens, then ones.', steps: [
+      { work: [p.prompt], prompt: `${h} hundreds = ?`, answer: 100 * h, hint: `Count by 100s, ${h} times.`, after: `${h} hundreds is ${100 * h}.` },
+      { work: [p.prompt, `${h} hundreds = ${100 * h}`], prompt: `Add the tens: ${100 * h} + ${10 * t} = ?`, answer: 100 * h + 10 * t, hint: `${t} tens is ${10 * t}.`, after: `Now we have ${100 * h + 10 * t}.` },
+      { work: [p.prompt, `= ${100 * h + 10 * t} + ${o}`], prompt: `Add the ones: ${100 * h + 10 * t} + ${o} = ?`, answer: p.answer, hint: `Put ${o} in the ones place.`, after: `The digits are ${h}, ${t}, ${o}: ${p.answer}.` },
+    ] };
+  }
+
+  function teachHalf(p) {
+    const a = p.a, ans = p.answer, tens = Math.floor(a / 10) * 10, ones = a % 10;
+    if (!tens) {
+      return { title: 'Share it out', intro: `Half means 2 equal groups. Deal ${a} things out one at a time, like cards.`, steps: [
+        { work: [`${a} → ? + ?`], prompt: `Which double makes ${a}? ? + ? = ${a}`, answer: ans, hint: `Try ${ans - 1} + ${ans - 1}. Too small? Try one more.`, after: `${ans} + ${ans} = ${a}. Half of ${a} is ${ans}.` },
+      ] };
+    }
+    const steps = [{ work: [`${a} = ${tens} + ${ones}`], prompt: `Split ${a} into ${tens} and ${ones}. Half of ${tens} = ?`, answer: tens / 2, hint: `What number plus itself makes ${tens}?`, after: `Half of ${tens} is ${tens / 2}.` }];
+    if (ones) steps.push({ work: [`${a} = ${tens} + ${ones}`, `half of ${tens} = ${tens / 2}`], prompt: `Half of ${ones} = ?`, answer: ones / 2, hint: `? + ? = ${ones}`, after: `Half of ${ones} is ${ones / 2}.` });
+    steps.push({ work: [`half of ${tens} = ${tens / 2}`, ...(ones ? [`half of ${ones} = ${ones / 2}`] : [])], prompt: ones ? `Put them together: ${tens / 2} + ${ones / 2} = ?` : `So half of ${a} = ?`, answer: ans, hint: 'Add the halves.', after: `Half of ${a} is ${ans}. Check: ${ans} + ${ans} = ${a}.` });
+    return { title: 'Split and halve', intro: 'Big numbers are easier to halve in pieces: the tens, then the ones.', steps };
+  }
+
+  function teachRound(p) {
+    const { a, b } = p, lo = Math.floor(a / b) * b, hi = lo + b;
+    const place = { 10: 'ones', 100: 'tens', 1000: 'hundreds' }[b], d = Math.floor((a % b) / (b / 10));
+    return { title: 'Round on a number line', intro: `Find the two round numbers ${a} sits between. Then see which one it's closer to.`, steps: [
+      { work: [`${lo} ... ${a} ... ?`], prompt: `${a} is between ${lo} and what?`, answer: hi, hint: `Count up ${b} from ${lo}.`, after: `${a} is between ${lo} and ${hi}.` },
+      { work: [`${lo} ... ${a} ... ${hi}`], prompt: `What is the ${place} digit of ${a}?`, answer: d, hint: `Look at the ${place} place.`, after: d >= 5 ? `${d} is 5 or more, so we round up.` : `${d} is less than 5, so we round down.` },
+      { work: [`${lo} ... ${a} ... ${hi}`, d >= 5 ? 'round up' : 'round down'], prompt: `So ${a} rounds to ?`, answer: p.answer, choices: [lo, hi], hint: d >= 5 ? 'Round up to the bigger one.' : 'Round down to the smaller one.', after: `${a} rounds to ${p.answer}.` },
+    ] };
+  }
+
+  // Partial products: 347 × 6 = 300 × 6 + 40 × 6 + 7 × 6.
+  function teachPartial(p) {
+    const two = p.skillId === 'mult-2digit' || (p.b >= 10 && p.a >= 10);
+    const [x, y] = two ? [p.a, p.b] : [p.b, p.a]; // x stays whole, y gets split
+    const parts = expand(y), steps = [], done = [];
+    for (const part of parts) {
+      const zeros = String(part).length - 1, lead = part / 10 ** zeros;
+      steps.push({
+        work: [`${p.a} × ${p.b}`, `= ${parts.map((q) => `${q} × ${x}`).join(' + ')}`, ...done],
+        prompt: `${part} × ${x} = ?`,
+        answer: part * x,
+        hint: zeros ? `${lead} × ${x} = ${lead * x}. Then add ${zeros === 1 ? 'a zero' : `${zeros} zeros`}.` : `Think ${part} groups of ${x}.`,
+        after: `${part} × ${x} = ${part * x}.`,
+      });
+      done.push(`${part} × ${x} = ${part * x}`);
+    }
+    if (parts.length > 1) steps.push({ work: [`${p.a} × ${p.b}`, ...done], prompt: `Add the parts: ${parts.map((q) => q * x).join(' + ')} = ?`, answer: p.answer, hint: 'Add them one at a time.', after: `So ${p.a} × ${p.b} = ${p.answer}.` });
+    return { title: 'Split and multiply', intro: `Split ${y} into ${parts.join(' + ')}. Multiply each part, then add.`, steps };
+  }
+
+  // Long division, one digit at a time: how many fit, then what's left.
+  function teachLongDiv(p) {
+    const { a, b } = p, ds = String(a).split('').map(Number), steps = [], qd = [];
+    let cur = 0, started = false;
+    ds.forEach((d, i) => {
+      cur = cur * 10 + d;
+      if (!started && cur < b && i < ds.length - 1) return;
+      started = true;
+      const q = Math.floor(cur / b), left = cur - q * b;
+      steps.push({
+        work: [`${a} ÷ ${b}`, `answer so far: ${qd.join('') || '_'}`],
+        prompt: `How many ${b}s fit in ${cur}? (${b} × ? without going over)`,
+        answer: q,
+        hint: `Count by ${b}s until the next one would pass ${cur}.`,
+        after: i < ds.length - 1 ? `${b} × ${q} = ${q * b}. ${cur} − ${q * b} leaves ${left}. Bring down the next digit.` : `${b} × ${q} = ${q * b}. Nothing left over!`,
+      });
+      qd.push(q);
+      cur = left;
+    });
+    steps.push({ work: [`${a} ÷ ${b}`, `answer: ${qd.join('')}`], prompt: `So ${a} ÷ ${b} = ?`, answer: p.answer, hint: 'Read the digits you found, in order.', after: `Check: ${b} × ${p.answer} = ${a}.` });
+    return { title: 'Long division', intro: 'Go left to right. At each digit ask: how many fit? Then carry what\'s left to the next digit.', steps };
+  }
+
+  function teachEquiv(p) {
+    const k = p.d / p.b;
+    return { title: 'Grow the fraction', intro: 'Multiply the top and the bottom by the same number. The amount stays the same.', steps: [
+      { work: [`${p.a}/${p.b} = ?/${p.d}`], prompt: `How many times bigger is ${p.d} than ${p.b}? ${p.b} × ? = ${p.d}`, answer: k, hint: `Count by ${p.b}s until you reach ${p.d}.`, after: `The bottom was multiplied by ${k}.` },
+      { work: [`${p.a}/${p.b} = ?/${p.d}`, `bottom × ${k}`], prompt: `Do the same to the top: ${p.a} × ${k} = ?`, answer: p.answer, hint: `${p.a} groups of ${k}.`, after: `${p.a}/${p.b} = ${p.answer}/${p.d}. Same amount, smaller pieces!` },
+    ] };
+  }
+
+  function teachFracAdd(p) {
+    const k = p.d / p.b;
+    return { title: 'Match the bottoms', intro: 'You can only add fractions when the pieces are the same size. Match the bottom numbers first.', steps: [
+      { work: [`${p.a}/${p.b} + ${p.c}/${p.d}`], prompt: `${p.b} × ? = ${p.d}`, answer: k, hint: `Count by ${p.b}s to ${p.d}.`, after: `Multiply ${p.a}/${p.b} by ${k} on top and bottom.` },
+      { work: [`${p.a}/${p.b} + ${p.c}/${p.d}`, `${p.b} × ${k} = ${p.d}`], prompt: `${p.a}/${p.b} = ?/${p.d}. ${p.a} × ${k} = ?`, answer: p.a * k, hint: `${p.a} × ${k}.`, after: `${p.a}/${p.b} = ${p.a * k}/${p.d}.` },
+      { work: [`${p.a * k}/${p.d} + ${p.c}/${p.d}`], prompt: `Now add the tops: ${p.a * k} + ${p.c} = ?`, answer: p.answer, hint: 'The bottom stays the same. Just add the tops.', after: `${p.a}/${p.b} + ${p.c}/${p.d} = ${p.answer}/${p.d}.` },
+    ] };
+  }
+
+  // Decimals: line up the points, work in tenths, then put the point back.
+  function teachDec(p) {
+    const A = Math.round(p.a * 10), B = Math.round(p.b * 10), plus = p.op === '+';
+    const inner = plus ? teachAdd({ ...p, a: A, b: B, answer: A + B }) : teachSub({ ...p, a: A, b: B, answer: A - B });
+    const whole = plus ? A + B : A - B;
+    inner.steps.push({ work: [`${p.a} ${p.op} ${p.b}`, `${A} ${p.op} ${B} = ${whole} tenths`], prompt: `Put the point back: one digit after it. ${whole} tenths = ?`, answer: p.answer, choices: [p.answer, whole, tenth(p.answer / 10) === p.answer / 10 ? p.answer / 10 : whole * 10], dec: true, hint: 'Move the point one place in from the right.', after: `${p.a} ${p.op} ${p.b} = ${p.answer}.` });
+    return { title: 'Line up the points', intro: `Line up the decimal points. ${p.a} and ${p.b} are ${A} and ${B} tenths, so we can ${plus ? 'add' : 'subtract'} like whole numbers.`, steps: inner.steps };
+  }
+
+  function teachDecPlace(p) {
+    const { a, b } = p;
+    if (p.op === 'or') {
+      const ha = Math.round(a * 100), hb = Math.round(b * 100);
+      return { title: 'Same number of digits', intro: 'Give both numbers two digits after the point. Then compare like whole numbers.', steps: [
+        { work: [`${a} = ${a.toFixed(2)}`], prompt: `${a.toFixed(2)} is how many hundredths?`, answer: ha, hint: 'Read the digits after the point.', after: `${a} is ${ha} hundredths.` },
+        { work: [`${a} = ${ha} hundredths`, `${b} = ${b.toFixed(2)}`], prompt: `${b.toFixed(2)} is how many hundredths?`, answer: hb, hint: 'Read the digits after the point.', after: `${b} is ${hb} hundredths.` },
+        { work: [`${a} = ${ha} hundredths`, `${b} = ${hb} hundredths`], prompt: 'So which is bigger?', answer: Math.max(a, b), choices: [a, b], dec: true, hint: `${Math.max(ha, hb)} hundredths is more.`, after: `${Math.max(a, b)} is bigger. More digits doesn't mean bigger!` },
+      ] };
+    }
+    if (p.op === '×') {
+      const whole = Math.floor(a), t = Math.round((a - whole) * 10);
+      return { title: 'Times 10', intro: 'Times 10 makes every part 10 times bigger. Each digit moves one place left.', steps: [
+        { work: [`${a} = ${whole} and ${t} tenths`], prompt: `${whole} × 10 = ?`, answer: whole * 10, hint: 'Add a zero to the end.', after: `${whole} × 10 = ${whole * 10}.` },
+        { work: [`${whole} × 10 = ${whole * 10}`, `${t} tenths × 10 = ${t} ones`], prompt: `${whole * 10} + ${t} = ?`, answer: p.answer, hint: `Ten tenths make one. So ${t} tenths × 10 = ${t}.`, after: `${a} × 10 = ${p.answer}.` },
+      ] };
+    }
+    const tens = Math.floor(a / 10), ones = a % 10;
+    return { title: 'Divide by 10', intro: 'Divide by 10 and each digit moves one place right. Ones become tenths.', steps: [
+      { work: [`${a} = ${tens} tens and ${ones} ones`], prompt: `How many tens are in ${a}?`, answer: tens, hint: `Cover the ones digit.`, after: `${tens} tens become ${tens} ones.` },
+      { work: [`${tens} tens → ${tens} ones`, `${ones} ones → ${ones} tenths`], prompt: `So ${a} ÷ 10 = ?`, answer: p.answer, choices: [p.answer, a * 10, tens], dec: true, hint: `${tens} and ${ones} tenths.`, after: `${a} ÷ 10 = ${p.answer}.` },
+    ] };
+  }
+
+  // A Teach me lesson for p. After a kid has seen a lesson twice, the first worked
+  // step is skipped (faded worked examples, Renkl & Atkinson).
+  function teach(p, seen = 0) {
     let lesson;
     if (p.missing) lesson = teachMissing(p);
     else {
       switch (p.skillId) {
-        case 'add-10': case 'add-20': lesson = teachCountOn(p); break;
+        case 'add-10': case 'add-20': case 'doubles': lesson = teachCountOn(p); break;
         case 'sub-10': case 'sub-20': lesson = teachTakeAway(p); break;
-        case 'compare': lesson = teachCompare(p); break;
-        case 'add-100': case 'add-1000': lesson = teachAdd(p); break;
-        case 'sub-100': case 'sub-1000': lesson = teachSub(p); break;
+        case 'compare': case 'compare-10': lesson = teachCompare(p); break;
+        case 'count-10': lesson = teachCount(p); break;
+        case 'skip-10': lesson = teachSeq(p); break;
+        case 'place-tens': lesson = teachPlace(p); break;
+        case 'place-100': lesson = p.op === 'seq' ? teachSeq(p) : teachPlace(p); break;
+        case 'halves': lesson = teachHalf(p); break;
+        case 'round': case 'round-big': lesson = teachRound(p); break;
+        case 'add-100': case 'add-1000': case 'add-multi': lesson = teachAdd(p); break;
+        case 'sub-100': case 'sub-1000': case 'sub-multi': lesson = teachSub(p); break;
         case 'equal-groups': case 'mult-facts': lesson = teachMult(p); break;
+        case 'mult-1digit': case 'mult-2digit': lesson = teachPartial(p); break;
         case 'div-facts': lesson = teachDiv(p); break;
+        case 'div-1digit': case 'div-long': lesson = teachLongDiv(p); break;
+        case 'equiv-frac': lesson = teachEquiv(p); break;
+        case 'frac-add': lesson = teachFracAdd(p); break;
+        case 'dec-add': case 'dec-sub': lesson = teachDec(p); break;
+        case 'dec-place': lesson = teachDecPlace(p); break;
         default: return null;
       }
     }
     if (p.story) lesson.intro = `This story is really ${p.equation.replace(' = ?', '')}. ` + lesson.intro;
+    if (seen >= 2 && lesson.steps.length >= 3) {
+      lesson.steps = lesson.steps.slice(1);
+      lesson.intro = 'You know this trick! Let\'s skip ahead. ' + lesson.intro;
+      lesson.faded = true;
+    }
     lesson.steps.forEach((s) => {
       if (!s.choices) {
         const set = new Set([s.answer]);
@@ -575,7 +977,7 @@ const MathEngine = (() => {
           if (c >= 0) set.add(c);
         }
         s.choices = shuffle([...set]);
-      }
+      } else s.choices = shuffle([...new Set(s.choices)]);
     });
     return lesson;
   }
@@ -583,6 +985,9 @@ const MathEngine = (() => {
   return {
     SKILLS, MASTERY, LEVELS,
     pickSkill, weakestSkill, gradeSkills, stretchLevel, accuracy,
-    make, twin, fromReview, tip, mistakeHint, teach,
+    make, twin, fromReview, saveable, tip, mistakeHint, teach, show,
+    TRICKS: ['Count on', 'Make a ten', 'Count back', 'Think adding', 'Column adding', 'Borrowing', 'Skip counting', 'Friendly fives',
+      'Think multiplication', 'Find the pattern', 'Tens and ones', 'Split and halve', 'Round on a number line', 'Split and multiply',
+      'Long division', 'Grow the fraction', 'Match the bottoms', 'Line up the points', 'The mystery number'],
   };
 })();

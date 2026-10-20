@@ -376,6 +376,24 @@ body.kb .ans.sel { outline: .9cqw solid var(--accent); outline-offset: .3cqw; }
 .vis.baseten .grp.x .rod, .vis.baseten .grp.x .cube { background: #f6a1a1; }
 .vis.baseten .sign { font-size: 7cqw; font-weight: 900; }
 
+.vis.numberline { padding: 1cqw 4cqw 6.5cqw; }
+.vis.numberline .track { position: relative; width: 100%; height: .8cqw; background: var(--ink); border-radius: 1cqw; margin-top: 2cqw; }
+.vis.numberline .tick { position: absolute; top: -1.2cqw; width: .5cqw; height: 3.2cqw; margin-left: -.25cqw; background: var(--ink); }
+.vis.numberline .tick.end { height: 4cqw; top: -1.6cqw; }
+.vis.numberline .mark { position: absolute; top: -1.4cqw; width: 3.6cqw; height: 3.6cqw; margin-left: -1.8cqw; border-radius: 50%; background: #e8506a; border: .4cqw solid var(--ink); }
+.vis.numberline .mark.end { background: none; border: 0; }
+.vis.numberline .mark.q { background: var(--gold); }
+/* The number being asked about sits above the line so it never collides with end labels. */
+.vis.numberline .mark.q b { top: auto; bottom: 4cqw; }
+.vis.numberline { padding-top: 6cqw; }
+.vis.numberline .mark b { position: absolute; top: 4cqw; left: 50%; transform: translateX(-50%); font-size: 3.6cqw; white-space: nowrap; }
+.vis.bars { flex-direction: column; gap: 1cqw; align-items: stretch; padding: 0 3cqw; }
+.vis.bars .bar { display: flex; align-items: center; gap: 1.5cqw; }
+.vis.bars .lbl { width: 9cqw; text-align: right; font-size: 3.8cqw; }
+.vis.bars .cells { flex: 1; display: flex; height: 5cqw; border: .4cqw solid var(--ink); border-radius: 1cqw; overflow: hidden; }
+.vis.bars .cell { flex: 1; border-left: .3cqw solid var(--ink); background: #fff; }
+.vis.bars .cell:first-child { border-left: 0; }
+.vis.bars .cell.on { background: #4a9ae8; }
 .vis.array { flex-direction: column; gap: .6cqw; }
 .vis.array .row { display: flex; gap: .6cqw; }
 .vis.array .dot { width: var(--dot); height: var(--dot); border-radius: 50%; background: #e8506a; }
@@ -540,6 +558,16 @@ body.kb .ans.sel { outline: .9cqw solid var(--accent); outline-offset: .3cqw; }
 .keypad .key.on { transform: translateY(3px); box-shadow: 0 1px 0 #14121f; }
 .keypad .key.del { background: #8a84a8; box-shadow: 0 4px 0 #6a6488; }
 .keypad .key.ok { background: #3fae5a; box-shadow: 0 4px 0 #2a7a3e; }
+/* Decimal point key (Grade 5): the bottom row becomes ⌫ 0 . and ✓ gets its own row. */
+.keypad .key.dot { display: none; order: 1; }
+.keypad .key.ok { order: 2; }
+.keypad.dec .key.dot { display: block; }
+.keypad.dec .key.ok { grid-column: 1 / -1; }
+/* Five rows need to fit small phones held upright (iPhone SE). */
+@media (max-height: 700px) and (orientation: portrait) {
+  .keypad.dec { gap: 7px; }
+  .keypad.dec .key { height: 42px; font-size: 24px; }
+}
 
 .entry {
   margin: auto auto 0;
