@@ -419,7 +419,7 @@ const Art = (() => {
 
     // ---------- Coral Deep
     '§': seaSand,
-    'ð': (k) => { seaSand(k); k.rect(0, 0, 16, 16, '#f0dca8'); k.px(4, 4, '#e0c890'); k.px(11, 11, '#e0c890'); k.px(8, 2, '#c8e8f8'); },
+    'ð': (k) => { k.rect(0, 0, 16, 16, '#fbf0d0'); for (const [x, y] of [[3, 3], [10, 2], [6, 9], [13, 11], [2, 13]]) k.rect(x, y, 2, 1, '#d8c094'); k.px(8, 6, '#ffffff'); },
     '¢': (k) => {
       seaSand(k);
       for (const [x, c] of [[3, '#e86ab8'], [8, '#f2a23c'], [13, '#a06ae8']]) {

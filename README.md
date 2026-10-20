@@ -125,6 +125,7 @@ To publish it, push to GitHub and turn on GitHub Pages for the `main` branch (Se
 - `sw.js`, `manifest.webmanifest`, `*.png`: offline support and app icons
 - `tools/icons.html`: draws the home screen icon options from the game's art
 - `tools/qc.html`: quality checks for Legends, maps, math problems, hints, reading level and offline files
+- `tools/worldgen/`: builds worlds 3–5. Each area's layout is generated from a fixed seed (same map for everyone), with its own size, winding path and features from `shapes.py`, and is checked for reachability before it's kept
 - `tools/layout-qc.js`, `tools/flow-qc.js`: in-game checks for question layout and the hint / Teach me path
 
 **Quality checks:** serve the folder, open `tools/qc.html` and read the report (it runs about 33,000 checks). For the in-game checks, open the game with `?dev`, then in the browser console run `await import('./tools/layout-qc.js'); await layoutQC()` (try phone and tablet sizes) or `await import('./tools/flow-qc.js'); await flowQC()`.
