@@ -1832,7 +1832,7 @@
       hideDialog();
       if (i === 0) {
         if (!S.box.length) { await say('No Legends are waiting here yet.'); continue; }
-        const j = await choose(storedItems(), { cls: 'full', head: `Stored Legends (${S.box.length})` });
+        const j = await choose(storedItems(), { cls: 'full', head: `Stored Legends (${S.box.length}) · Team: ${S.party.length}/6` });
         if (j < 0) continue;
         const c = S.box[j];
         if (S.party.length < 6) {
@@ -1841,7 +1841,7 @@
           sfx('friend');
           await say(`${nameOf(c)} joined your team!`);
         } else {
-          const k = await teamPicker(`Team is full. Swap ${nameOf(c)} with...`);
+          const k = await teamPicker(`Team is full (6/6). Swap ${nameOf(c)} with...`);
           if (k < 0) continue;
           const out = S.party[k];
           if (out.sp === S.sidekick) { await say(`${nameOf(out)} is your buddy, so it stays with you.`); continue; }
@@ -1852,7 +1852,7 @@
         }
       } else if (i === 1) {
         if (S.party.length <= 1) { await say('You need at least one Legend with you.'); continue; }
-        const k = await teamPicker('Put away which Legend?');
+        const k = await teamPicker(`Put away which Legend? (Team: ${S.party.length}/6)`);
         if (k < 0) continue;
         const c = S.party[k];
         if (c.sp === S.sidekick) { await say(`${nameOf(c)} is your buddy, so it stays with you. You can pick a new buddy in MENU, Team.`); continue; }
