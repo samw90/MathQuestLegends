@@ -42,6 +42,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* ---------- console shell ---------- */
 
 .console {
+  position: relative;
   width: min(100%, 540px);
   min-height: 100dvh;
   display: flex;
@@ -684,3 +685,18 @@ body:has(.console.side) { align-items: stretch; padding: 0; }
 }
 .console.side .keypad .key { height: calc(var(--grip) * .21); font-size: calc(var(--grip) * .11); }
 .console.side.typing .pad { display: none; }
+
+/* Which version this is (rev number and date), tucked at the bottom of the controller. */
+.rev {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: max(6px, calc(env(safe-area-inset-bottom) - 8px));
+  margin: 0;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: #8a84a8;
+  opacity: .8;
+  pointer-events: none;
+}
+.console.side .rev { color: #c9c1dc; }

@@ -10,6 +10,11 @@
   const SAVE_KEY = 'mql:save:v2';
   const DAY = 24 * 60 * 60 * 1000;
   // How each kind of puzzle is named in battle: "It loves take-away puzzles!"
+  // Version label under the controls, e.g. "rev 29 · Oct 20".
+  if (typeof REV !== 'undefined') {
+    const d = new Date(REV.date + 'T12:00:00');
+    document.getElementById('rev').textContent = `rev ${REV.n} · ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  }
   // Testing tools show up only with ?dev in the address.
   const DEV = /[?&]dev\b/.test(location.search);
   const FAMILY_PHRASE = {

@@ -1,0 +1,10 @@
+#!/bin/sh
+# Stamps the revision shown under the game's controls (js/version.js) on every commit.
+# Install once per clone:  cp tools/git-hooks/pre-commit .git/hooks/ && chmod +x .git/hooks/pre-commit
+n=$(( $(git rev-list --count HEAD 2>/dev/null || echo 0) + 1 ))
+d=$(date +%Y-%m-%d)
+cat > js/version.js <<JS
+// Written automatically on every commit (tools/git-hooks/pre-commit). Shown under the controls.
+const REV = { n: $n, date: '$d' };
+JS
+git add js/version.js
