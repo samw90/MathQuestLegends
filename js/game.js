@@ -1211,10 +1211,13 @@
     }
     const ents = m.npcs.map((n) => ({ y: n.y * TS, x: n.x * TS, img: Art.person(LOOKS[n.look], n.dir, 0), oy: -3 }));
     if (S.sidekick && !F.stacked) {
-      const hop = P.moving ? (P.t < STEP_MS / 2 ? 1 : 0) : Math.floor(now / 500) % 2;
+      // While walking up or down the screen is already scrolling, so the buddy doesn't
+      // hop then (it looked like shaking); it hops while walking sideways and when idle.
+      const vertical = P.moving && F.fx === F.tx;
+      const hop = vertical ? 0 : P.moving ? (P.t < STEP_MS / 2 ? 1 : 0) : Math.floor(now / 500) % 2;
       const bm = S.party.find((c) => c.sp === S.sidekick);
       const img = Art.creatureSmall(S.sidekick, hop, !!(bm && bm.golden));
-      ents.push({ y: F.py - 0.5, x: Math.round(F.px) - 2, img, oy: -5, flip: F.dir === 'right' });
+      ents.push({ y: F.py, sy: F.py - 0.5, x: Math.round(F.px) - 2, img, oy: -5, flip: F.dir === 'right' });
     }
     for (const sp of SPECIALS) {
       if (sp.map !== S.map || !specialReady(sp)) continue;
@@ -1222,7 +1225,7 @@
     }
     const frame = P.moving && P.t < STEP_MS * 0.6 ? 1 + (P.step % 2) : 0;
     ents.push({ y: P.py, x: Math.round(P.px), img: Art.person(LOOKS.hero, P.dir, frame), oy: -3 });
-    ents.sort((a, b) => a.y - b.y);
+    ents.sort((a, b) => (a.sy ?? a.y) - (b.sy ?? b.y));
     for (const e of ents) {
       const x = e.x - camX, y = Math.round(e.y) - camY + e.oy;
       if (e.flip) {
