@@ -1747,34 +1747,60 @@
       step++;
     }
   }
+  // Remy's route: the shortest walk from the gate to the next area to a tile
+  // beside you, as [beside you, ..., gate]. Null if there's no way through.
+  function routeFromGate() {
+    const m = map(), gates = m.warps.filter((w) => w.need);
+    const key = (x, y) => x + ',' + y, from = new Map();
+    const q = gates.map((w) => [w.x, w.y]);
+    q.forEach(([x, y]) => from.set(key(x, y), null));
+    for (let h = 0; h < q.length; h++) {
+      const [x, y] = q[h];
+      if (Math.abs(x - P.x) + Math.abs(y - P.y) === 1 && !(F.x === x && F.y === y)) {
+        const path = [];
+        for (let k = key(x, y); k; k = from.get(k)) path.push(k.split(',').map(Number));
+        return path;
+      }
+      for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        const nx = x + dx, ny = y + dy;
+        if (from.has(key(nx, ny)) || (nx === P.x && ny === P.y) || blocked(nx, ny)) continue;
+        from.set(key(nx, ny), key(x, y));
+        q.push([nx, ny]);
+      }
+    }
+    return null;
+  }
+  // Off screen: the camera keeps you in the middle, so this is about 5 tiles away.
+  const offScreen = ([x, y]) => x - P.x <= -6 || x - P.x >= 6 || y - P.y <= -5 || y - P.y >= 5;
+
   async function rivalBattle(i) {
     const r = RIVAL[i];
-    // Remy walks up from a few tiles away to stand next to you, coming from the
-    // side with the longest clear path.
     const m = map();
-    let best = null;
-    for (const [dx, dy] of [DIRS[P.dir], [0, -1], [1, 0], [-1, 0], [0, 1]]) {
-      const kx = P.x + dx, ky = P.y + dy;
-      if (blocked(kx, ky) || (F.x === kx && F.y === ky)) continue;
-      const path = [[kx, ky]];
-      for (let d = 2; d <= 5 && !blocked(P.x + dx * d, P.y + dy * d) && !(F.x === P.x + dx * d && F.y === P.y + dy * d); d++) path.unshift([P.x + dx * d, P.y + dy * d]);
-      if (!best || path.length > best.path.length) best = { path, dx, dy };
+    // Remy comes from the way to the next area, starting just off screen...
+    let route = routeFromGate();
+    if (!route) {
+      const [dx, dy] = DIRS[P.dir];
+      route = [[P.x + dx, P.y + dy]];
     }
-    const { path, dx, dy } = best || { path: [[P.x, P.y - 1]], dx: 0, dy: -1 };
-    const remy = { x: path[0][0], y: path[0][1], look: 'rival', dir: 'down' };
+    let far = route.findIndex(offScreen);
+    if (far < 0) far = route.length - 1;
+    const [sx, sy] = route[0];
+    const remy = { x: route[far][0], y: route[far][1], look: 'rival', dir: 'down' };
     m.npcs.push(remy);
     sfx('select');
-    await walkNpc(remy, path.slice(1));
-    remy.dir = dx > 0 ? 'left' : dx < 0 ? 'right' : dy > 0 ? 'up' : 'down';
-    P.dir = S.dir = dx > 0 ? 'right' : dx < 0 ? 'left' : dy > 0 ? 'down' : 'up';
+    await walkNpc(remy, route.slice(0, far).reverse());
+    remy.dir = sx > P.x ? 'left' : sx < P.x ? 'right' : sy > P.y ? 'up' : 'down';
+    P.dir = S.dir = sx > P.x ? 'right' : sx < P.x ? 'left' : sy > P.y ? 'down' : 'up';
     await say(r.hi);
     const result = await battle(rivalTeam(i), { trainer: 'Remy' });
     if (result === 'win') {
       S.flags['rival' + i] = true;
       await say(r.win);
       writeSave();
-      // ...and walks back the way Remy came.
-      await walkNpc(remy, path.slice(0, -1).reverse());
+      // ...and heads on toward the next area until out of sight.
+      const out = route.slice(1);
+      const gone = out.findIndex(offScreen);
+      await walkNpc(remy, gone < 0 ? out : out.slice(0, gone + 1));
     }
     m.npcs.splice(m.npcs.indexOf(remy), 1);
   }
