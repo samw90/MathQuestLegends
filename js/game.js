@@ -103,6 +103,8 @@
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* storage full or blocked */ }
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden && mode !== 'title') writeSave(); });
+  // Leaving the page (the launcher's home screen, a reload) saves too.
+  window.addEventListener('pagehide', () => { if (mode !== 'title') writeSave(); });
 
   // ---------------------------------------------------------------- creatures
 
@@ -482,8 +484,9 @@
   // Walking in the world uses held[] instead.
   const axisDirs = (x, y) => [x < -0.5 && 'left', x > 0.5 && 'right', y < -0.5 && 'up', y > 0.5 && 'down'];
   const apiDown = new Set();
+  let appDriven = false; // the launcher app sends the buttons, so don't read them twice
   function padTick(now) {
-    const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
+    const pads = !appDriven && navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
     if (pads.length) {
       const down = new Set();
       for (const gp of pads) {
@@ -508,7 +511,7 @@
   requestAnimationFrame(padTick);
   window.addEventListener('blur', () => { for (const btn of Object.keys(padDown)) padSet(btn, false); apiDown.clear(); });
   // For the launcher app: MQLPad.set('a', true) when A goes down, false when it comes up.
-  window.MQLPad = { set: (btn, down) => padSet(btn, down, 'app') };
+  window.MQLPad = { set: (btn, down) => { appDriven = true; padSet(btn, down, 'app'); } };
 
   // ---------------------------------------------------------------- UI pieces
 
