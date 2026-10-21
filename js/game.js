@@ -240,12 +240,14 @@
       const u = new SpeechSynthesisUtterance(spoken(text));
       const v = currentVoice();
       if (v) { u.voice = v; u.lang = v.lang; }
-      // Natural voices sound best near normal speed; basic ones a touch slower.
-      u.rate = v && voiceScore(v) >= 30 ? 0.95 : 0.88;
+      // Natural voices sound best a little under normal speed; basic ones a touch
+      // slower still. Settings -> Reading speed scales both.
+      u.rate = (v && voiceScore(v) >= 30 ? 0.9 : 0.88) * (READ_SPEEDS[S && S.readSpeed] || 1);
       u.pitch = 1;
       speechSynthesis.speak(u);
     } catch (e) { /* no voice */ }
   }
+  const READ_SPEEDS = { slower: 0.8, normal: 1, faster: 1.15 };
   function hush() { try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) { /* ignore */ } }
   function hearButton(getText) {
     const b = el('button', 'hear', '🔊');
@@ -2354,6 +2356,7 @@
         `Grade: ${GRADES[S.grade]}`,
         `Read aloud: ${S.voice ? 'On' : 'Off'}`,
         `Voice: ${currentVoice() ? currentVoice().name.replace(/\s*\(.*\)$/, '') : 'None'}`,
+        `Reading speed: ${{ slower: 'Slower', faster: 'Faster' }[S.readSpeed] || 'Normal'}`,
         `Sound: ${soundOn ? 'On' : 'Off'}`,
         `Answers: ${answerLabel()}`,
         `Controls: ${layoutLabel()}`,
@@ -2361,7 +2364,7 @@
         ...(DEV && !B ? ['Dev: go to Portal Shrine'] : []), // not mid-battle
         'Back',
       ], { cls: 'start-menu' });
-      const devItem = !DEV ? -1 : i === 6 ? 0 : i === 7 && !B ? 1 : -1;
+      const devItem = !DEV ? -1 : i === 7 ? 0 : i === 8 && !B ? 1 : -1;
       if (i === 0) {
         const g = await choose(GRADES, { cls: 'start-menu', start: S.grade });
         if (g >= 0) S.grade = g;
@@ -2372,12 +2375,16 @@
       } else if (i === 2) {
         await voiceMenu();
       } else if (i === 3) {
+        const speeds = ['slower', 'normal', 'faster'];
+        S.readSpeed = speeds[(speeds.indexOf(S.readSpeed || 'normal') + 1) % speeds.length];
+        speak('This is how fast I\'ll read.', true);
+      } else if (i === 4) {
         soundOn = !soundOn;
         try { localStorage.setItem('mql:sound', soundOn ? 'on' : 'off'); } catch (e) { /* ignore */ }
-      } else if (i === 4) {
+      } else if (i === 5) {
         const modes = ['auto', 'type', 'pick'];
         S.answerMode = modes[(modes.indexOf(S.answerMode || 'auto') + 1) % modes.length];
-      } else if (i === 5) {
+      } else if (i === 6) {
         layout = LAYOUTS[(LAYOUTS.indexOf(layout) + 1) % LAYOUTS.length];
         try { localStorage.setItem('mql:layout', layout); } catch (e) { /* ignore */ }
         applyLayout();
