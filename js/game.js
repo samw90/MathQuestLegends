@@ -408,7 +408,7 @@
   // ---------------------------------------------------------------- game controllers
   // Handhelds (Retroid Pocket) and Bluetooth gamepads come in two ways: the
   // browser's Gamepad API, polled every frame, and the launcher app, which
-  // reads the buttons itself and calls MQLPad.set('a', true). Both go through
+  // reads the buttons itself and calls LauncherPad.set('a', true). Both go through
   // padSet(). Button numbers differ between devices, so the map can be changed
   // on the device: localStorage 'mql:padmap' = '{"0":"b","1":"a"}' (see tools/pad-test.html).
   // Select works as MENU too. Buttons not in the map (C and Z) do nothing.
@@ -510,8 +510,9 @@
   }
   requestAnimationFrame(padTick);
   window.addEventListener('blur', () => { for (const btn of Object.keys(padDown)) padSet(btn, false); apiDown.clear(); });
-  // For the launcher app: MQLPad.set('a', true) when A goes down, false when it comes up.
-  window.MQLPad = { set: (btn, down) => { appDriven = true; padSet(btn, down, 'app'); } };
+  // For the launcher app: LauncherPad.set('a', true) when A goes down, false when it
+  // comes up. (MQLPad is its first name, still answered to.)
+  window.LauncherPad = window.MQLPad = { set: (btn, down) => { appDriven = true; padSet(btn, down, 'app'); } };
 
   // ---------------------------------------------------------------- UI pieces
 

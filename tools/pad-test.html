@@ -55,7 +55,7 @@ The game's map lives in localStorage <code>mql:padmap</code>.</p>
       keysEl.textContent = log.join('\n');
     });
   }
-  window.MQLPad = { set: (btn, down) => { log.unshift(`launcher  ${btn} ${down ? 'down' : 'up'}`); keysEl.textContent = log.join('\n'); } };
+  window.LauncherPad = { set: (btn, down) => { log.unshift(`launcher  ${btn} ${down ? 'down' : 'up'}`); keysEl.textContent = log.join('\n'); } };
 
   const padsEl = document.getElementById('pads');
   function tick() {
