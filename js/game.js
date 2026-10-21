@@ -1282,7 +1282,8 @@
       const w = WORLDS[pt.world - 1];
       ctx.drawImage(Art.portal(w.color, spin, worldOpen(w)), pt.x * TS - camX, pt.y * TS - camY);
     }
-    const ents = m.npcs.map((n) => ({ y: n.y * TS, x: n.x * TS, img: Art.person(LOOKS[n.look], n.dir, 0), oy: -3 }));
+    // ox/oy/frame let a person walk between tiles (Remy walking up to you).
+    const ents = m.npcs.map((n) => ({ y: n.y * TS + (n.oy || 0), x: n.x * TS + (n.ox || 0), img: Art.person(LOOKS[n.look], n.dir, n.frame || 0), oy: -3 }));
     if (S.sidekick && !F.stacked) {
       // While walking up or down the screen is already scrolling, so the buddy doesn't
       // hop then (it looked like shaking); it hops while walking sideways and when idle.
@@ -1348,6 +1349,7 @@
       if (!ok) { close(); return; }
       S.party.push(mon(id, 5));
       S.sidekick = id;
+      S.starterId = id;
       S.flags.starter = true;
       STARTERS.forEach((s) => { S.seen[s] = true; });
       S.caught[id] = true;
@@ -1698,6 +1700,13 @@
     if (!map().area || !S.party.some(alive)) return -1;
     return RIVAL.findIndex((r, i) => r.area === map().area && !S.flags['rival' + i]);
   }
+  // The buddy you picked at Professor Pi's table (older saves: the first starter
+  // on your team or in the Terminal, even if you've since picked a new buddy).
+  function myStarter() {
+    if (S.starterId) return S.starterId;
+    const mine = [...S.party, ...S.box].map((c) => baseForm(c.sp)).find((id) => STARTERS.includes(id));
+    return mine || (S.sidekick && STARTERS.includes(baseForm(S.sidekick)) ? baseForm(S.sidekick) : STARTERS[0]);
+  }
   // Remy's buddy is the one after yours in the starter list, grown to its level.
   function grownForm(id, lv) {
     for (let e = evolutionOf(id); e && lv >= (e.lv || Infinity); e = evolutionOf(e.to)) id = e.to;
@@ -1705,7 +1714,7 @@
   }
   function rivalTeam(i) {
     const r = RIVAL[i], area = AREAS[r.area], lv = area.base + 3;
-    if (!S.rivalBuddy) S.rivalBuddy = STARTERS[(STARTERS.indexOf(baseForm(S.sidekick)) + 1) % STARTERS.length];
+    const rivalBuddy = STARTERS[(STARTERS.indexOf(myStarter()) + 1) % STARTERS.length];
     const team = [];
     // Friends from the areas Remy has passed through, newest last.
     const pool = AREA_ORDER.slice(0, AREA_ORDER.indexOf(r.area) + 1).reverse()
@@ -1718,27 +1727,54 @@
       fams.add(fam);
       team.unshift(mon(lv >= (EVOLVE_LV[sp] || Infinity) + 4 ? EVOLUTIONS[sp][0] : sp, lv));
     }
-    team.push(mon(grownForm(S.rivalBuddy, lv + 1), lv + 1));
+    team.push(mon(grownForm(rivalBuddy, lv + 1), lv + 1));
     return team;
+  }
+  // Walks a person along a list of tiles, one step at a time.
+  async function walkNpc(n, tiles) {
+    let step = 0;
+    for (const [tx, ty] of tiles) {
+      const dx = tx - n.x, dy = ty - n.y;
+      n.dir = dx > 0 ? 'right' : dx < 0 ? 'left' : dy > 0 ? 'down' : 'up';
+      const start = performance.now(), ms = STEP_MS * 1.3;
+      for (let k = 0; k < 1;) {
+        await sleep(16);
+        k = Math.min(1, (performance.now() - start) / ms);
+        n.ox = dx * TS * k; n.oy = dy * TS * k;
+        n.frame = k < 0.6 ? 1 + (step % 2) : 0;
+      }
+      n.x = tx; n.y = ty; n.ox = n.oy = 0; n.frame = 0;
+      step++;
+    }
   }
   async function rivalBattle(i) {
     const r = RIVAL[i];
-    // Remy runs up and stands next to you.
-    const m = map(), [fx, fy] = DIRS[P.dir];
-    const spots = [[fx, fy], [0, -1], [1, 0], [-1, 0], [0, 1]].map(([dx, dy]) => [P.x + dx, P.y + dy])
-      .filter(([x, y]) => !blocked(x, y) && !(F.x === x && F.y === y));
-    const [kx, ky] = spots[0] || [P.x, P.y - 1];
-    const toward = kx > P.x ? 'left' : kx < P.x ? 'right' : ky > P.y ? 'up' : 'down';
-    const remy = { x: kx, y: ky, look: 'rival', dir: toward };
+    // Remy walks up from a few tiles away to stand next to you, coming from the
+    // side with the longest clear path.
+    const m = map();
+    let best = null;
+    for (const [dx, dy] of [DIRS[P.dir], [0, -1], [1, 0], [-1, 0], [0, 1]]) {
+      const kx = P.x + dx, ky = P.y + dy;
+      if (blocked(kx, ky) || (F.x === kx && F.y === ky)) continue;
+      const path = [[kx, ky]];
+      for (let d = 2; d <= 5 && !blocked(P.x + dx * d, P.y + dy * d) && !(F.x === P.x + dx * d && F.y === P.y + dy * d); d++) path.unshift([P.x + dx * d, P.y + dy * d]);
+      if (!best || path.length > best.path.length) best = { path, dx, dy };
+    }
+    const { path, dx, dy } = best || { path: [[P.x, P.y - 1]], dx: 0, dy: -1 };
+    const remy = { x: path[0][0], y: path[0][1], look: 'rival', dir: 'down' };
     m.npcs.push(remy);
-    P.dir = S.dir = { left: 'right', right: 'left', up: 'down', down: 'up' }[toward];
     sfx('select');
+    await walkNpc(remy, path.slice(1));
+    remy.dir = dx > 0 ? 'left' : dx < 0 ? 'right' : dy > 0 ? 'up' : 'down';
+    P.dir = S.dir = dx > 0 ? 'right' : dx < 0 ? 'left' : dy > 0 ? 'down' : 'up';
     await say(r.hi);
     const result = await battle(rivalTeam(i), { trainer: 'Remy' });
     if (result === 'win') {
       S.flags['rival' + i] = true;
       await say(r.win);
       writeSave();
+      // ...and walks back the way Remy came.
+      await walkNpc(remy, path.slice(0, -1).reverse());
     }
     m.npcs.splice(m.npcs.indexOf(remy), 1);
   }
