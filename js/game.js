@@ -285,7 +285,11 @@
     if (!btn) return;
     e.preventDefault();
     document.body.classList.add('kb');
+    // Some handhelds send their D-pad as both a gamepad and arrow keys; take one.
+    if (!fresh(btn, 'key')) return;
     if (DIRS[btn] && !held.includes(btn)) held.push(btn);
+    // With a controller, arrows walk the keypad cursor during a question.
+    if (keyInput && padSeen) { if (!e.repeat || DIRS[btn]) padPress(btn); return; }
     if (!e.repeat || handler) press(btn);
   });
   window.addEventListener('keyup', (e) => {
@@ -318,6 +322,7 @@
       const label = key === 'del' ? '⌫' : key === 'ok' ? '✓' : key;
       const b = el('button', 'key' + (key === 'del' ? ' del' : key === 'ok' ? ' ok' : key === '.' ? ' dot' : ''), label);
       b.type = 'button';
+      b.dataset.key = key;
       b.setAttribute('aria-label', key === 'del' ? 'Erase' : key === 'ok' ? 'Check my answer' : key === '.' ? 'Decimal point' : key);
       b.addEventListener('pointerdown', (e) => {
         e.preventDefault();
@@ -334,14 +339,20 @@
     return k;
   })();
   // Controls below the screen, or on both sides like a Switch. Auto uses the
-  // sides when the device is sideways. Saved per device, not in save files.
-  const LAYOUTS = ['auto', 'side', 'below'];
+  // sides when the device is sideways, and no on-screen controls once a game
+  // controller is used (handhelds like the Retroid Pocket have their own
+  // buttons). Saved per device, not in save files.
+  const LAYOUTS = ['auto', 'side', 'below', 'handheld'];
   let layout = 'auto';
   try { layout = localStorage.getItem('mql:layout') || 'auto'; } catch (e) { /* ignore */ }
+  // ?handheld in the address (the launcher app adds it) starts in controller mode.
+  let padSeen = /[?&]handheld\b/.test(location.search);
   const wide = matchMedia('(orientation: landscape) and (min-width: 600px)');
   const roomy = matchMedia('(min-width: 600px)'); // phones held upright are too narrow for grips
   function applyLayout() {
-    const side = (layout === 'side' && roomy.matches) || (layout === 'auto' && wide.matches);
+    const handheld = layout === 'handheld' || (layout === 'auto' && padSeen);
+    const side = !handheld && ((layout === 'side' && roomy.matches) || (layout === 'auto' && wide.matches));
+    consoleEl.classList.toggle('handheld', handheld);
     consoleEl.classList.toggle('side', side);
   }
   wide.addEventListener('change', applyLayout);
@@ -350,10 +361,18 @@
   function layoutLabel() {
     if (layout === 'side') return 'On the sides';
     if (layout === 'below') return 'Below';
-    return wide.matches ? 'Auto (sides)' : 'Auto (below)';
+    if (layout === 'handheld') return 'Controller';
+    return padSeen ? 'Auto (controller)' : wide.matches ? 'Auto (sides)' : 'Auto (below)';
   }
 
-  function showKeypad(fn, dec = false) { keyInput = fn; keypad.hidden = false; keypad.classList.toggle('dec', dec); consoleEl.classList.add('typing'); }
+  function showKeypad(fn, dec = false) {
+    keyInput = fn;
+    keypad.hidden = false;
+    keypad.classList.toggle('dec', dec);
+    consoleEl.classList.add('typing');
+    cursor = { r: 1, c: 1 }; // start on 5, the fewest presses from any key
+    drawCursor();
+  }
   function hideKeypad() { keyInput = null; keypad.hidden = true; consoleEl.classList.remove('typing'); }
 
   // Grades 1-3 type their answers (recall builds memory better than picking);
@@ -383,6 +402,113 @@
     b.addEventListener('lostpointercapture', release);
     b.addEventListener('contextmenu', (e) => e.preventDefault());
   });
+
+  // ---------------------------------------------------------------- game controllers
+  // Handhelds (Retroid Pocket) and Bluetooth gamepads come in two ways: the
+  // browser's Gamepad API, polled every frame, and the launcher app, which
+  // reads the buttons itself and calls MQLPad.set('a', true). Both go through
+  // padSet(). Button numbers differ between devices, so the map can be changed
+  // on the device: localStorage 'mql:padmap' = '{"0":"b","1":"a"}' (see tools/pad-test.html).
+  // Select works as MENU too. Buttons not in the map (C and Z) do nothing.
+  const PAD_MAP = { 0: 'a', 1: 'b', 2: 'x', 3: 'y', 8: 'select', 9: 'start', 12: 'up', 13: 'down', 14: 'left', 15: 'right' };
+  let padMap = PAD_MAP;
+  try { padMap = { ...PAD_MAP, ...JSON.parse(localStorage.getItem('mql:padmap') || '{}') }; } catch (e) { /* ignore */ }
+  const padDown = {}; // button -> when it went down
+  const padRepeat = {}; // direction -> when it last repeated
+  const lastBtn = {}; // button -> { src, t }, to drop the same press arriving twice
+  function fresh(btn, src) {
+    const now = performance.now(), l = lastBtn[btn];
+    if (l && l.src !== src && now - l.t < 150) return false;
+    lastBtn[btn] = { src, t: now };
+    return true;
+  }
+  function padSet(btn, down, src = 'pad') {
+    if (!btn) return;
+    if (!down) {
+      delete padDown[btn];
+      const i = held.indexOf(btn);
+      if (i >= 0) held.splice(i, 1);
+      return;
+    }
+    if (padDown[btn]) return;
+    padDown[btn] = padRepeat[btn] = performance.now();
+    if (!fresh(btn, src)) return;
+    if (DIRS[btn] && !held.includes(btn)) held.push(btn);
+    padPress(btn);
+  }
+  function padPress(btn) {
+    document.body.classList.add('kb');
+    if (!padSeen) { padSeen = true; applyLayout(); }
+    if (keyInput) {
+      // Typed answers: the D-pad walks a cursor over the keypad, A presses the
+      // key under it, B erases, Start checks the answer and X or Y asks for a hint.
+      if (DIRS[btn]) return moveCursor(btn);
+      if (btn === 'a') return padKey(keyRows()[cursor.r][cursor.c]);
+      if (btn === 'b') return padKey('del');
+      if (btn === 'start') return padKey('ok');
+      if (btn === 'x' || btn === 'y') press('b');
+      return;
+    }
+    if (btn === 'x' || btn === 'y') return;
+    press(btn === 'select' ? 'start' : btn);
+  }
+
+  // The keypad as it looks on screen (Grade 5 adds a decimal point row).
+  let cursor = { r: 1, c: 1 };
+  const keyRows = () => [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9'],
+    ...(keypad.classList.contains('dec') ? [['del', '0', '.'], ['ok', 'ok', 'ok']] : [['del', '0', 'ok']])];
+  function moveCursor(dir) {
+    const rows = keyRows(), [dx, dy] = DIRS[dir];
+    const r = Math.max(0, Math.min(rows.length - 1, cursor.r + dy));
+    const c = Math.max(0, Math.min(2, cursor.c + dx));
+    if (r === cursor.r && c === cursor.c) return;
+    // Sideways on the wide ✓ row does nothing.
+    if (dx && rows[r][c] === rows[cursor.r][cursor.c]) return;
+    cursor = { r, c };
+    sfx('move');
+    drawCursor();
+  }
+  function drawCursor() {
+    const key = keyInput ? keyRows()[cursor.r][cursor.c] : null;
+    keypad.querySelectorAll('.key').forEach((b) => b.classList.toggle('cur', b.dataset.key === key));
+  }
+  function padKey(key) {
+    const b = keypad.querySelector(`[data-key="${key}"]`);
+    if (b) { b.classList.add('on'); setTimeout(() => b.classList.remove('on'), 120); }
+    keyInput(key);
+  }
+
+  // Held directions repeat in menus and on the keypad, like a held arrow key.
+  // Walking in the world uses held[] instead.
+  const axisDirs = (x, y) => [x < -0.5 && 'left', x > 0.5 && 'right', y < -0.5 && 'up', y > 0.5 && 'down'];
+  const apiDown = new Set();
+  function padTick(now) {
+    const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
+    if (pads.length) {
+      const down = new Set();
+      for (const gp of pads) {
+        gp.buttons.forEach((b, i) => { if (b.pressed && padMap[i]) down.add(padMap[i]); });
+        // D-pads without the standard mapping show up as axes: 0/1, or 6/7 (Android's hat).
+        for (const [ax, ay] of [[0, 1], [6, 7]]) {
+          if (gp.axes.length > ay) axisDirs(gp.axes[ax], gp.axes[ay]).forEach((d) => d && down.add(d));
+        }
+      }
+      for (const btn of down) if (!apiDown.has(btn)) padSet(btn, true);
+      for (const btn of apiDown) if (!down.has(btn)) padSet(btn, false);
+      apiDown.clear();
+      down.forEach((btn) => apiDown.add(btn));
+    }
+    if (handler || keyInput) {
+      for (const d of Object.keys(DIRS)) {
+        if (padDown[d] && now - padDown[d] > 380 && now - padRepeat[d] > 120) { padRepeat[d] = now; padPress(d); }
+      }
+    }
+    requestAnimationFrame(padTick);
+  }
+  requestAnimationFrame(padTick);
+  window.addEventListener('blur', () => { for (const btn of Object.keys(padDown)) padSet(btn, false); apiDown.clear(); });
+  // For the launcher app: MQLPad.set('a', true) when A goes down, false when it comes up.
+  window.MQLPad = { set: (btn, down) => padSet(btn, down, 'app') };
 
   // ---------------------------------------------------------------- UI pieces
 

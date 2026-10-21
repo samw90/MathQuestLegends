@@ -701,6 +701,52 @@ body:has(.console.side) { align-items: stretch; padding: 0; }
 }
 .console.side .rev { color: #c9c1dc; }
 
+/* ---------- handheld layout: a game controller with its own buttons ----------
+   Used once a gamepad is pressed (Retroid Pocket, Bluetooth pads), with ?handheld
+   in the address, or if Settings -> Controls says so. The on-screen buttons go
+   and the screen fills the display. During a typed answer the keypad sits to the
+   right, walked with the D-pad (the gold ring is the cursor). */
+.console.handheld {
+  --kp: min(30vw, 46dvh);
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  min-height: 0;
+  border-radius: 0;
+  box-shadow: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  justify-items: center;
+  gap: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: #000;
+}
+body:has(.console.handheld) { align-items: stretch; padding: 0; background: #000; }
+.console.handheld .pad,
+.console.handheld .start,
+.console.handheld .keys,
+.console.handheld .brand,
+.console.handheld .rev { display: none; }
+.console.handheld .bezel {
+  width: min(100%, calc(100dvh * 160 / 144));
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+}
+.console.handheld .screen { border-radius: 0; }
+.console.handheld.typing { grid-template-columns: minmax(0, 1fr) var(--kp); background: #1c1a2b; }
+.console.handheld .keypad {
+  width: var(--kp);
+  max-width: none;
+  gap: 1.6dvh;
+  padding: 0 2vw 0 1vw;
+}
+.console.handheld .keypad .key { height: 14dvh; font-size: 7dvh; border-radius: 2.4dvh; }
+.console.handheld .keypad.dec .key { height: 12dvh; font-size: 6dvh; }
+body.kb .keypad .key.cur { outline: 6px solid var(--gold); outline-offset: 3px; }
+
 /* Evolution: the old and new forms flicker, then a flash. */
 .evolve {
   position: absolute;

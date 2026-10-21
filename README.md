@@ -72,6 +72,8 @@ A pixel-art adventure for Kindergarten to Grade 5 in the style of classic handhe
 
 **Controls:** on-screen D-pad, A, B and MENU buttons, or the keyboard: arrows/WASD to move, Z or Space for A, X for B, Enter for the menu. During a question, type the number and press Enter (or 1–4 to pick a choice), and press B or H for a hint.
 
+**Game controllers and handhelds** (Retroid Pocket, Bluetooth gamepads): press any button and the on-screen controls go away so the game fills the screen (or open the game with `?handheld`, or pick MENU → Settings → Controls → Controller). D-pad moves, A and B as usual, Start or Select opens the menu. During a typed answer the number keypad sits beside the screen: the D-pad moves the gold cursor, A presses the key, B erases, Start checks the answer, and X or Y asks for a hint. If A and B come out swapped (or a button does nothing), open `tools/pad-test.html` on the device: it shows each button's number and can swap A/B in the game's map (`mql:padmap` in browser storage).
+
 ## Hints
 
 The buddy helps the way Math Quest's tutor does:
@@ -138,6 +140,7 @@ To publish it, push to GitHub and turn on GitHub Pages for the `main` branch (Se
 - `js/version.js`: the "rev" shown under the controls. A git hook (`tools/git-hooks/pre-commit`) stamps the next revision number and date on every commit. Install it once per clone: `cp tools/git-hooks/pre-commit .git/hooks/`
 - `tools/worldgen/`: builds worlds 3–5. Each area's layout is generated from a fixed seed (same map for everyone), with its own size, winding path and features from `shapes.py`, and is checked for reachability before it's kept
 - `tools/layout-qc.js`, `tools/flow-qc.js`: in-game checks for question layout and the hint / Teach me path
+- `tools/pad-test.html`: shows what a game controller sends (button numbers, axes, key events) and fixes the button map
 
 **Quality checks:** serve the folder, open `tools/qc.html` and read the report (it runs about 33,000 checks). For the in-game checks, open the game with `?dev`, then in the browser console run `await import('./tools/layout-qc.js'); await layoutQC()` (try phone and tablet sizes) or `await import('./tools/flow-qc.js'); await flowQC()`.
 

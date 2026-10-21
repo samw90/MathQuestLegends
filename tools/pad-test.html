@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controller test</title>
+<style>
+  body { margin: 0; padding: 16px; background: #1c1a2b; color: #fffdf6; font: 18px/1.4 system-ui, sans-serif; }
+  h1 { font-size: 22px; margin: 0 0 8px; }
+  p { margin: 4px 0 12px; color: #c9c1dc; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: #2b2840; border-radius: 12px; padding: 12px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .b { min-width: 44px; padding: 6px; text-align: center; border-radius: 8px; background: #4a4566; }
+  .b.on { background: #f2c84b; color: #2b2840; font-weight: 800; }
+  .b small { display: block; font-size: 12px; opacity: .8; }
+  pre { margin: 0; white-space: pre-wrap; font-size: 15px; max-height: 50vh; overflow: auto; }
+  button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 0; margin: 4px 4px 0 0; }
+</style>
+</head>
+<body>
+<h1>Controller test</h1>
+<p>Press every button once. Left: what the Gamepad API sees (number → game button). Right: key events, which is what a launcher WebView or Chrome may send instead.
+The game's map lives in localStorage <code>mql:padmap</code>.</p>
+<div class="cols">
+  <div class="card"><div id="pads">No gamepad yet. Press a button.</div></div>
+  <div class="card"><pre id="keys"></pre></div>
+</div>
+<p>
+  <button id="swap">Swap A/B in the game's map</button>
+  <button id="reset">Reset the game's map</button>
+  <span id="map"></span>
+</p>
+<script>
+  // Keep in sync with PAD_MAP in js/game.js.
+  const PAD_MAP = { 0: 'a', 1: 'b', 2: 'x', 3: 'y', 8: 'select', 9: 'start', 12: 'up', 13: 'down', 14: 'left', 15: 'right' };
+  const load = () => { try { return { ...PAD_MAP, ...JSON.parse(localStorage.getItem('mql:padmap') || '{}') }; } catch (e) { return PAD_MAP; } };
+  const showMap = () => { document.getElementById('map').textContent = 'Map: ' + (localStorage.getItem('mql:padmap') || 'default'); };
+  document.getElementById('swap').onclick = () => {
+    const m = load(), a = Object.keys(m).find((k) => m[k] === 'a'), b = Object.keys(m).find((k) => m[k] === 'b');
+    localStorage.setItem('mql:padmap', JSON.stringify({ [a]: 'b', [b]: 'a' }));
+    showMap();
+  };
+  document.getElementById('reset').onclick = () => { localStorage.removeItem('mql:padmap'); showMap(); };
+  showMap();
+
+  const log = [];
+  const keysEl = document.getElementById('keys');
+  for (const type of ['keydown', 'keyup']) {
+    window.addEventListener(type, (e) => {
+      e.preventDefault();
+      if (e.repeat) return;
+      log.unshift(`${type.padEnd(7)} key=${JSON.stringify(e.key)} code=${JSON.stringify(e.code)} keyCode=${e.keyCode}`);
+      log.length = Math.min(log.length, 40);
+      keysEl.textContent = log.join('\n');
+    });
+  }
+  window.MQLPad = { set: (btn, down) => { log.unshift(`launcher  ${btn} ${down ? 'down' : 'up'}`); keysEl.textContent = log.join('\n'); } };
+
+  const padsEl = document.getElementById('pads');
+  function tick() {
+    const pads = [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(Boolean);
+    if (pads.length) {
+      const map = load();
+      padsEl.innerHTML = '';
+      for (const gp of pads) {
+        const h = document.createElement('div');
+        h.textContent = `#${gp.index} ${gp.id} · mapping "${gp.mapping}"`;
+        const btns = document.createElement('div');
+        btns.className = 'btns';
+        gp.buttons.forEach((b, i) => {
+          const d = document.createElement('div');
+          d.className = 'b' + (b.pressed ? ' on' : '');
+          d.innerHTML = `${i}<small>${map[i] || '–'}</small>`;
+          btns.append(d);
+        });
+        const ax = document.createElement('div');
+        ax.textContent = 'axes: ' + gp.axes.map((v, i) => `${i}:${v.toFixed(2)}`).join('  ');
+        padsEl.append(h, btns, ax);
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+</script>
+</body>
+</html>
