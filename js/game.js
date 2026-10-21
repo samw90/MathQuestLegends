@@ -985,7 +985,9 @@
     const t = tileAt(x, y);
     return t === null || SOLID.has(t) || !!npcAt(x, y) || !!specialAt(x, y);
   }
+  let mapSteps = 0; // steps taken since arriving on this map
   function placePlayer(mapId, x, y, dir) {
+    mapSteps = 0;
     S.map = mapId; S.x = x; S.y = y;
     const m = MAPS[mapId];
     if (m.heal) { S.healMap = mapId; S.visited[mapId] = true; }
@@ -1034,6 +1036,7 @@
 
   async function arrived() {
     const m = map();
+    mapSteps++;
     const pt = portalAt(P.x, P.y);
     if (pt) {
       busy = true;
@@ -1059,6 +1062,13 @@
           writeSave();
         });
       }
+      busy = false;
+      return;
+    }
+    const ri = rivalHere();
+    if (ri >= 0 && mapSteps === 4) {
+      busy = true;
+      await rivalBattle(ri);
       busy = false;
       return;
     }
@@ -1095,6 +1105,11 @@
       busy = true;
       await say(pt.home ? ['A portal home to the Portal Shrine.'] : worldOpen(w) ? [`A portal to ${w.name}.`, w.start ? 'Step in to go there!' : 'That world is still being built.'] : [`A sleeping portal to ${w.name}.`, `Beat ${WORLDS[w.id - 2].name} to wake it up.`]);
       busy = false;
+      return;
+    }
+    if ((t === '}' || t === 'Σ') && !buddyHere && !n) {
+      busy = true;
+      try { await badgeCase(); } finally { busy = false; }
       return;
     }
     if (t === '¦' && !buddyHere && !n) {
@@ -1141,7 +1156,7 @@
       done: ['Smooth as water.', 'Calm and careful wins every time.'],
     },
   };
-  const voice = () => VOICE[S.sidekick] || {
+  const voice = () => VOICE[S.sidekick] || VOICE[baseForm(S.sidekick)] || {
     hi: ['Hi! I\'m happy to be your buddy!', `I love ${FAMILY_PHRASE[SPECIES[S.sidekick].family] || 'all kinds of'} puzzles. Let's do some together!`],
     go: 'Let\'s practice together!',
     done: ['Great teamwork!', 'We make a good team!'],
@@ -1212,6 +1227,7 @@
         await say(`${nameOf(c)} grew to level ${c.lv}!`);
       }
     }
+    await checkEvolutions();
     writeSave();
   }
 
@@ -1578,14 +1594,17 @@
     const blink = (offset) => (now + offset) % 3400 < 140;
     const fe = B.fx.e, fp = B.fx.p;
     if (!fe.hide) {
-      ctx.drawImage(Art.creature(B.enemy.sp, blink(1700), !!B.enemy.golden), 100 + fe.dx, 8 + fe.dy + hop(1.3));
+      // Evolved Legends are drawn bigger; they stay centered on the same spot.
+      const ei = Art.creature(B.enemy.sp, blink(1700), !!B.enemy.golden), eg = ei.width - 48;
+      ctx.drawImage(ei, 100 - eg / 2 + fe.dx, 8 - eg / 2 + fe.dy + hop(1.3));
       if (B.enemy.golden || B.special) sparkles(124 + fe.dx, 30 + fe.dy, now, 22);
     }
     if (!fp.hide) {
       ctx.save();
-      ctx.translate(14 + 48 + fp.dx, 44 + fp.dy + hop(0));
+      const pi = Art.creature(B.me.sp, blink(0), !!B.me.golden), pg = pi.width - 48;
+      ctx.translate(14 + 48 + pg / 2 + fp.dx, 44 - pg / 2 + fp.dy + hop(0));
       ctx.scale(-1, 1);
-      ctx.drawImage(Art.creature(B.me.sp, blink(0), !!B.me.golden), 0, 0);
+      ctx.drawImage(pi, 0, 0);
       ctx.restore();
     }
   }
@@ -1668,8 +1687,115 @@
     if (result === 'lose') {
       await say(['NURSE ADA: There! Your team feels great again.', 'Every puzzle helps you learn.', 'You\'ll get it next time!']);
     }
+    if (result !== 'lose') await checkEvolutions();
     writeSave();
     return result;
+  }
+
+  // ---------------------------------------------------------------- rival
+  // Remy's battle in this area, if you haven't won it yet.
+  function rivalHere() {
+    if (!map().area || !S.party.some(alive)) return -1;
+    return RIVAL.findIndex((r, i) => r.area === map().area && !S.flags['rival' + i]);
+  }
+  // Remy's buddy is the one after yours in the starter list, grown to its level.
+  function grownForm(id, lv) {
+    for (let e = evolutionOf(id); e && lv >= (e.lv || Infinity); e = evolutionOf(e.to)) id = e.to;
+    return id;
+  }
+  function rivalTeam(i) {
+    const r = RIVAL[i], area = AREAS[r.area], lv = area.base + 3;
+    if (!S.rivalBuddy) S.rivalBuddy = STARTERS[(STARTERS.indexOf(baseForm(S.sidekick)) + 1) % STARTERS.length];
+    const team = [];
+    // Friends from the areas Remy has passed through, newest last.
+    const pool = AREA_ORDER.slice(0, AREA_ORDER.indexOf(r.area) + 1).reverse()
+      .flatMap((a) => Object.values(AREAS[a].species));
+    const fams = new Set();
+    for (const sp of pool) {
+      if (team.length >= r.team - 1) break;
+      const fam = SPECIES[sp].family;
+      if (fams.has(fam)) continue;
+      fams.add(fam);
+      team.unshift(mon(lv >= (EVOLVE_LV[sp] || Infinity) + 4 ? EVOLUTIONS[sp][0] : sp, lv));
+    }
+    team.push(mon(grownForm(S.rivalBuddy, lv + 1), lv + 1));
+    return team;
+  }
+  async function rivalBattle(i) {
+    const r = RIVAL[i];
+    // Remy runs up and stands next to you.
+    const m = map(), [fx, fy] = DIRS[P.dir];
+    const spots = [[fx, fy], [0, -1], [1, 0], [-1, 0], [0, 1]].map(([dx, dy]) => [P.x + dx, P.y + dy])
+      .filter(([x, y]) => !blocked(x, y) && !(F.x === x && F.y === y));
+    const [kx, ky] = spots[0] || [P.x, P.y - 1];
+    const toward = kx > P.x ? 'left' : kx < P.x ? 'right' : ky > P.y ? 'up' : 'down';
+    const remy = { x: kx, y: ky, look: 'rival', dir: toward };
+    m.npcs.push(remy);
+    P.dir = S.dir = { left: 'right', right: 'left', up: 'down', down: 'up' }[toward];
+    sfx('select');
+    await say(r.hi);
+    const result = await battle(rivalTeam(i), { trainer: 'Remy' });
+    if (result === 'win') {
+      S.flags['rival' + i] = true;
+      await say(r.win);
+      writeSave();
+    }
+    m.npcs.splice(m.npcs.indexOf(remy), 1);
+  }
+
+  // ---------------------------------------------------------------- evolution
+  // Buddies grow at set levels. Wild Legends grow at their level AND once you're
+  // getting strong at their kind of math, so learning is what makes them grow.
+  function familyStrong(fam) {
+    const ids = MathEngine.gradeSkills(S.grade).filter((id) => MathEngine.SKILLS[id].family === fam);
+    return !ids.length || ids.some((id) => MathEngine.stretchLevel(S.skills[id]) >= 1);
+  }
+  async function checkEvolutions() {
+    for (const c of S.party) {
+      const e = evolutionOf(c.sp);
+      if (!e || c.lv < e.lv) continue;
+      const fam = SPECIES[c.sp].family;
+      if (!SPECIES[c.sp].sidekick && !familyStrong(fam)) {
+        if (!c.evoHint) {
+          c.evoHint = true;
+          await say([`${nameOf(c)} is glowing a little...`, `It's ready to grow! It just needs you to get stronger at ${FAMILY_PHRASE[fam]} puzzles.`]);
+        }
+        continue;
+      }
+      await evolve(c, e.to);
+    }
+  }
+  async function evolve(c, to) {
+    const from = c.sp;
+    await say(`What? ${nameOf(c)} is evolving!`);
+    const box = el('div', 'evolve');
+    const img = el('img');
+    img.alt = '';
+    box.append(img);
+    ui.append(box);
+    const oldUrl = Art.creatureURL(from, !!c.golden), newUrl = Art.creatureURL(to, !!c.golden);
+    img.src = oldUrl;
+    sfx('heal');
+    // Flicker between the two forms, faster and faster, then a flash.
+    for (let gap = 420; gap > 50; gap *= 0.8) {
+      await sleep(gap);
+      img.src = img.src === oldUrl ? newUrl : oldUrl;
+    }
+    box.classList.add('flash');
+    img.src = newUrl;
+    await sleep(350);
+    box.classList.remove('flash');
+    sfx('level');
+    c.sp = to;
+    c.hp = maxHp(c);
+    delete c.evoHint;
+    if (S.sidekick === from) S.sidekick = to;
+    S.seen[to] = S.caught[to] = true;
+    if (c.golden) S.goldens[to] = true;
+    await say([`Hooray! ${SPECIES[from].name} evolved into ${SPECIES[to].name}!`, SPECIES[to].dex]);
+    box.remove();
+    hideDialog();
+    writeSave();
   }
 
   const foeName = () => `${B.trainer ? '' : 'Wild '}${nameOf(B.enemy)}`;
@@ -1958,6 +2084,41 @@
         if (where && where.kind === 'ultra') box.append(el('p', null, `Shows up for ${GRADES[where.grade]} players who are getting strong at ${MathEngine.SKILLS[where.skill].label.toLowerCase()}.`));
       });
     }
+  }
+
+  // The Badge Case in your room: every boss badge, a row per world, in the color
+  // of the highest grade it was won at.
+  function badgeCase() {
+    sfx('select');
+    return panel((box) => {
+      box.classList.add('badges');
+      box.append(el('h3', null, `Badge Case · ${badgeCount()} of ${BADGE_FLAGS.length}`));
+      for (const w of WORLDS) {
+        const row = el('div', 'brow');
+        row.append(el('span', 'wname', w.name));
+        const open = worldOpen(w);
+        w.areas.forEach((a, i) => {
+          const b = BOSSES[a], won = !!S.flags[b.flag];
+          const img = el('img');
+          img.src = Art.badge(i, tierOf(b.flag).color, won).toDataURL();
+          img.alt = won ? `${b.badge} (${tierOf(b.flag).name})` : 'Not won yet';
+          img.title = img.alt;
+          if (!open) img.classList.add('locked');
+          row.append(img);
+        });
+        box.append(row);
+      }
+      const key = el('div', 'tiers');
+      BADGE_TIERS.forEach((t, g) => {
+        const k = el('span');
+        const img = el('img');
+        img.src = Art.badge(0, t.color, true).toDataURL();
+        img.alt = '';
+        k.append(img, g ? `Gr ${g}` : 'K');
+        key.append(k);
+      });
+      box.append(el('p', 'note', 'Badge colors show the grade you won at:'), key);
+    });
   }
 
   function progressPage() {
@@ -2464,6 +2625,12 @@
   if (/[?&]dev\b/.test(location.search)) {
     window.MQL.ask = ask;
     window.MQL.say = say;
+    window.MQL.checkEvolutions = checkEvolutions;
+    // Test hook: jump into the world at a spot, e.g. MQL.warp('room', 2, 2).
+    window.MQL.warp = (mapId, x, y, dir = 'up') => { ui.textContent = ''; handler = null; placePlayer(mapId, x, y, dir); mode = 'world'; };
+    window.MQL.interact = () => interact();
+    window.MQL.battle = (foes, opts) => battle(foes.map(([sp, lv]) => mon(sp, lv)), opts);
+    window.MQL.rival = (i) => rivalBattle(i);
     // Test hook: a throwaway game state so questions can be shown from the title screen.
     window.MQL.testState = (grade = 0) => {
       S = newState('Tester', grade);

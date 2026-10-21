@@ -50,7 +50,9 @@ suite('Legends', ({ check }) => {
     check(sp.sidekick || FAMS.includes(sp.family), `${id}: unknown family ${sp.family}`);
     let big = null, small = null;
     try { big = Art.creature(id); small = Art.creatureSmall(id, 0); } catch (e) { /* reported below */ }
-    check(big && big.width === 48, `${id}: no 48px art`);
+    // First forms are 48px; evolved forms are drawn bigger (60px).
+    check(big && big.width === (sp.from ? 60 : 48), `${id}: no ${sp.from ? 60 : 48}px art`);
+    if (sp.from) check(SPECIES[sp.from] && evolutionOf(sp.from) && evolutionOf(sp.from).to === id, `${id}: evolves from ${sp.from}, but that link is missing`);
     check(small && small.width === 20, `${id}: no map-size art`);
     if (big) {
       const d = big.getContext('2d').getImageData(0, 0, 48, 48).data;

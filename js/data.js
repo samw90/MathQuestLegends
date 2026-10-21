@@ -214,7 +214,146 @@ const AREA_ORDER = [...WORLD1_AREAS, ...WORLD2_AREAS, ...WORLD3_AREAS, ...WORLD4
 // Every Legend once, in the order you meet them.
 // Every Legend once, in the order you meet them, with the rare ones at the end.
 const RARE = (id) => !!SPECIES[id].rarity;
-const DEX_ORDER = [...new Set([...STARTERS, ...AREA_ORDER.flatMap((a) => [...Object.values(AREAS[a].species), AREAS[a].boss]),
+
+// Remy, Professor Pi's grandkid: a friendly rival who turns up once in each world
+// (twice in the first), a little ahead of you, with a team that keeps growing.
+const RIVAL = [
+  { area: WORLD1_AREAS[0], team: 1,
+    hi: ['Hey, wait up! I\'m Remy, Professor Pi\'s grandkid.', 'Grandpa gave me a buddy too.', 'Let\'s see whose buddy is stronger!'],
+    win: ['Whoa, you\'re good!', 'I\'m going to practice every day. Next time, I\'ll win!'] },
+  { area: WORLD1_AREAS[3], team: 2,
+    hi: ['REMY: There you are! My team got bigger.', 'I\'ve been practicing my math every day. Ready?'],
+    win: ['You figured those out so fast!', 'Okay, I\'ll see you up ahead!'] },
+  { area: WORLD2_AREAS[2], team: 3,
+    hi: ['REMY: You made it to Whisperwood too!', 'I made some new friends in the forest. Battle me!'],
+    win: ['Wow. Practice really works, huh?', 'We both keep getting better. That\'s the fun part!'] },
+  { area: WORLD3_AREAS[2], team: 4,
+    hi: ['REMY: Brightport is so big! I got lost three times.', 'But I don\'t get lost in math! Let\'s go!'],
+    win: ['Your team is amazing.', 'I\'m going to try your tricks. See you in the next world!'] },
+  { area: WORLD4_AREAS[2], team: 4,
+    hi: ['REMY: Even underwater, I\'m not giving up!', 'I\'ve been working on the hard puzzles. This time I\'ll win!'],
+    win: ['Bubbles! You did it again!', 'When I get stuck, I think about how you never give up.'] },
+  { area: WORLD5_AREAS[2], team: 5,
+    hi: ['REMY: The Sky Isles! The top of the world!', 'One more battle. Give it everything you\'ve got!'],
+    win: ['You did it. You\'re the best math partner I know.', 'Thanks for always pushing me to get better. Friends?'] },
+];
+
+// Evolution. Buddies grow at set levels. Wild Legends grow once they're strong
+// enough (their home area's level + 8) AND you're getting strong at their kind
+// of math. Each line: base: [new id, name, Legendex entry].
+const BUDDY_EVOLUTIONS = {
+  sproutle: { to: 'sprigleaf', lv: 16 }, sprigleaf: { to: 'grovegiant', lv: 36 },
+  emberkit: { to: 'blazecat', lv: 16 }, blazecat: { to: 'sunmane', lv: 36 },
+  splashfin: { to: 'surfin', lv: 16 }, surfin: { to: 'tidalfin', lv: 36 },
+};
+Object.assign(SPECIES, {
+  sprigleaf: { name: 'Sprigleaf', hp: 30, atk: 15, sidekick: true, from: 'sproutle', moves: ['Leaf Storm', 'Vine Whip'], dex: 'Sproutle grew up! Its two leaves became a leafy crown.' },
+  grovegiant: { name: 'Grovegiant', hp: 40, atk: 19, sidekick: true, from: 'sprigleaf', moves: ['Forest Stomp', 'Leaf Storm'], dex: 'A gentle giant with a little tree on its back. Birds nest in it.' },
+  blazecat: { name: 'Blazecat', hp: 28, atk: 16, sidekick: true, from: 'emberkit', moves: ['Flame Dash', 'Ember Pounce'], dex: 'Emberkit grew up! Its tail flame burns brighter with every idea.' },
+  sunmane: { name: 'Sunmane', hp: 38, atk: 20, sidekick: true, from: 'blazecat', moves: ['Sun Roar', 'Flame Dash'], dex: 'A proud lion with a mane like the sun. It roars when it solves a puzzle.' },
+  surfin: { name: 'Surfin', hp: 32, atk: 14, sidekick: true, from: 'splashfin', moves: ['Wave Ride', 'Bubble Burst'], dex: 'Splashfin grew up! It rides the waves with its big new fin.' },
+  tidalfin: { name: 'Tidalfin', hp: 42, atk: 18, sidekick: true, from: 'surfin', moves: ['Tidal Wave', 'Wave Ride'], dex: 'A calm, strong sea Legend. It can make a wave as tall as a house.' },
+});
+const EVOLUTIONS = {
+  hootsum: ['hootsage', 'Hootsage', 'A wise old owl. Its plus-sign feathers glow when it adds.'],
+  snipsnap: ['snipclaw', 'Snipclaw', 'Its big claws snip numbers down to size.'],
+  pebblit: ['boulderbig', 'Boulderbig', 'A pebble that grew into a boulder. It still asks which is bigger.'],
+  buzzlet: ['buzzhive', 'Buzzhive', 'It leads its whole hive in equal groups.'],
+  shareling: ['sharecap', 'Sharecap', 'Its giant cap has room to share with everyone.'],
+  tallytoise: ['tallytide', 'Tallytide', 'Its shell is covered in tally marks from a hundred trips.'],
+  gulpgull: ['gulpalbatross', 'Gulpalbatross', 'Its huge beak gulps whole waves of snacks.'],
+  starbig: ['starbiggest', 'Starbiggest', 'It knows which pile is biggest, every time.'],
+  octogroup: ['octogrand', 'Octogrand', 'It can hold eight groups at once, one in each arm.'],
+  jellishare: ['jellishine', 'Jellishine', 'It glows and shares its light in equal beams.'],
+  cactotal: ['cactotower', 'Cactotower', 'A tall cactus covered in flowers. Count them all!'],
+  minusnake: ['minuscobra', 'Minuscobra', 'It hisses and takes away even faster now.'],
+  lizardo: ['lizardking', 'Lizardking', 'Its frill opens like a crown to show which is bigger.'],
+  arraydillo: ['arraydon', 'Arraydon', 'Its shell is a perfect array of rows and columns.'],
+  coyshare: ['coyleader', 'Coyleader', 'It leads the pack and makes sure every share is fair.'],
+  pengplus: ['pengpolar', 'Pengpolar', 'It slides so fast it adds up speed like magic.'],
+  meltling: ['meltberg', 'Meltberg', 'A big iceberg. A piece melts away with every take-away.'],
+  yetiny: ['yetall', 'Yetall', 'The tiny yeti finally got big! Now it compares mountains.'],
+  flurrfox: ['blizzfox', 'Blizzfox', 'It counts whole blizzards in equal groups.'],
+  harefrost: ['harehail', 'Harehail', 'It splits its carrot patch into equal rows.'],
+  batsum: ['batsumo', 'Batsumo', 'Its giant wings can hold every star it adds up.'],
+  molemin: ['moleminer', 'Moleminer', 'It digs away whole hills, one scoop at a time.'],
+  crystling: ['crystalor', 'Crystalor', 'Its crystals shine brightest on the bigger number.'],
+  webbit: ['webweaver', 'Webweaver', 'Its webs are giant arrays that sparkle with dew.'],
+  glowsplit: ['glowshare', 'Glowshare', 'It splits its glow so every corner of the cave is lit.'],
+  plusquirrel: ['plusquire', 'Plusquire', 'It has a whole tree full of acorns and knows the total.'],
+  otteradd: ['otterplenty', 'Otterplenty', 'It floats with a big pile of shells and adds them all.'],
+  toadtotal: ['toadtally', 'Toadtally', 'Its croak is so loud it adds ten at a time.'],
+  mothaway: ['mothfade', 'Mothfade', 'Its wings shimmer and fade as it flies away.'],
+  beaverbite: ['beaverdam', 'Beaverdam', 'It chews whole trees down. Take away, take away!'],
+  snailess: ['snailshell', 'Snailshell', 'A big snail with a spiral shell. It leaves less and less behind.'],
+  mossbig: ['mossboulder', 'Mossboulder', 'A mossy hill that has compared numbers for a hundred years.'],
+  heronmore: ['heronmost', 'Heronmost', 'It always spears the biggest fish in the river.'],
+  toucount: ['toucanto', 'Toucanto', 'Its huge rainbow beak is full of tally marks.'],
+  mushgroup: ['mushring', 'Mushring', 'A whole ring of mushrooms grows around it in equal groups.'],
+  dragonfleet: ['dragonflight', 'Dragonflight', 'Four wings, two pairs, one fast flyer!'],
+  chimpairs: ['chimpdouble', 'Chimpdouble', 'It carries bananas in doubles: two, four, eight!'],
+  hedgeshare: ['hedgeberry', 'Hedgeberry', 'Its spikes are covered in berries to share fairly.'],
+  lilysplit: ['lilybloom', 'Lilybloom', 'Its lily pad splits into equal slices like a big pie.'],
+  mistsplit: ['mistfall', 'Mistfall', 'A waterfall spirit that splits into equal drops.'],
+  pigeonplus: ['pigeonparade', 'Pigeonparade', 'A whole flock follows it. One more, one more!'],
+  taxicub: ['taxibear', 'Taxibear', 'A big bear bus that adds up all its riders.'],
+  crabplus: ['crabcaptain', 'Crabcaptain', 'Its giant claws hold shells to add up.'],
+  raccminus: ['raccbandit', 'Raccbandit', 'It takes snacks away so fast. Count what\'s left!'],
+  mouseless: ['mousemunch', 'Mousemunch', 'It munches a whole wheel of cheese, bit by bit.'],
+  seaslurp: ['seaslurpent', 'Seaslurpent', 'It slurps up whole schools of fish. How many are left?'],
+  lampling: ['lamppost', 'Lamppost', 'A tall street lamp that shines on the bigger number.'],
+  neonewt: ['neonagon', 'Neonagon', 'Its neon stripes flash to show which is more.'],
+  lighthousey: ['lighthousemax', 'Lighthousemax', 'Its beam can find the biggest number from far away.'],
+  sprinklet: ['sprinklord', 'Sprinklord', 'It sprays a fountain in perfect equal groups.'],
+  bricklet: ['brickwall', 'Brickwall', 'A big wall of bricks in neat rows and columns.'],
+  traintrio: ['trainexpress', 'Trainexpress', 'A long train with cars in groups of three.'],
+  pelishare: ['pelicaptain', 'Pelicaptain', 'Its huge pouch holds fish for everyone, shared fairly.'],
+  slicerat: ['slicechef', 'Slicechef', 'A pizza chef. Every slice is exactly the same size.'],
+  balloonsplit: ['balloonbunch', 'Balloonbunch', 'A big bunch of balloons in equal groups.'],
+  clownplus: ['clownparade', 'Clownparade', 'It swims with a whole parade of friends. Add them up!'],
+  barnaplus: ['barnacastle', 'Barnacastle', 'So many barnacles stuck on, it looks like a castle!'],
+  anglerplus: ['anglerlight', 'Anglerlight', 'Its glowing lure adds lights until the deep sea shines.'],
+  urchless: ['urchspike', 'Urchspike', 'It shoots spines away. Count how many are left!'],
+  squidrop: ['squidink', 'Squidink', 'It squirts ink clouds that get smaller each time.'],
+  eelaway: ['eelectric', 'Eelectric', 'It zips away with a spark. There are fewer every time!'],
+  puffbig: ['puffbiggest', 'Puffbiggest', 'It puffs up bigger than any number around.'],
+  seamore: ['seamajor', 'Seamajor', 'A proud seahorse that always rides toward more.'],
+  lanternfin: ['lanternlord', 'Lanternlord', 'Its lantern lights the bigger number in the dark.'],
+  schoolio: ['schoolsquad', 'Schoolsquad', 'A big school of fish that swims in equal groups.'],
+  prawnpairs: ['prawnparty', 'Prawnparty', 'Pairs of prawns everywhere! Count by twos.'],
+  mantarray: ['mantarmada', 'Mantarmada', 'A giant manta ray covered in arrays of spots.'],
+  starsplit: ['starshare', 'Starshare', 'A big starfish that shares its arms fairly.'],
+  clamshare: ['clampearl', 'Clampearl', 'Its giant shell holds pearls in equal groups.'],
+  narwhalf: ['narwhole', 'Narwhole', 'Its horn splits anything into equal parts.'],
+  fluffadd: ['fluffluff', 'Fluffluff', 'A giant cloud sheep. Its wool keeps adding puffs.'],
+  zapadd: ['zapstorm', 'Zapstorm', 'Every bolt adds one more. Zap, zap, zap!'],
+  gustplus: ['gustgale', 'Gustgale', 'A strong wind spirit that gathers leaves by the hundred.'],
+  drizzless: ['drizzlestorm', 'Drizzlestorm', 'A big storm cloud that shrinks with every drop.'],
+  plumeless: ['plumephoenix', 'Plumephoenix', 'It drops shining feathers as it flies. How many are left?'],
+  fadebow: ['fadearc', 'Fadearc', 'A big rainbow that hides one color at a time.'],
+  kitebig: ['kitesoar', 'Kitesoar', 'It soars high to find the biggest number.'],
+  starmore: ['starmost', 'Starmost', 'The brightest star in the sky, always on the bigger number.'],
+  boltbig: ['boltthunder', 'Boltthunder', 'Its thunder booms on the bigger number.'],
+  goosegroup: ['goosegaggle', 'Goosegaggle', 'A whole gaggle of geese in equal groups.'],
+  pinwheelie: ['pinwheelmill', 'Pinwheelmill', 'A spinning windmill with blades in equal groups.'],
+  hailgroup: ['hailstorm', 'Hailstorm', 'It drops ice in neat rows and columns.'],
+  cloudsplit: ['cloudshare', 'Cloudshare', 'A huge cloud that splits into equal little clouds.'],
+  prismshare: ['prismatic', 'Prismatic', 'It splits sunlight into equal rainbows.'],
+  sailsplit: ['sailship', 'Sailship', 'A sky ship that shares the wind with every sail.'],
+};
+const EVOLVE_LV = {};
+for (const [base, [to, name, dex]] of Object.entries(EVOLUTIONS)) {
+  const b = SPECIES[base];
+  SPECIES[to] = { name, hp: b.hp + 8, atk: b.atk + 4, family: b.family, from: base, moves: b.moves, dex };
+}
+// What a Legend grows into, if anything: { to, lv } (lv 0 for wild Legends, set below).
+const evolutionOf = (id) => BUDDY_EVOLUTIONS[id] || (EVOLUTIONS[id] ? { to: EVOLUTIONS[id][0], lv: EVOLVE_LV[id] } : null);
+// A Legend's first form (Grovegiant -> Sproutle).
+const baseForm = (id) => { while (SPECIES[id] && SPECIES[id].from) id = SPECIES[id].from; return id; };
+// Every form in a line, first to last.
+const evoLine = (id) => { const out = [id]; for (let e = evolutionOf(id); e; e = evolutionOf(e.to)) out.push(e.to); return out; };
+for (const a of AREA_ORDER) for (const id of Object.values(AREAS[a].species)) if (EVOLUTIONS[id] && !EVOLVE_LV[id]) EVOLVE_LV[id] = AREAS[a].base + 8;
+const DEX_ORDER = [...new Set([...STARTERS.flatMap(evoLine), ...AREA_ORDER.flatMap((a) => [...Object.values(AREAS[a].species).flatMap(evoLine), AREAS[a].boss]),
   ...Object.keys(SPECIES).filter(RARE)])];
 
 // One boss guards the way out of each area.
@@ -427,6 +566,7 @@ const LOOKS = {
   marsh: { id: 'marsh', hair: '#4a6a3a', shirt: '#8a6aa8', pants: '#3a4a3a', long: true },
   scout: { id: 'scout', hat: '#e8702a', hair: '#5a3418', shirt: '#6a8a3a', pants: '#5a4a3a' },
   elder: { id: 'elder', hair: '#e8e8f0', shirt: '#3a6ab8', pants: '#2a3a5a', long: true },
+  rival: { id: 'rival', hair: '#c8402a', shirt: '#3a7ad8', pants: '#2b2840' },
 };
 
 // Tiles:
@@ -456,7 +596,7 @@ const LOOKS = {
 //   bosses  four house styles, each roof / roof with emblem / wall / door:
 //           cabin D E N S   tent < > ? /   tower # ! [ ]   dome a y $ +
 //   inside  x wall  o floor  b shelf  t table  1/2/3 buddy beds  c counter  m exit mat  ¦ Legend Terminal
-const SOLID = new Set('T~srRCVwWxbt123c PKMAQXF-zJZU|45678Y#![]DENS<>?/ay$+ζηθικμοφχΔΞ¤£¥®°¿ßÐÅÇÎÒÔÕÁ¦'.split(''));
+const SOLID = new Set(('){}Σ' + 'T~srRCVwWxbt123c PKMAQXF-zJZU|45678Y#![]DENS<>?/ay$+ζηθικμοφχΔΞ¤£¥®°¿ßÐÅÇÎÒÔÕÁ¦').split(''));
 // Legends hide in these.
 const ENCOUNTER = new Set([',', ';', '"', '^', '%', 'e', 'L', 'v', 'l', '&', 'ε', 'ν', 'τ', 'ψ', 'Λ', '¢', 'µ', '±', 'Ø', 'Þ', 'Ä', 'È', 'Ì', 'Ï', 'Ó']);
 
@@ -705,7 +845,7 @@ const MAPS = {
     border: ' ',
     tiles: [
       'xxxxxxxx',
-      'xbbooobx',
+      'xbbooo(x',
       'xoooooox',
       'xoottoox',
       'xoooooox',
@@ -713,7 +853,25 @@ const MAPS = {
       'xxxmxxxx',
     ],
     npcs: [{ x: 5, y: 2, dir: 'down', look: 'mom', script: 'mom' }],
-    warps: [{ x: 3, y: 6, to: 'town', tx: 3, ty: 4, dir: 'down' }],
+    warps: [{ x: 3, y: 6, to: 'town', tx: 3, ty: 4, dir: 'down' }, { x: 6, y: 1, to: 'room', tx: 5, ty: 5, dir: 'left' }],
+    signs: {},
+  },
+
+  // Upstairs: your room, with the Badge Case.
+  room: {
+    name: 'Your Room',
+    border: ' ',
+    tiles: [
+      'xxxxxxxx',
+      'x}Σbo)ox',
+      'xoooo{ox',
+      'xootooox',
+      'xoommoox',
+      'xooooo(x',
+      'xxxxxxxx',
+    ],
+    npcs: [],
+    warps: [{ x: 6, y: 5, to: 'house', tx: 5, ty: 1, dir: 'left' }],
     signs: {},
   },
 

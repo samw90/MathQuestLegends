@@ -700,3 +700,28 @@ body:has(.console.side) { align-items: stretch; padding: 0; }
   pointer-events: none;
 }
 .console.side .rev { color: #c9c1dc; }
+
+/* Evolution: the old and new forms flicker, then a flash. */
+.evolve {
+  position: absolute;
+  inset: 0 0 34% 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle, #fffbe8 0%, #f6e7b0 60%, #d8c27a 100%);
+  transition: background .2s;
+}
+.evolve img { width: 46%; image-rendering: pixelated; }
+.evolve.flash { background: #ffffff; }
+.evolve.flash img { filter: brightness(0) invert(1); }
+
+/* Badge Case: a row of badges per world, then a key of badge colors by grade. */
+.panel.badges h3 { margin-bottom: 1cqw; font-size: 5.6cqw; }
+.panel.badges .hint { margin-top: 1.5cqw; }
+.panel.badges .brow { display: grid; grid-template-columns: 1fr repeat(5, 8cqw); align-items: center; gap: 1.4cqw; padding: .5cqw 0; border-bottom: .3cqw dashed #cfc8e6; }
+.panel.badges .wname { font-size: 4.2cqw; line-height: 1.1; }
+.panel.badges .brow img { width: 8cqw; image-rendering: pixelated; }
+.panel.badges .brow img.locked { opacity: .35; }
+.panel.badges .note { font-size: 3.8cqw; margin: 1.5cqw 0 .8cqw; }
+.panel.badges .tiers { display: flex; flex-wrap: wrap; gap: .6cqw 2.4cqw; font-size: 3.8cqw; }
+.panel.badges .tiers span { display: flex; align-items: center; gap: 1cqw; }
+.panel.badges .tiers img { width: 5cqw; image-rendering: pixelated; }

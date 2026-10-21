@@ -44,7 +44,7 @@ A pixel-art adventure for Kindergarten to Grade 5 in the style of classic handhe
   | Groups | Mushgroup | Dragonfleet | Dragonfleet | Chimpairs | Chimpairs |
   | Sharing | Hedgeshare | Lilysplit | Lilysplit | Hedgeshare | Mistsplit |
   | Boss partner | Oakulus | Hippomath | Crocalc | Owlgebra | Cascoi |
-- **Rare Legends (137 Legends in all):**
+- **Rare Legends (228 Legends in all, counting evolved forms):**
   - *Ultra rares:* 18, three for each grade. Each waits at a fixed spot and appears only while playing its grade, once the player is getting strong at its skill (82% or better over at least 6 tries). For example, Glimmerdot on Route 1 shows up for Kindergarten counters, and Griffinity on Treetop Trail for Grade 5 two-digit multipliers. The Legendex says which skill wakes each one.
   - *World Legends:* Equalion waits in Glowcap Cave after the Crystal Badge, and Whisperstag at Thunder Falls after the Cascade Badge.
   - *Golden Legends:* answer 10 puzzles in a row on the first try and the next wild Legend is golden. Golden friends stay gold in your team and the Legendex.
@@ -59,6 +59,13 @@ A pixel-art adventure for Kindergarten to Grade 5 in the style of classic handhe
 - **Boss houses:** every boss guards the door of a log cabin, striped tent, stone tower or domed hall. Rest Centers have a heart on the roof, Professor Pi's lab has a π badge, and your home has a teal roof and a chimney.
 - **Badge colors:** each badge's color shows the grade it was won at: Bronze (K), Silver (1), Gold (2), Emerald (3), Sapphire (4), Crystal (5). Start a harder grade and every boss offers a rematch to upgrade its badge.
 - **Legend Terminal:** when your team is full (6), new friends wait in storage. Use the terminal in Professor Pi's lab or any Rest Center to take them out, put team members away, or swap. Your buddy always stays with you.
+- **Evolution:**
+  - *Buddies* grow twice, at level 16 and level 36: Sproutle → Sprigleaf → Grovegiant, Emberkit → Blazecat → Sunmane, Splashfin → Surfin → Tidalfin.
+  - *Wild Legends* (all 85) grow once. A Legend is ready at its home area's level + 8 (Hootsum at 10, Sailsplit at 98), but it only evolves once the player is "Getting strong" at that Legend's kind of math (any skill of that family at their grade: 82%+ over 6 tries). Until then it glows and says what to practice. Learning is what makes Legends grow.
+  - Evolution is checked after each battle you don't lose and after practicing with your buddy. Evolved Legends are drawn bigger, with a crest, wings and a gem in their math family's color, and get more HP and power. Golden Legends stay golden.
+  - Boss partners and rare Legends don't evolve.
+- **Remy, your rival:** Professor Pi's grandkid, with the buddy after yours (Sproutle → Emberkit → Splashfin → Sproutle). Remy runs up a few steps into Route 1, Frostpeak, Bogwater Swamp, Subway Station, Sunken Ship and Rainbow Bridge, with a team that grows from 1 to 5 Legends (a little stronger than the area's wild Legends; Remy's buddy evolves too). Lose, and Remy waits to battle again next time you come through.
+- **Your room and the Badge Case:** take the stairs in your house up to your room. The Badge Case shows all 25 badges, a row per world, each in the color of the grade it was won at.
 - The Rest Center (pink roof) heals your team. If your whole team needs a rest, you wake up there. Nothing is lost.
 
 **MENU in battle:** at the SOLVE / TEAM / RUN choice, MENU opens Team, Legendex, Grown-ups and Settings. Map and Save & load aren't available mid-battle, because a save holds your team and where you're standing, not the battle itself.

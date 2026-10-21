@@ -263,6 +263,22 @@ const Art = (() => {
     k.rect(6, 6, 4, 1, '#fff');
   }
 
+  // The Badge Case: a wooden cabinet with a glass front, two tiles wide.
+  function badgeCaseTile(k, half) {
+    k.rect(0, 0, 16, 16, '#f6ecd4');
+    k.rect(0, 1, 16, 14, '#7a4a2a');
+    k.rect(half ? 0 : 2, 3, 14, 9, '#bfe4f4');
+    k.rect(half ? 0 : 2, 3, 14, 1, '#e8f6fc');
+    const cols = ['#c8834a', '#c8ccd8', '#f2c84b', '#3fbf7a', '#4a7ae8', '#e0b8ff'];
+    for (let i = 0; i < 3; i++) {
+      const x = (half ? 2 : 4) + i * 4;
+      k.ell(x + 1, 6.5, 1.5, 1.5, cols[(i + half * 3) % 6]);
+      k.px(x + 1, 9, '#7a4a2a');
+    }
+    k.rect(half ? 0 : 2, 12, 14, 1, '#5a3418');
+    k.rect(0, 13, 16, 2, '#9a6438');
+  }
+
   const TILE_DRAW = {
     '.': grass,
     ',': (k) => {
@@ -711,6 +727,34 @@ const Art = (() => {
       k.rect(2, 4, 12, 9, '#d8706a');
       k.rect(3, 8, 10, 1, '#f2c84b');
     },
+    // ---- Your room (upstairs): stairs, bed, Badge Case
+    '(': (k) => {
+      floor(k);
+      for (let i = 0; i < 4; i++) {
+        k.rect(1, 1 + i * 4, 14, 3, i % 2 ? '#a8865a' : '#c8a26c');
+        k.rect(1, 3 + i * 4, 14, 1, '#7a5a3a');
+      }
+      k.rect(0, 0, 1, 16, '#7a5a3a'); k.rect(15, 0, 1, 16, '#7a5a3a');
+    },
+    ')': (k) => {
+      floor(k);
+      k.rect(1, 1, 14, 15, '#8a5a32');
+      k.rect(2, 2, 12, 14, '#f4f4f8');
+      k.rect(3, 3, 10, 5, '#ffffff');
+      k.rect(3, 7, 10, 1, '#dcdce6');
+      k.rect(2, 10, 12, 6, '#4a8ae0');
+      k.rect(2, 10, 12, 1, '#7aaef0');
+    },
+    '{': (k) => {
+      floor(k);
+      k.rect(1, 0, 14, 13, '#8a5a32');
+      k.rect(2, 0, 12, 11, '#4a8ae0');
+      for (let x = 3; x < 14; x += 4) k.rect(x, 2, 2, 2, '#f2c84b');
+      for (let x = 5; x < 14; x += 4) k.rect(x, 6, 2, 2, '#f2c84b');
+      k.rect(1, 13, 2, 3, '#6a4020'); k.rect(13, 13, 2, 3, '#6a4020');
+    },
+    '}': (k) => badgeCaseTile(k, 0),
+    'Σ': (k) => badgeCaseTile(k, 1),
     ' ': (k) => k.rect(0, 0, 16, 16, '#000'),
 
     // ---- Sunny Shore
@@ -1025,6 +1069,100 @@ const Art = (() => {
       eyes(k, 10, 14); eyes(k, 19, 14);
       k.rect(15, 19, 2, 1, INK);
       k.px(14, 20, INK); k.px(17, 20, INK);
+    },
+    // Buddy evolutions (drawn on a 60px canvas, see BIG below)
+    sprigleaf(k) {
+      k.ell(9, 29, 4.5, 2.5, '#3f8a30');
+      k.ell(23, 29, 4.5, 2.5, '#3f8a30');
+      k.ell(4.5, 21, 2.5, 4, '#4f9a3a');
+      k.ell(27.5, 21, 2.5, 4, '#4f9a3a');
+      k.ell(16, 20, 11, 9.5, '#6cc05a');
+      k.ell(16, 24, 7, 5, '#d4f2b8');
+      k.rect(15, 4, 2, 7, '#3f8f3a');
+      k.ell(9, 6, 6, 3, '#4fa840');
+      k.ell(23, 6, 6, 3, '#4fa840');
+      k.ell(13, 2.5, 3.5, 2, '#7cd060');
+      k.ell(19, 2.5, 3.5, 2, '#7cd060');
+      k.ell(8, 5.2, 3, 1, '#9be07a');
+      k.ell(22, 5.2, 3, 1, '#9be07a');
+      eyes(k, 9, 14); eyes(k, 19, 14);
+      k.rect(13, 20, 5, 1, INK);
+      k.rect(6, 19, 2, 1, '#f59aa0'); k.rect(24, 19, 2, 1, '#f59aa0');
+    },
+    grovegiant(k) {
+      k.rect(5, 26, 5, 5, '#5a4030'); k.rect(22, 26, 5, 5, '#5a4030');
+      k.ell(16, 21, 14.5, 9, '#4f9a3a');
+      k.ell(17, 25, 9, 4.5, '#cfe8a8');
+      k.rect(18, 4, 3, 9, '#7a5432');
+      k.ell(19.5, 5, 7.5, 4.5, '#3f8a30');
+      k.ell(15, 7, 4.5, 3, '#5fb84a');
+      k.ell(24, 6.5, 4, 2.6, '#5fb84a');
+      k.ell(19, 2.5, 3.5, 2, '#7cd060');
+      k.px(16, 5, '#f59aa0'); k.px(23, 4, '#f59aa0');
+      k.ell(6, 17, 5, 5, '#5fae48');
+      eyes(k, 3, 14); eyes(k, 8, 14);
+      k.rect(4, 20, 4, 1, INK);
+      k.rect(1, 18, 1, 1, '#f59aa0');
+      k.rect(12, 18, 4, 1, '#3f8a30'); k.rect(26, 18, 3, 1, '#3f8a30');
+    },
+    blazecat(k) {
+      k.ell(27, 10, 4, 7, '#ffcf3c');
+      k.ell(27, 13, 2.4, 4.5, '#ff6a2a');
+      k.ell(28, 4, 2, 3, '#ffe88a');
+      k.tri(4, 14, 7, 1, 14, 10, '#e05a20');
+      k.tri(24, 14, 21, 1, 15, 10, '#e05a20');
+      k.tri(6.5, 11, 7.5, 4.5, 11.5, 10, '#ffc08a');
+      k.tri(21.5, 11, 20.5, 4.5, 16.5, 10, '#ffc08a');
+      k.tri(11.5, 10, 14, 3, 16.5, 10, '#ffcf3c');
+      k.rect(7, 25, 4, 5, '#d0642a'); k.rect(17, 25, 4, 5, '#d0642a');
+      k.ell(9, 30, 3, 1.5, '#ffcf3c'); k.ell(19, 30, 3, 1.5, '#ffcf3c');
+      k.ell(14, 18.5, 10.5, 9, '#ee7a30');
+      k.ell(14, 23, 6, 4.5, '#ffe0b8');
+      eyes(k, 8, 13); eyes(k, 17, 13);
+      k.rect(13, 18, 2, 1, INK);
+      k.px(12, 19, INK); k.px(15, 19, INK);
+    },
+    sunmane(k) {
+      for (let a = 0; a < 12; a++) {
+        const t = (a / 12) * Math.PI * 2;
+        k.tri(13 + Math.cos(t) * 8, 13 + Math.sin(t) * 8, 13 + Math.cos(t + 0.26) * 13.5, 13 + Math.sin(t + 0.26) * 13.5, 13 + Math.cos(t + 0.52) * 8, 13 + Math.sin(t + 0.52) * 8, a % 2 ? '#ffcf3c' : '#ff8a2a');
+      }
+      k.ell(13, 13, 10, 10, '#f29a2a');
+      k.ell(24, 23, 7.5, 6.5, '#e8823a');
+      k.rect(18, 26, 3.5, 5, '#d0642a'); k.rect(25, 26, 3.5, 5, '#d0642a');
+      k.ell(31, 18, 1.5, 3, '#ff6a2a');
+      k.ell(13, 14, 7.5, 7, '#ffb860');
+      k.ell(12, 18, 4, 2.6, '#ffe0b8');
+      k.tri(6, 7, 7, 3, 10, 6, '#e05a20'); k.tri(20, 7, 19, 3, 16, 6, '#e05a20');
+      eyes(k, 7, 11); eyes(k, 15, 11);
+      k.rect(11, 16, 3, 1, INK);
+      k.rect(11, 19, 3, 1, INK);
+    },
+    surfin(k) {
+      k.tri(9, 12, 16, 0, 23, 12, '#2f68b8');
+      k.tri(16, 2, 18, 0, 21, 6, '#bfe8ff');
+      k.tri(24, 19, 32, 9, 32, 29, '#2f68b8');
+      k.tri(27, 18, 32, 12, 32, 18, '#bfe8ff');
+      k.ell(15, 19, 13, 9.5, '#4a98e0');
+      k.ell(14, 23.5, 9, 5, '#d4f0ff');
+      k.tri(10, 25, 16, 25, 13, 31, '#2f68b8');
+      k.ell(4, 22, 3, 2.2, '#2f68b8');
+      eyes(k, 7, 14); eyes(k, 15, 14);
+      k.rect(10, 20, 4, 1, INK);
+      k.ell(26, 4, 1.6, 1.6, '#bfe8ff');
+    },
+    tidalfin(k) {
+      k.tri(24, 18, 32, 6, 32, 30, '#245aa0');
+      k.ell(15, 19, 15, 11, '#3a80cc');
+      k.ell(14, 24.5, 11, 5.5, '#d4f0ff');
+      for (const x of [8, 12, 16, 20]) k.rect(x, 22, 1, 6, '#b8dcf5');
+      k.tri(9, 9, 15, 1, 21, 9, '#245aa0');
+      k.tri(12, 4, 15, 1, 16, 6, '#e8f8ff');
+      k.ell(3, 2.5, 1.2, 2.5, '#bfe8ff'); k.ell(6, 1.5, 1.2, 2.5, '#bfe8ff'); k.rect(4, 4, 1, 4, '#bfe8ff');
+      k.ell(17, 28, 4, 2.2, '#245aa0');
+      eyes(k, 4, 14); eyes(k, 11, 14);
+      k.rect(5, 21, 5, 1, INK);
+      k.rect(3, 19, 2, 1, '#f59aa0');
     },
     splashfin(k) {
       k.tri(11, 13, 17, 2, 22, 13, '#3a78c4');
@@ -2449,17 +2587,81 @@ const Art = (() => {
     return c;
   }
 
+  // Evolved wild Legends: the first form drawn bigger and richer, with a crest,
+  // wings and a chest gem in its math family's color. Drawn on a 60px canvas.
+  const FAMILY_GLOW = { add: '#ffb04a', sub: '#46c8e8', compare: '#a884ff', mult: '#ff6a9a', div: '#5ccf6a' };
+  const EVO_SIZE = 60;
+  const BIG = new Set(['sprigleaf', 'grovegiant', 'blazecat', 'sunmane', 'surfin', 'tidalfin']);
+  function richer(c) {
+    const g = c.getContext('2d'), img = g.getImageData(0, 0, c.width, c.height), d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      if (!d[i + 3]) continue;
+      const r = d[i] / 255, gg = d[i + 1] / 255, b = d[i + 2] / 255;
+      const mx = Math.max(r, gg, b), mn = Math.min(r, gg, b);
+      if (mx < 0.3 || mn > 0.93) continue; // ink and eye whites stay
+      let h = 0, sat = 0;
+      const l = (mx + mn) / 2, dd = mx - mn;
+      if (dd) {
+        sat = dd / (1 - Math.abs(2 * l - 1));
+        h = mx === r ? ((gg - b) / dd) % 6 : mx === gg ? (b - r) / dd + 2 : (r - gg) / dd + 4;
+        h *= 60;
+      }
+      const S2 = Math.min(1, sat * 1.2 + 0.04), L2 = l * 0.9;
+      const C = (1 - Math.abs(2 * L2 - 1)) * S2, X = C * (1 - Math.abs(((h / 60) % 2) - 1)), m = L2 - C / 2;
+      const [r1, g1, b1] = h < 60 ? [C, X, 0] : h < 120 ? [X, C, 0] : h < 180 ? [0, C, X] : h < 240 ? [0, X, C] : h < 300 ? [X, 0, C] : [C, 0, X];
+      d[i] = Math.round((r1 + m) * 255); d[i + 1] = Math.round((g1 + m) * 255); d[i + 2] = Math.round((b1 + m) * 255);
+    }
+    g.putImageData(img, 0, 0);
+  }
+  function evolvedArt(id) {
+    const sp = SPECIES[id], col = FAMILY_GLOW[sp.family] || '#f2c84b', dark = shade(col, 0.7), light = shade(col, 1.3);
+    const N = EVO_SIZE, body = canvas(N, N);
+    const kb = kit(body, 1.65);
+    kb.g.translate(3, 6);
+    CREATURES[sp.from](kb);
+    richer(body);
+    // Where the body is: its box and the middle of its top edge.
+    const d = body.getContext('2d').getImageData(0, 0, N, N).data;
+    let x0 = N, x1 = 0, y0 = N, y1 = 0;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (d[(y * N + x) * 4 + 3]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    const top = []; for (let x = x0; x <= x1; x++) if (d[(y0 * N + x) * 4 + 3]) top.push(x);
+    const tx = Math.round(top.reduce((a, b) => a + b, 0) / top.length), my = Math.round(y0 + (y1 - y0) * 0.45);
+    const c = canvas(N, N), k = kit(c);
+    // behind: wings at the sides, a crest on top
+    const wl = Math.max(1, x0 - 4), wr = Math.min(N - 2, x1 + 4);
+    k.tri(x0 + 6, my - 6, wl, my - 9, x0 + 6, my + 4, dark);
+    k.tri(x0 + 6, my - 4, wl + 1, my + 1, x0 + 6, my + 6, col);
+    k.tri(x1 - 6, my - 6, wr, my - 9, x1 - 6, my + 4, dark);
+    k.tri(x1 - 6, my - 4, wr - 1, my + 1, x1 - 6, my + 6, col);
+    const cy = Math.max(1, y0 - 5);
+    k.tri(tx - 6, y0 + 4, tx - 5, cy + 2, tx - 1, y0 + 4, dark);
+    k.tri(tx + 6, y0 + 4, tx + 5, cy + 2, tx + 1, y0 + 4, dark);
+    k.tri(tx - 3, y0 + 4, tx, cy, tx + 3, y0 + 4, col);
+    k.px(tx, cy + 2, light);
+    k.g.drawImage(body, 0, 0);
+    // a gem on the chest
+    const gx = Math.round((x0 + x1) / 2), gy = Math.round(y0 + (y1 - y0) * 0.72);
+    k.tri(gx - 3, gy, gx, gy - 3, gx + 3, gy, col);
+    k.tri(gx - 3, gy, gx, gy + 3, gx + 3, gy, dark);
+    k.px(gx - 1, gy - 1, '#ffffff');
+    return outline(c);
+  }
+
   const creatureCache = {};
   function creature(id, blink = false, golden = false) {
     const key = id + (blink ? ':blink' : '') + (golden ? ':gold' : '');
     if (!creatureCache[key]) {
       if (golden) creatureCache[key] = goldify(creature(id, blink));
       else {
-        const c = canvas(48, 48);
         blinking = blink;
-        CREATURES[id](kit(c, 1.5));
+        let img;
+        if (CREATURES[id]) {
+          const big = BIG.has(id), c = canvas(big ? EVO_SIZE : 48, big ? EVO_SIZE : 48);
+          CREATURES[id](kit(c, big ? EVO_SIZE / 32 : 1.5));
+          img = outline(c);
+        } else img = evolvedArt(id);
         blinking = false;
-        creatureCache[key] = mirrored({ id, img: outline(c) });
+        creatureCache[key] = mirrored({ id: SPECIES[id].from && !CREATURES[id] ? SPECIES[id].from : id, img });
       }
     }
     return creatureCache[key];
@@ -2476,9 +2678,11 @@ const Art = (() => {
     if (!smallCache[key]) {
       const c = canvas(20, 20);
       const inner = canvas(20, 20);
-      CREATURES[id](kit(inner, 18 / 32));
+      const from = CREATURES[id] ? id : SPECIES[id].from;
+      CREATURES[from](kit(inner, 18 / 32));
+      if (from !== id) richer(inner);
       outline(inner);
-      c.getContext('2d').drawImage(mirrored({ id, img: inner }), 0, frame ? 0 : 1);
+      c.getContext('2d').drawImage(mirrored({ id: from, img: inner }), 0, frame ? 0 : 1);
       smallCache[key] = c;
     }
     return smallCache[key];
@@ -2525,5 +2729,29 @@ const Art = (() => {
     return portalCache[key];
   }
 
-  return { tile, person, creature, creatureSmall, creatureURL, platform, portal };
+  // A badge for the Badge Case: one of five shapes, in its tier color (or a dark
+  // empty slot when it hasn't been won).
+  const badgeCache = {};
+  function badge(shape, color, won) {
+    const key = shape + color + won;
+    if (!badgeCache[key]) {
+      const c = canvas(16, 16), k = kit(c);
+      const main = won ? color : '#4a4566', hi = won ? shade(color, 1.3) : '#5a5578', lo = won ? shade(color, 0.7) : '#3a3552';
+      if (shape === 0) { k.ell(8, 8, 7, 7, lo); k.ell(8, 8, 5.5, 5.5, main); k.ell(6.5, 6.5, 2, 2, hi); }
+      if (shape === 1) {
+        for (let i = 0; i < 5; i++) {
+          const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5, b = a + Math.PI / 5, b2 = a - Math.PI / 5;
+          k.tri(8 + Math.cos(a) * 7.5, 8.5 + Math.sin(a) * 7.5, 8 + Math.cos(b) * 3, 8.5 + Math.sin(b) * 3, 8 + Math.cos(b2) * 3, 8.5 + Math.sin(b2) * 3, main);
+        }
+        k.ell(8, 8.5, 3.2, 3.2, main); k.px(7, 7, hi);
+      }
+      if (shape === 2) { k.rect(2, 1, 12, 8, lo); k.rect(3, 2, 10, 7, main); k.tri(2, 9, 14, 9, 8, 15.5, lo); k.tri(3, 9, 13, 9, 8, 14, main); k.rect(5, 3, 2, 4, hi); }
+      if (shape === 3) { k.tri(8, 0.5, 15.5, 8, 0.5, 8, lo); k.tri(0.5, 8, 15.5, 8, 8, 15.5, lo); k.tri(8, 2.5, 13.5, 8, 2.5, 8, main); k.tri(2.5, 8, 13.5, 8, 8, 13.5, main); k.px(6, 6, hi); k.px(7, 5, hi); }
+      if (shape === 4) { k.rect(4, 1, 8, 14, lo); k.rect(1, 4, 14, 8, lo); k.rect(5, 2, 6, 12, main); k.rect(2, 5, 12, 6, main); k.rect(5, 4, 2, 2, hi); }
+      badgeCache[key] = outline(c);
+    }
+    return badgeCache[key];
+  }
+
+  return { tile, person, creature, creatureSmall, creatureURL, platform, portal, badge };
 })();
