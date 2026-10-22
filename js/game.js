@@ -26,18 +26,26 @@
     mult: 'Groups: skip counting, doubles, times', div: 'Sharing: parts, halves, division, fractions', mixed: 'All kinds of math',
   };
   // Praise the strategy, not the kid (Mueller & Dweck): name what worked.
-  const STRATEGY = {
-    'count-10': 'Counting carefully', 'compare-10': 'Using the number line', 'add-10': 'Counting on', 'sub-10': 'Counting back',
-    'skip-10': 'Finding the pattern', 'parts-10': 'Finding the missing part', 'add-20': 'Making a ten', 'sub-20': 'Thinking adding',
-    compare: 'Checking the tens', 'place-tens': 'Counting the tens', doubles: 'Knowing your doubles', 'missing-20': 'Finding the mystery number',
-    'add-100': 'Lining up the places', 'sub-100': 'Borrowing carefully', 'place-100': 'Thinking about places', 'equal-groups': 'Skip counting',
-    halves: 'Splitting it in half', 'add-1000': 'Adding column by column', 'sub-1000': 'Subtracting column by column', round: 'Checking the next digit',
-    'mult-facts': 'Using a times fact', 'div-facts': 'Thinking multiplication', 'add-multi': 'Lining up the places', 'sub-multi': 'Borrowing carefully',
-    'round-big': 'Checking the next digit', 'mult-1digit': 'Splitting it up', 'div-1digit': 'Going one digit at a time', 'equiv-frac': 'Growing the fraction',
-    'dec-add': 'Lining up the points', 'dec-sub': 'Lining up the points', 'dec-place': 'Thinking about tenths', 'mult-2digit': 'Splitting it up',
-    'div-long': 'Going one digit at a time', 'frac-add': 'Matching the bottoms',
+  // Praise names the trick that fits this problem (the same one Teach me would
+  // use), so 12 + 5 isn't praised for "making a ten".
+  const PRAISE = {
+    'Make a ten': 'Making a ten', 'Ones first': 'Adding the ones first', 'Count on': 'Counting on',
+    'Count on from 5': 'Counting on from 5', 'Count back': 'Counting back', 'Think adding': 'Thinking adding',
+    'The mystery number': 'Finding the mystery number', 'Tens first': 'Checking the tens first',
+    'Count to compare': 'Counting to compare', 'Touch and count': 'Counting carefully', 'Find the pattern': 'Finding the pattern',
+    'Tens and ones': 'Counting the tens and ones', 'Hundreds, tens and ones': 'Thinking about places',
+    'Column adding': 'Adding column by column', 'Borrowing': 'Borrowing carefully', 'Column taking away': 'Taking away column by column',
+    'Skip counting': 'Skip counting', 'Friendly fives': 'Using friendly fives', 'Think multiplication': 'Thinking multiplication',
+    'Share it out': 'Sharing it out', 'Split and halve': 'Splitting it in half', 'Round on a number line': 'Using the number line',
+    'Split and multiply': 'Splitting it up', 'Long division': 'Going one digit at a time', 'Grow the fraction': 'Growing the fraction',
+    'Match the bottoms': 'Matching the bottoms', 'Line up the points': 'Lining up the points',
+    'Same number of digits': 'Giving them the same number of digits', 'Times 10': 'Moving the digits', 'Divide by 10': 'Moving the digits',
   };
-  const praiseFor = (p) => pick([`${STRATEGY[p.skillId] || 'Careful thinking'} worked!`, `Nice! ${STRATEGY[p.skillId] || 'Careful thinking'} did it.`]);
+  function praiseFor(p) {
+    const lesson = MathEngine.teach(p);
+    const how = (lesson && PRAISE[lesson.title]) || 'Careful thinking';
+    return pick([`${how} worked!`, `Nice! ${how} did it.`]);
+  }
 
   const cv = document.getElementById('cv');
   const ctx = cv.getContext('2d');
@@ -418,7 +426,8 @@
   // reads the buttons itself and calls LauncherPad.set('a', true). Both go through
   // padSet(). Button numbers differ between devices, so the map can be changed
   // on the device: localStorage 'mql:padmap' = '{"0":"b","1":"a"}' (see tools/pad-test.html).
-  // Select is MENU and Start opens the map. Buttons not in the map (C and Z) do nothing.
+  // Select is MENU and Start opens the map. C and Z only work on the keypad
+  // (check and erase); they reach the game through the launcher, not the Gamepad API.
   const PAD_MAP = { 0: 'a', 1: 'b', 2: 'x', 3: 'y', 8: 'select', 9: 'start', 12: 'up', 13: 'down', 14: 'left', 15: 'right' };
   let padMap = PAD_MAP;
   try { padMap = { ...PAD_MAP, ...JSON.parse(localStorage.getItem('mql:padmap') || '{}') }; } catch (e) { /* ignore */ }
@@ -450,15 +459,16 @@
     if (!padSeen) { padSeen = true; applyLayout(); }
     if (keyInput) {
       // Typed answers: the D-pad walks a cursor over the keypad, A presses the
-      // key under it, B erases, Start checks the answer and X or Y asks for a hint.
+      // key under it, B or Z erases, Start or C (the blue button, like the
+      // blue check key) checks the answer and X or Y asks for a hint.
       if (DIRS[btn]) return moveCursor(btn);
       if (btn === 'a') return padKey(keyRows()[cursor.r][cursor.c]);
-      if (btn === 'b') return padKey('del');
-      if (btn === 'start') return padKey('ok');
+      if (btn === 'b' || btn === 'z') return padKey('del');
+      if (btn === 'start' || btn === 'c') return padKey('ok');
       if (btn === 'x' || btn === 'y') press('b');
       return;
     }
-    if (btn === 'x' || btn === 'y') return;
+    if (btn === 'x' || btn === 'y' || btn === 'c' || btn === 'z') return;
     // On a controller Select is MENU and Start opens the map (on the Retroid
     // Pocket Classic: the top and lower of the two small buttons).
     press(btn === 'select' ? 'start' : btn === 'start' ? 'map' : btn);

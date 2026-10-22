@@ -746,6 +746,9 @@ body:has(.console.handheld) { align-items: stretch; padding: 0; background: #000
 .console.handheld .keypad .key { height: 14dvh; font-size: 7dvh; border-radius: 2.4dvh; }
 .console.handheld .keypad.dec .key { height: 12dvh; font-size: 6dvh; }
 body.kb .keypad .key.cur { outline: 6px solid var(--gold); outline-offset: 3px; }
+/* The check key matches the Retroid's blue C button, which also checks the answer. */
+.console.handheld .keypad .key.ok { background: #2f4bb8; box-shadow: 0 4px 0 #1d2f7a; }
+.console.handheld .keypad .key.ok.on { box-shadow: 0 1px 0 #1d2f7a; }
 
 /* Controller mode on an upright screen (a phone held tall with a gamepad): the
    screen spans the top, and during a typed answer the keypad is two rows in the
