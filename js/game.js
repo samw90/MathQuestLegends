@@ -353,13 +353,17 @@
   let padSeen = /[?&]handheld\b/.test(location.search);
   const wide = matchMedia('(orientation: landscape) and (min-width: 600px)');
   const roomy = matchMedia('(min-width: 600px)'); // phones held upright are too narrow for grips
+  const tall = matchMedia('(orientation: portrait)'); // upright handhelds like the Retroid Pocket Classic
   function applyLayout() {
     const handheld = layout === 'handheld' || (layout === 'auto' && padSeen);
     const side = !handheld && ((layout === 'side' && roomy.matches) || (layout === 'auto' && wide.matches));
     consoleEl.classList.toggle('handheld', handheld);
+    consoleEl.classList.toggle('upright', handheld && tall.matches);
     consoleEl.classList.toggle('side', side);
+    if (keyInput) drawCursor();
   }
   wide.addEventListener('change', applyLayout);
+  tall.addEventListener('change', applyLayout);
   roomy.addEventListener('change', applyLayout);
   applyLayout();
   function layoutLabel() {
@@ -374,7 +378,7 @@
     keypad.hidden = false;
     keypad.classList.toggle('dec', dec);
     consoleEl.classList.add('typing');
-    cursor = { r: 1, c: 1 }; // start on 5, the fewest presses from any key
+    cursor = keyAt('5'); // the middle, the fewest presses from any key
     drawCursor();
   }
   function hideKeypad() { keyInput = null; keypad.hidden = true; consoleEl.classList.remove('typing'); }
@@ -457,23 +461,38 @@
     press(btn === 'select' ? 'start' : btn);
   }
 
-  // The keypad as it looks on screen (Grade 5 adds a decimal point row).
+  // The keypad as it looks on screen: a phone-style 3 x 4 grid, or on upright
+  // handhelds two rows under the screen (1-5, 6-0). Grade 5 adds a decimal point.
+  // A key listed twice is one wide key.
   let cursor = { r: 1, c: 1 };
-  const keyRows = () => [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9'],
-    ...(keypad.classList.contains('dec') ? [['del', '0', '.'], ['ok', 'ok', 'ok']] : [['del', '0', 'ok']])];
+  function keyRows() {
+    const dec = keypad.classList.contains('dec');
+    if (consoleEl.classList.contains('upright')) {
+      return dec ? [['1', '2', '3', '4', '5', '.', 'del'], ['6', '7', '8', '9', '0', 'ok', 'ok']]
+        : [['1', '2', '3', '4', '5', 'del'], ['6', '7', '8', '9', '0', 'ok']];
+    }
+    return [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9'],
+      ...(dec ? [['del', '0', '.'], ['ok', 'ok', 'ok']] : [['del', '0', 'ok']])];
+  }
+  function keyAt(key) {
+    const rows = keyRows(), r = rows.findIndex((row) => row.includes(key));
+    return { r, c: rows[r].indexOf(key) };
+  }
   function moveCursor(dir) {
-    const rows = keyRows(), [dx, dy] = DIRS[dir];
+    const rows = keyRows(), [dx, dy] = DIRS[dir], from = rows[cursor.r][cursor.c];
     const r = Math.max(0, Math.min(rows.length - 1, cursor.r + dy));
-    const c = Math.max(0, Math.min(2, cursor.c + dx));
-    if (r === cursor.r && c === cursor.c) return;
-    // Sideways on the wide ✓ row does nothing.
-    if (dx && rows[r][c] === rows[cursor.r][cursor.c]) return;
+    let c = Math.min(cursor.c, rows[r].length - 1);
+    // Sideways steps over the rest of a wide key.
+    if (dx) do c += dx; while (c >= 0 && c < rows[r].length && rows[r][c] === from);
+    if (c < 0 || c >= rows[r].length || (r === cursor.r && c === cursor.c)) return;
     cursor = { r, c };
     sfx('move');
     drawCursor();
   }
   function drawCursor() {
-    const key = keyInput ? keyRows()[cursor.r][cursor.c] : null;
+    const rows = keyRows();
+    if (!rows[cursor.r] || !rows[cursor.r][cursor.c]) cursor = keyAt('5'); // the layout changed
+    const key = keyInput ? rows[cursor.r][cursor.c] : null;
     keypad.querySelectorAll('.key').forEach((b) => b.classList.toggle('cur', b.dataset.key === key));
   }
   function padKey(key) {

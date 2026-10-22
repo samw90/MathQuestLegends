@@ -747,6 +747,44 @@ body:has(.console.handheld) { align-items: stretch; padding: 0; background: #000
 .console.handheld .keypad.dec .key { height: 12dvh; font-size: 6dvh; }
 body.kb .keypad .key.cur { outline: 6px solid var(--gold); outline-offset: 3px; }
 
+/* Upright handhelds (the Retroid Pocket Classic is 1080 x 1240): the screen spans
+   the top, and during a typed answer the keypad is two rows in the space under
+   it (1-5 and 6-0), so the screen never has to shrink. */
+.console.handheld.upright,
+.console.handheld.upright.typing {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  align-items: start;
+  background: #1c1a2b;
+}
+.console.handheld.upright .keypad {
+  grid-row: 2;
+  align-self: stretch;
+  width: 100%;
+  height: 100%;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 1.6vw;
+  padding: 2vw 2.4vw;
+}
+.console.handheld.upright .keypad.dec { grid-template-columns: repeat(7, 1fr); }
+.console.handheld.upright .keypad .key,
+.console.handheld.upright .keypad.dec .key { height: auto; font-size: min(8vw, 5.6dvh); border-radius: 2.4vw; }
+.console.handheld.upright .keypad .key[data-key="1"] { order: 1; }
+.console.handheld.upright .keypad .key[data-key="2"] { order: 2; }
+.console.handheld.upright .keypad .key[data-key="3"] { order: 3; }
+.console.handheld.upright .keypad .key[data-key="4"] { order: 4; }
+.console.handheld.upright .keypad .key[data-key="5"] { order: 5; }
+.console.handheld.upright .keypad .key[data-key="."] { order: 6; }
+.console.handheld.upright .keypad .key[data-key="del"] { order: 7; }
+.console.handheld.upright .keypad .key[data-key="6"] { order: 8; }
+.console.handheld.upright .keypad .key[data-key="7"] { order: 9; }
+.console.handheld.upright .keypad .key[data-key="8"] { order: 10; }
+.console.handheld.upright .keypad .key[data-key="9"] { order: 11; }
+.console.handheld.upright .keypad .key[data-key="0"] { order: 12; }
+.console.handheld.upright .keypad .key[data-key="ok"] { order: 13; }
+.console.handheld.upright .keypad.dec .key.ok { grid-column: auto / span 2; }
+
 /* Evolution: the old and new forms flicker, then a flash. */
 .evolve {
   position: absolute;
