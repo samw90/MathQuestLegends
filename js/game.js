@@ -353,7 +353,7 @@
   let padSeen = /[?&]handheld\b/.test(location.search);
   const wide = matchMedia('(orientation: landscape) and (min-width: 600px)');
   const roomy = matchMedia('(min-width: 600px)'); // phones held upright are too narrow for grips
-  const tall = matchMedia('(orientation: portrait)'); // upright handhelds like the Retroid Pocket Classic
+  const tall = matchMedia('(orientation: portrait)'); // phones held upright with a controller
   function applyLayout() {
     const handheld = layout === 'handheld' || (layout === 'auto' && padSeen);
     const side = !handheld && ((layout === 'side' && roomy.matches) || (layout === 'auto' && wide.matches));

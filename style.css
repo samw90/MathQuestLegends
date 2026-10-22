@@ -747,9 +747,10 @@ body:has(.console.handheld) { align-items: stretch; padding: 0; background: #000
 .console.handheld .keypad.dec .key { height: 12dvh; font-size: 6dvh; }
 body.kb .keypad .key.cur { outline: 6px solid var(--gold); outline-offset: 3px; }
 
-/* Upright handhelds (the Retroid Pocket Classic is 1080 x 1240): the screen spans
-   the top, and during a typed answer the keypad is two rows in the space under
-   it (1-5 and 6-0), so the screen never has to shrink. */
+/* Controller mode on an upright screen (a phone held tall with a gamepad): the
+   screen spans the top, and during a typed answer the keypad is two rows in the
+   space under it (1-5 and 6-0), so the screen never has to shrink. The Retroid
+   Pocket Classic shows 1240 x 1080 (landscape), so it uses the side keypad. */
 .console.handheld.upright,
 .console.handheld.upright.typing {
   grid-template-columns: minmax(0, 1fr);
