@@ -292,8 +292,9 @@
     // Some handhelds send their D-pad as both a gamepad and arrow keys; take one.
     if (!fresh(btn, 'key')) return;
     if (DIRS[btn] && !held.includes(btn)) held.push(btn);
-    // With a controller, arrows walk the keypad cursor during a question.
-    if (keyInput && padSeen) { if (!e.repeat || DIRS[btn]) padPress(btn); return; }
+    // With a controller, arrows walk the keypad cursor during a question. The
+    // other keys work as usual (digits type, Enter checks, H or X is a hint).
+    if (keyInput && padSeen && DIRS[btn]) { padPress(btn); return; }
     if (!e.repeat || handler) press(btn);
   });
   window.addEventListener('keyup', (e) => {

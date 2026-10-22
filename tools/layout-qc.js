@@ -62,7 +62,7 @@ window.layoutQC = async function () {
     await wait(150);
   }
   for (const b of document.querySelectorAll('.pad button, .start')) {
-    if (getComputedStyle(b).display !== 'none' && !inView(b)) issues.push(`control ${b.dataset.btn} off screen`);
+    if (b.offsetParent && !inView(b)) issues.push(`control ${b.dataset.btn} off screen`); // hidden in controller mode
   }
   return { size: `${vw}x${vh}`, side: document.querySelector('.console').classList.contains('side'), issues };
 };
