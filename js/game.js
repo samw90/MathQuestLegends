@@ -418,7 +418,7 @@
   // reads the buttons itself and calls LauncherPad.set('a', true). Both go through
   // padSet(). Button numbers differ between devices, so the map can be changed
   // on the device: localStorage 'mql:padmap' = '{"0":"b","1":"a"}' (see tools/pad-test.html).
-  // Select works as MENU too. Buttons not in the map (C and Z) do nothing.
+  // Select is MENU and Start opens the map. Buttons not in the map (C and Z) do nothing.
   const PAD_MAP = { 0: 'a', 1: 'b', 2: 'x', 3: 'y', 8: 'select', 9: 'start', 12: 'up', 13: 'down', 14: 'left', 15: 'right' };
   let padMap = PAD_MAP;
   try { padMap = { ...PAD_MAP, ...JSON.parse(localStorage.getItem('mql:padmap') || '{}') }; } catch (e) { /* ignore */ }
@@ -459,7 +459,9 @@
       return;
     }
     if (btn === 'x' || btn === 'y') return;
-    press(btn === 'select' ? 'start' : btn);
+    // On a controller Select is MENU and Start opens the map (on the Retroid
+    // Pocket Classic: the top and lower of the two small buttons).
+    press(btn === 'select' ? 'start' : btn === 'start' ? 'map' : btn);
   }
 
   // The keypad as it looks on screen: a phone-style 3 x 4 grid, or on upright
@@ -1235,6 +1237,13 @@
     if (busy || P.moving) return;
     if (btn === 'a') interact();
     else if (btn === 'start') openMenu();
+    else if (btn === 'map') openMap();
+  }
+  async function openMap() {
+    busy = true;
+    sfx('select');
+    await mapMenu();
+    busy = false;
   }
 
   async function interact() {
