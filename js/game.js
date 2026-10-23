@@ -3231,14 +3231,27 @@
     if (what === 'Erase a game') {
       const j = await choose([...labels, 'Back'], { cls: 'title-menu', head: 'Erase which game?' });
       if (j >= 0 && j < games.length && await yesNo([`Erase ${labels[j]}?`, 'It can\'t be brought back.'])) {
-        try { localStorage.removeItem(SLOT_PREFIX + games[j].id); } catch (e) { /* storage blocked */ }
-        setSlotIds(slotIds().filter((id) => id !== games[j].id));
-        hideDialog();
+        if (await grownUpOk()) {
+          try { localStorage.removeItem(SLOT_PREFIX + games[j].id); } catch (e) { /* storage blocked */ }
+          setSlotIds(slotIds().filter((id) => id !== games[j].id));
+          hideDialog();
+        } else await say('Only a grown-up can erase a game.');
       }
       return title();
     }
     slot = newSlot();
     await newGame();
+  }
+
+  // In Homebase (the Retroid's launcher) erasing a game needs the grown-up PIN:
+  // Homebase asks for it and answers with window.__launcherPin(true or false).
+  // Elsewhere (iPad, computer) the "can't be brought back" question is enough.
+  function grownUpOk() {
+    if (!(window.Launcher && Launcher.askPin)) return Promise.resolve(true);
+    return new Promise((res) => {
+      window.__launcherPin = (ok) => { window.__launcherPin = null; res(!!ok); };
+      Launcher.askPin();
+    });
   }
 
   async function newGame() {
