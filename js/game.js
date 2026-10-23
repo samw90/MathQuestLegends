@@ -2401,12 +2401,15 @@
     return foeTurn(true);
   }
 
-  // The foe's turn. If the puzzle was solved, our Legend was ready and only
-  // takes half the hit.
+  // The foe's turn. If the puzzle was solved, our Legend was ready and takes less
+  // of the hit. Wild Legends are gentle (weaker moves, half the hit when ready).
+  // Trainers, bosses and Remy fight like in Pokémon: moves as strong as yours, and
+  // a solved puzzle only takes a quarter off, so a rushed, low-level team can lose.
   async function foeTurn(ready) {
     const e = B.enemy;
+    const power = B.trainer ? 40 : 35, shield = B.trainer ? 0.75 : 0.5;
     await say(`${foeName()} uses ${pick(SPECIES[e.sp].moves)}!`);
-    await hurt(B.me, Math.max(1, Math.round(damage(35, atkOf(e)) * (ready ? 0.5 : 1))), 'p');
+    await hurt(B.me, Math.max(1, Math.round(damage(power, atkOf(e)) * (ready ? shield : 1))), 'p');
     if (alive(B.me)) return null;
 
     await faintAnim('p');
