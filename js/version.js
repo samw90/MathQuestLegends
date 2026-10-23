@@ -1,2 +1,2 @@
 // Written automatically on every commit (tools/git-hooks/pre-commit). Shown under the controls.
-const REV = { n: 49, date: '2026-10-23' };
+const REV = { n: 50, date: '2026-10-23' };

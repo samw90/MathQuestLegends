@@ -239,9 +239,9 @@
     const sum = el('p');
     const bits = [];
     if (strong.length) bits.push(`${name} is strongest at ${strong.map(lower).join(', ').replace(/, ([^,]*)$/, ' and $1')}.`);
-    if (up.length) bits.push(`${up.map((id) => label(id)).join(' and ')} ${up.length > 1 ? 'are' : 'is'} clicking: much better lately than at first.`);
+    if (up.length) bits.push(`${up.map((id, i) => (i ? lower(id) : label(id))).join(' and ')} ${up.length > 1 ? 'are' : 'is'} clicking: much better lately than at first.`);
     if (weak.length) bits.push(`Still learning ${weak.map(lower).join(' and ')}; the game asks these more often.`);
-    if (!weak.length && !untried.length) bits.push('No weak spots right now.');
+    if (!weak.length && !untried.length) bits.push('Nothing is a struggle right now.');
     sum.textContent = bits.join(' ');
     main.append(el('h2', null, 'In a nutshell'), sum);
 
@@ -287,7 +287,9 @@
       main.append(el('h2', null, 'Changing'));
       for (const id of up) {
         const sk = skills[id];
-        point('up', `↑ ${label(id)}`, `${pct(E.accuracy(sk))} first-try overall, ${pct(recentAcc(sk))} in the last ${(sk.recent || []).length}. Practice is working.`);
+        const back = review.filter((x) => x.skillId === id).length;
+        point('up', `↑ ${label(id)}`, `${pct(E.accuracy(sk))} first-try overall, ${pct(recentAcc(sk))} in the last ${(sk.recent || []).length}. Practice is working.` +
+          (back ? ` ${back} missed one${back === 1 ? ' is' : 's are'} still coming back for review.` : ''));
       }
       for (const id of down) {
         const sk = skills[id];
@@ -361,8 +363,9 @@
         const bar = el('div', 'bar'), fill = el('i');
         if (tried(sk)) { fill.style.width = pct(recentAcc(sk)); fill.style.background = colorFor(recentAcc(sk)); }
         bar.append(fill);
-        const lv = tried(sk) ? E.stretchLevel(sk) : -1;
-        const chip = el('span', 'chip', lv < 0 ? '–' : E.MASTERY[lv]);
+        // The game's own rating needs at least 6 tries.
+        const lv = tried(sk) && sk.attempts >= 6 ? E.stretchLevel(sk) : -1;
+        const chip = el('span', 'chip', !tried(sk) ? '–' : lv < 0 ? 'Few tries' : E.MASTERY[lv]);
         chip.style.background = lv < 0 ? 'var(--none)' : LEVEL_COLOR[lv];
         row.append(nm, bar, chip);
         main.append(row);
@@ -389,11 +392,18 @@
   function go(d) { if (all.length > 1) { at = (at + d + all.length) % all.length; render(); } }
   document.getElementById('prev').onclick = () => go(-1);
   document.getElementById('next').onclick = () => go(1);
-  // Homebase's controller: up/down scroll, left/right switch games.
+  // Homebase's controller: up/down scroll, left/right switch games. Quick presses
+  // add up (each smooth scroll would otherwise restart from where the last one was).
+  let target = null;
   window.LauncherPad = {
     set(btn, down) {
       if (!down) return;
-      if (btn === 'up' || btn === 'down') window.scrollBy({ top: (btn === 'down' ? 1 : -1) * 160, behavior: 'smooth' });
+      if (btn === 'up' || btn === 'down') {
+        const from = target !== null && Math.abs(target - window.scrollY) < 600 ? target : window.scrollY;
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        target = Math.max(0, Math.min(max, from + (btn === 'down' ? 1 : -1) * 160));
+        window.scrollTo({ top: target, behavior: 'smooth' });
+      }
       else if (btn === 'left' || btn === 'right') go(btn === 'right' ? 1 : -1);
     },
   };
