@@ -1300,6 +1300,12 @@
       busy = false;
       return;
     }
+    const tr = S.party.some(alive) ? trainerSeeing() : null;
+    if (tr) {
+      busy = true;
+      try { await trainerBattle(tr, true); } finally { busy = false; }
+      return;
+    }
     if (ENCOUNTER.has(tileAt(P.x, P.y)) && m.wild && S.party.some(alive) && Math.random() < 0.13) {
       busy = true;
       await wildBattle();
@@ -1518,7 +1524,7 @@
       ctx.drawImage(Art.portal(w.color, spin, worldOpen(w)), pt.x * TS - camX, pt.y * TS - camY);
     }
     // ox/oy/frame let a person walk between tiles (Remy walking up to you).
-    const ents = m.npcs.map((n) => ({ y: n.y * TS + (n.oy || 0), x: n.x * TS + (n.ox || 0), img: Art.person(LOOKS[n.look], n.dir, n.frame || 0), oy: -3 }));
+    const ents = m.npcs.map((n) => ({ y: n.y * TS + (n.oy || 0), x: n.x * TS + (n.ox || 0), img: Art.person(LOOKS[n.look], n.dir, n.frame || 0), oy: -3, alert: n.alert }));
     if (S.sidekick && !F.stacked) {
       // While walking up or down the screen is already scrolling, so the buddy doesn't
       // hop then (it looked like shaking); it hops while walking sideways and when idle.
@@ -1545,6 +1551,11 @@
         ctx.restore();
       } else ctx.drawImage(e.img, x, y);
       if (e.sparkle) sparkles(x + 10, y + 10, now);
+      if (e.alert) { // a trainer spotted you: "!" above their head
+        ctx.fillStyle = '#2b2840'; ctx.fillRect(x + 4, y - 13, 9, 12);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 5, y - 12, 7, 10);
+        ctx.fillStyle = '#e8506a'; ctx.fillRect(x + 7, y - 11, 3, 5); ctx.fillRect(x + 7, y - 5, 3, 2);
+      }
     }
     // Tall grass hides feet.
     for (const [gx, gy, still] of [[P.x, P.y, !P.moving], [F.x, F.y, !P.moving && !F.stacked]]) {
@@ -1650,6 +1661,10 @@
     castleKid: () => say(['Starmore twinkles on the bigger number.', 'Every star you see is a number!']),
     waterfallKid: () => say(['The falls are loud, so think quietly.', 'Mistsplit splits into drops that are all the same size.']),
 
+    // A route trainer: battles if you haven't beaten them, then shares a tip.
+    trainer: (n) => (trainerBeaten(n) ? say(`${n.trainer.name.toUpperCase()}: ${TRAINER_TIP[n.trainer.fams[0]]}`)
+      : S.party.some(alive) ? trainerBattle(n, false) : say(`${n.trainer.name.toUpperCase()}: Rest your team first, then let's battle!`)),
+
     // The way to the next area is closed until you beat this area's boss.
     gate: (w) => {
       const boss = Object.values(BOSSES).find((b) => b.flag === w.need);
@@ -1671,6 +1686,12 @@
       const b = BOSSES[areaId], area = AREAS[areaId];
       const won = S.flags[b.flag], wonAt = S.badgeGrade[b.flag] ?? -1;
       if (won && (S.badgeWins[b.flag] || []).includes(S.grade)) return say(b.after);
+      if (!bossOpen(areaId)) {
+        const n = areaFriends(areaId).length;
+        return say([`${b.name.toUpperCase()}: Hold on! A real Legend trainer knows the Legends around here.`,
+          `Make ${GATE_FRIENDS} friends in ${area.name} first. You have ${n} so far.`,
+          'Your stamp card (MENU → Stamp card) shows who lives here.']);
+      }
       const tier = BADGE_TIERS[S.grade];
       let lv = area.base;
       if (won) {
@@ -2040,6 +2061,238 @@
     m.npcs.splice(m.npcs.indexOf(remy), 1);
   }
 
+  // ---------------------------------------------------------------- route trainers
+  // Like the trainers on Pokémon routes: 2 or 3 per area stand beside the way to
+  // the boss. Walk into one's line of sight and they walk up for a battle, so an
+  // area has a few sure puzzles before the boss. They're placed from the map
+  // itself (beside the shortest walk from the way in to the boss), so every area
+  // gets them without hand-placing, and they never stand on the path.
+  const TRAINER_NAMES = ['Ava', 'Ben', 'Cleo', 'Dev', 'Ella', 'Finn', 'Gus', 'Hana', 'Ira', 'Jade', 'Kai', 'Lola', 'Milo', 'Nia', 'Omar',
+    'Pia', 'Quinn', 'Rex', 'Suki', 'Theo', 'Uma', 'Vic', 'Wes', 'Xia', 'Yuri', 'Zoe', 'Abe', 'Bea', 'Cal', 'Dot', 'Eli', 'Fay', 'Gil', 'Hal', 'Ivy', 'Jon', 'Kit', 'Lex', 'Max', 'Nell'];
+  const TRAINER_CLASS = { kid: 'Camper', girl: 'Picnicker', hiker: 'Hiker', swimmer: 'Swimmer', skier: 'Skier', miner: 'Miner' };
+  const TRAINER_LOOKS = {
+    shore: ['swimmer', 'girl', 'kid'], river: ['swimmer', 'kid', 'girl'], harbor: ['swimmer', 'girl', 'kid'], reef: ['swimmer', 'girl', 'swimmer'],
+    kelp: ['swimmer', 'kid', 'swimmer'], wreck: ['swimmer', 'swimmer', 'girl'], trench: ['swimmer', 'girl', 'swimmer'], temple: ['swimmer', 'kid', 'swimmer'],
+    canyon: ['hiker', 'kid', 'girl'], cave: ['miner', 'hiker', 'miner'], subway: ['kid', 'miner', 'girl'], snow: ['skier', 'kid', 'skier'], storm: ['skier', 'hiker', 'girl'],
+  };
+  const TRAINER_HI = {
+    add: 'I\'ve been adding things up all day!',
+    sub: 'Taking away is my favorite trick!',
+    compare: 'Bet you can\'t spot the bigger number as fast as me!',
+    mult: 'Equal groups are the best groups!',
+    div: 'Sharing is caring. And dividing!',
+  };
+  const TRAINER_TIP = {
+    add: 'Adding tip: start with the bigger number and count on.',
+    sub: 'Taking away tip: you can count back from the bigger number.',
+    compare: 'Numbers tip: look at the biggest place first.',
+    mult: 'Groups tip: doubles are a great place to start.',
+    div: 'Sharing tip: every group gets the same amount.',
+  };
+  const FAMS = ['add', 'sub', 'compare', 'mult', 'div'];
+  const SIGHT = 4; // tiles a trainer can see
+
+  // The shortest walk from the way into the map to the boss, as tiles.
+  function mainPath(m) {
+    const H = m.tiles.length, W = m.tiles[0].length;
+    const open = (x, y) => y >= 0 && y < H && x >= 0 && x < W && !SOLID.has(m.tiles[y][x]) && !m.npcs.some((n) => n.x === x && n.y === y);
+    const boss = m.npcs.find((n) => n.script === 'boss');
+    if (!boss) return null;
+    const world = WORLDS.find((w) => w.start && w.start.map === Object.keys(MAPS).find((k) => MAPS[k] === m));
+    const starts = m.warps.filter((w) => w.dir === 'down' && !w.need).map((w) => [w.x, w.y]);
+    if (world) starts.push([world.start.x, world.start.y]);
+    const key = (x, y) => x + ',' + y, from = new Map();
+    const q = starts.filter(([x, y]) => open(x, y));
+    q.forEach(([x, y]) => from.set(key(x, y), null));
+    for (let h = 0; h < q.length; h++) {
+      const [x, y] = q[h];
+      if (Math.abs(x - boss.x) + Math.abs(y - boss.y) === 1) {
+        const path = [];
+        for (let k = key(x, y); k; k = from.get(k)) path.unshift(k.split(',').map(Number));
+        return path;
+      }
+      for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        const nx = x + dx, ny = y + dy;
+        if (from.has(key(nx, ny)) || !open(nx, ny)) continue;
+        from.set(key(nx, ny), key(x, y));
+        q.push([nx, ny]);
+      }
+    }
+    return null;
+  }
+
+  // Where this map's trainers stand: beside the main path a third, a half and
+  // three quarters of the way along, looking at it from 1 to 3 tiles away.
+  function placeTrainers(mapId, nth) {
+    const m = MAPS[mapId];
+    const path = mainPath(m);
+    if (!path || path.length < 8) return [];
+    const H = m.tiles.length, W = m.tiles[0].length;
+    const onPath = new Set(path.map(([x, y]) => x + ',' + y));
+    const t = (x, y) => (y >= 0 && y < H && x >= 0 && x < W ? m.tiles[y][x] : null);
+    const near = (x, y, list, d) => list.some((o) => Math.abs(o.x - x) + Math.abs(o.y - y) <= d);
+    const warpsNear = (x, y) => m.warps.some((w) => Math.abs(w.x - x) + Math.abs(w.y - y) <= 2) || (m.portals || []).some((p) => Math.abs(p.x - x) + Math.abs(p.y - y) <= 2);
+    const signNear = (x, y) => Object.keys(m.signs || {}).some((k) => { const [sx, sy] = k.split(',').map(Number); return Math.abs(sx - x) + Math.abs(sy - y) <= 1; });
+    const special = (x, y) => SPECIALS.some((sp) => sp.map === mapId && Math.abs(sp.x - x) + Math.abs(sp.y - y) <= 1);
+    // Nothing that could be reached before may be cut off by a trainer.
+    const reach = (extra) => {
+      const blockedAt = (x, y) => SOLID.has(t(x, y)) || m.npcs.some((n) => n.x === x && n.y === y) || extra.some((o) => o.x === x && o.y === y);
+      const seen = new Set([path[0].join(',')]), q = [path[0]];
+      for (let h = 0; h < q.length; h++) {
+        const [x, y] = q[h];
+        for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+          const nx = x + dx, ny = y + dy, k = nx + ',' + ny;
+          if (seen.has(k) || t(nx, ny) === null || blockedAt(nx, ny)) continue;
+          seen.add(k);
+          q.push([nx, ny]);
+        }
+      }
+      return seen.size;
+    };
+    const all = reach([]);
+    // Spots a third, a half and three quarters of the way along. Cramped maps get a
+    // second, looser try: more spots, tall grass allowed, trainers closer together.
+    function pass(loose) {
+      const placed = [];
+      const spots = loose ? [0.3, 0.55, 0.8, 0.2, 0.45, 0.65, 0.7, 0.9] : path.length >= 16 ? [0.3, 0.55, 0.8] : [0.35, 0.7];
+      for (const f of spots) {
+        if (placed.length >= 3) break;
+        const i = Math.round(f * (path.length - 1));
+        let best = null;
+        // Look out from tiles near this point of the path, nearest first.
+        for (const j of [i, i - 1, i + 1, i - 2, i + 2]) {
+          if (best || j < 1 || j >= path.length - 2) continue;
+          const [px, py] = path[j];
+          for (const d of [2, 1, 3]) {
+            for (const [dx, dy, face] of [[1, 0, 'left'], [-1, 0, 'right'], [0, 1, 'up'], [0, -1, 'down']]) {
+              const x = px + dx * d, y = py + dy * d;
+              const c = t(x, y);
+              if (best || c === null || SOLID.has(c) || (ENCOUNTER.has(c) && !loose) || onPath.has(x + ',' + y)) continue;
+              // The tiles between the trainer and the path must be open, so it can see and walk.
+              let clear = true;
+              for (let k = 1; k < d; k++) { const b = t(px + dx * k, py + dy * k); if (b === null || SOLID.has(b)) clear = false; }
+              if (!clear || near(x, y, m.npcs, 2) || near(x, y, placed, loose ? 3 : 4) || warpsNear(x, y) || signNear(x, y) || special(x, y)) continue;
+              if (reach([...placed, { x, y }]) !== all - placed.length - 1) continue;
+              best = { x, y, dir: face };
+            }
+            if (best) break;
+          }
+        }
+        if (best) placed.push(best);
+      }
+      return placed;
+    }
+    let placed = pass(false);
+    if (placed.length < 2) placed = pass(true);
+    return placed.map((p, k) => {
+      const looks = TRAINER_LOOKS[m.area] || ['kid', 'girl', 'hiker'];
+      const look = looks[k % looks.length];
+      const name = `${TRAINER_CLASS[look]} ${TRAINER_NAMES[(nth * 3 + k) % TRAINER_NAMES.length]}`;
+      return { x: p.x, y: p.y, dir: p.dir, home: [p.x, p.y, p.dir], look, script: 'trainer', trainer: { id: `${mapId}:${k}`, name, k, fams: [FAMS[(nth + 2 * k) % 5], FAMS[(nth + 2 * k + 1) % 5]] } };
+    });
+  }
+  // Every area map gets its trainers once, when the game starts.
+  AREA_ORDER.forEach((areaId, nth) => {
+    const mapId = Object.keys(MAPS).find((k) => MAPS[k].area === areaId && MAPS[k].wild);
+    if (!mapId) return;
+    for (const tr of placeTrainers(mapId, nth)) { tr.arg = tr; MAPS[mapId].npcs.push(tr); }
+  });
+
+  const trainerBeaten = (n) => !!S.flags['tr:' + n.trainer.id];
+  // A puzzle skill of this kind of math at the player's grade.
+  function skillOfFamily(fam) {
+    const ids = MathEngine.gradeSkills(S.grade).filter((id) => MathEngine.SKILLS[id].family === fam);
+    return ids.length ? pick(ids) : MathEngine.pickSkill(S.grade, S.skills);
+  }
+  // 1 Legend for the first trainer, 2 after that, a level or two above the area.
+  function trainerTeam(n) {
+    const area = AREAS[map().area];
+    const { k, fams } = n.trainer;
+    return fams.slice(0, k === 0 ? 1 : 2).map((fam, i) => mon(area.species[fam], area.base + k + i, skillOfFamily(fam)));
+  }
+
+  // A trainer who can see you: on its line of sight, nothing in between.
+  function trainerSeeing() {
+    for (const n of map().npcs) {
+      if (!n.trainer || trainerBeaten(n)) continue;
+      const [dx, dy] = DIRS[n.dir];
+      for (let d = 1; d <= SIGHT; d++) {
+        const x = n.x + dx * d, y = n.y + dy * d;
+        if (x === P.x && y === P.y) return d > 1 ? n : null; // right next to you: talk instead
+        const c = tileAt(x, y);
+        if (c === null || SOLID.has(c) || npcAt(x, y)) break;
+      }
+    }
+    return null;
+  }
+
+  async function trainerBattle(n, spotted) {
+    const fams = n.trainer.fams;
+    if (spotted) {
+      sfx('select');
+      n.alert = true;
+      await sleep(700);
+      n.alert = false;
+      // Walk up to the tile beside you.
+      const [dx, dy] = DIRS[n.dir];
+      const tiles = [];
+      for (let x = n.x + dx, y = n.y + dy; !(x === P.x && y === P.y); x += dx, y += dy) tiles.push([x, y]);
+      await walkNpc(n, tiles);
+      P.dir = S.dir = OPPOSITE[n.dir];
+    }
+    await say([`${n.trainer.name.toUpperCase()}: Hey! You've got Legends too!`, TRAINER_HI[fams[0]], 'Let\'s battle!']);
+    const result = await battle(trainerTeam(n), { trainer: n.trainer.name });
+    if (result === 'win') {
+      S.flags['tr:' + n.trainer.id] = true;
+      await say([`${n.trainer.name.toUpperCase()}: Wow, you're quick!`, TRAINER_TIP[fams[0]]]);
+      writeSave();
+    }
+    // Back to where they stand (after a loss you're at the Rest Center anyway).
+    const [hx, hy, hd] = n.home;
+    if (result === 'win' && (n.x !== hx || n.y !== hy)) {
+      const back = [];
+      const sx = Math.sign(hx - n.x), sy = Math.sign(hy - n.y);
+      for (let x = n.x + sx, y = n.y + sy; ; x += sx, y += sy) { back.push([x, y]); if (x === hx && y === hy) break; }
+      await walkNpc(n, back);
+    }
+    n.x = hx; n.y = hy; n.dir = hd; n.ox = n.oy = 0;
+  }
+
+  // ---------------------------------------------------------------- the boss gate
+  // A boss only battles once you've made 3 friends among the area's Legends
+  // (Professor Pi's stamp card shows them), so an area gets explored first.
+  const GATE_FRIENDS = 3;
+  const areaFriends = (areaId) => [...new Set(Object.values(AREAS[areaId].species))].filter((sp) => S.caught[sp]);
+  const bossOpen = (areaId) => !!S.flags[BOSSES[areaId].flag] || !!S.flags.devAll || areaFriends(areaId).length >= GATE_FRIENDS;
+
+  // Professor Pi's stamp card: the Legends of each area in this world, and whose boss is open.
+  function stampCard() {
+    sfx('select');
+    const w = WORLDS[worldOf(S.map) - 1];
+    return panel((box) => {
+      box.classList.add('stamps');
+      box.append(el('h3', null, `Stamp card · ${w.name}`));
+      box.append(el('p', 'note', `Make ${GATE_FRIENDS} friends in an area and its boss will battle you.`));
+      for (const a of w.areas) {
+        const row = el('div', 'srow');
+        const visited = Object.keys(MAPS).some((k) => MAPS[k].area === a && (S.visited[k] || S.map === k)) || S.flags[BOSSES[a].flag];
+        row.append(el('span', 'aname', visited ? AREAS[a].name : '???'));
+        const sps = [...new Set(Object.values(AREAS[a].species))];
+        for (const sp of sps) {
+          const img = el('img');
+          img.alt = '';
+          if (S.caught[sp]) img.src = Art.creatureURL(sp, !!S.goldens[sp]);
+          else if (S.seen[sp]) { img.src = Art.creatureURL(sp); img.classList.add('seen'); }
+          else img.classList.add('none');
+          row.append(img);
+        }
+        const won = !!S.flags[BOSSES[a].flag], n = areaFriends(a).length;
+        row.append(el('span', 'stamp' + (won ? ' won' : n >= GATE_FRIENDS ? ' ready' : ''), won ? '★' : n >= GATE_FRIENDS ? '✓' : `${n}/${GATE_FRIENDS}`));
+        box.append(row);
+      }
+    });
+  }
+
   // ---------------------------------------------------------------- evolution
   // Buddies grow at set levels. Wild Legends grow at their level AND once you're
   // getting strong at their kind of math, so learning is what makes them grow.
@@ -2203,6 +2456,7 @@
       if (await yesNo([`${nameOf(c)} really likes you!`, 'It wants to come with you. Take it along?'])) {
         c.hp = maxHp(c);
         delete c.skill;
+        const here = map().area, before = here ? areaFriends(here).length : 0;
         S.caught[c.sp] = true;
         if (c.golden) S.goldens[c.sp] = true;
         if (S.party.length < 6) {
@@ -2211,6 +2465,11 @@
         } else {
           S.box.push(c);
           await say(['Your team is full.', `${nameOf(c)} will wait in the Legend Terminal.`, 'There\'s a Terminal in every Rest Center and in Professor Pi\'s lab.']);
+        }
+        // The stamp that opens this area's boss.
+        if (here && !S.flags[BOSSES[here].flag] && before < GATE_FRIENDS && areaFriends(here).length >= GATE_FRIENDS) {
+          sfx('level');
+          await say([`That's ${GATE_FRIENDS} friends from ${AREAS[here].name}! Your stamp card got a new stamp.`, `${BOSSES[here].name} is ready to battle you now!`]);
         }
       } else {
         await say(B.special ? `${nameOf(c)} will wait for you right here.` : `${nameOf(c)} waves goodbye!`);
@@ -2805,15 +3064,16 @@
     sfx('select');
     let i = 0;
     for (;;) {
-      const items = ['Team', 'Map', 'Legendex', 'Talk to buddy', 'Grown-ups', 'Settings', 'Save & load', 'Close'];
+      const items = ['Team', 'Map', 'Legendex', 'Stamp card', 'Talk to buddy', 'Grown-ups', 'Settings', 'Save & load', 'Close'];
       i = await choose(items, { cls: 'start-menu', start: Math.max(0, i) });
       if (i === 0) await teamMenu();
       else if (i === 1) { if (await mapMenu()) break; }
       else if (i === 2) await dexMenu();
-      else if (i === 3) { if (S.sidekick) await buddyTalk(); else await say('You don\'t have a buddy yet.'); }
-      else if (i === 4) await progressPage();
-      else if (i === 5) { if ((await settingsMenu()) === 'closed') break; }
-      else if (i === 6) { if (await saveMenu()) break; }
+      else if (i === 3) await stampCard();
+      else if (i === 4) { if (S.sidekick) await buddyTalk(); else await say('You don\'t have a buddy yet.'); }
+      else if (i === 5) await progressPage();
+      else if (i === 6) { if ((await settingsMenu()) === 'closed') break; }
+      else if (i === 7) { if (await saveMenu()) break; }
       else break;
     }
     busy = false;
@@ -2965,6 +3225,9 @@
     // Test hook: jump into the world at a spot, e.g. MQL.warp('room', 2, 2).
     window.MQL.warp = (mapId, x, y, dir = 'up') => { ui.textContent = ''; handler = null; placePlayer(mapId, x, y, dir); mode = 'world'; };
     window.MQL.interact = () => interact();
+    // Test hooks for route trainers: where they'd stand, and the path they watch.
+    window.MQL.mainPath = (mapId) => mainPath(MAPS[mapId]);
+    window.MQL.placeTrainers = (mapId, nth) => placeTrainers(mapId, nth);
     window.MQL.battle = (foes, opts) => battle(foes.map(([sp, lv]) => mon(sp, lv)), opts);
     window.MQL.rival = (i) => rivalBattle(i);
     // Test hook: a throwaway game state so questions can be shown from the title screen.

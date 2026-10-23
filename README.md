@@ -20,6 +20,8 @@ A pixel-art adventure for Kindergarten to Grade 5 in the style of classic handhe
 - In battle, choose **SOLVE**. A right answer powers your buddy's move, and a fast first try gives extra power.
 - **Answers:** in Grades 1–5 you type answers (Grade 5 gets a decimal point key). During a question, the D-pad and buttons turn into a big number keypad (typing an answer builds memory better than picking one). Kindergarten picks from big choices. Grown-ups can change this in MENU → Settings → Answers.
 - Solve enough puzzles and the wild Legend **calms down**. Legends you solved on the first try often want to be your friend and join your team.
+- **Route trainers:** 2 or 3 trainers stand beside the way through every area (Campers, Picnickers, Hikers, Swimmers, Skiers and Miners). Walk into one's line of sight and they spot you ("!"), walk up and battle with 1 or 2 Legends from the area. Beaten trainers share a math tip when you talk to them. They're placed from each map automatically: beside the shortest walk to the boss, never blocking a path.
+- **Stamp card and the boss gate:** a boss only battles once you've made 3 friends among the area's Legends. MENU → Stamp card (Professor Pi's) shows each area's Legends in this world: friends in color, seen ones in gray, and ✓ once the boss is open (★ once beaten). Bosses you've already beaten are always open.
 - Each area has a boss guarding the way north. Beat them to earn five badges:
 
   | Area | Boss | Badge |
