@@ -277,6 +277,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .menu.full .head { font-size: 6cqw; font-weight: 900; padding: 1cqw 2cqw 2cqw; }
 .menu.start-menu { top: 1.5%; bottom: auto; max-height: 97%; min-width: 46%; }
 .menu.title-menu { left: 50%; right: auto; bottom: 4%; transform: translateX(-50%); min-width: 52%; }
+/* Several saved games: wide enough for "Mia · Sproutle" on one line. */
+.menu.title-menu:has(img) { min-width: 78%; max-height: 66%; }
+.menu.title-menu .item span { white-space: nowrap; }
 
 /* quiz: the whole screen, so there is room for pictures and hints */
 .quiz, .teach {

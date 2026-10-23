@@ -113,7 +113,8 @@ On top of that, wild encounters follow the player's needs: while one skill is cl
   - Chrome on any computer includes Google voices, which sound better than the basic system ones.
 - **Progress:** MENU → Grown-ups shows first-try accuracy and mastery for each skill, which skill is being practiced most, and how many missed problems are waiting for review.
 - Progress is saved on the device (browser storage). Nothing is sent anywhere.
-- **Save files:** MENU → Save & load → Export save file downloads (or shares) a backup. Load save file brings it back on any device, and the title screen has Load save file too.
+- **Several games:** the title screen lists every game on the device, labeled with the player's name and starter Legend ("Mia · Sproutle", with a number if two match), last played first. New Game adds a game without erasing any; Erase a game asks first. MENU → Save & load → Switch game goes back to the list.
+- **Save files:** MENU → Save & load → Export save file downloads (or shares) a backup. Load save file adds it as another game, on any device, and the title screen has Load save file too.
 - **Devices:** works on phones, tablets and computers. On iPad and other tablets it scales up. Turned sideways, the controls move to a grip on each side of the screen, like a Nintendo Switch. MENU → Settings → Controls can keep them on the sides or below the screen all the time (this setting stays on the device, not in save files).
 
 ## Running it

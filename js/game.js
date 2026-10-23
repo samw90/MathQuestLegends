@@ -98,17 +98,58 @@
     s.streak = Number(s.streak) || 0;
     return s;
   }
-  function loadSave() {
+  // Several games on one device (brothers and sisters, or a fresh start), each in
+  // its own slot: mql:save:v2:<id>. mql:slots lists the ids, last played first.
+  // The single save from before slots (SAVE_KEY) becomes the first slot and is
+  // left in place as a backup.
+  const SLOTS_KEY = 'mql:slots', SLOT_PREFIX = SAVE_KEY + ':';
+  let slot = null; // the game being played
+  function slotIds() {
+    try { return JSON.parse(localStorage.getItem(SLOTS_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function setSlotIds(ids) {
+    try { localStorage.setItem(SLOTS_KEY, JSON.stringify(ids)); } catch (e) { /* storage blocked */ }
+  }
+  try {
+    const old = localStorage.getItem(SAVE_KEY);
+    if (old && !slotIds().length) { localStorage.setItem(SLOT_PREFIX + '1', old); setSlotIds(['1']); }
+  } catch (e) { /* storage blocked */ }
+  function readSlot(id) {
     try {
-      const raw = localStorage.getItem(SAVE_KEY);
+      const raw = localStorage.getItem(SLOT_PREFIX + id);
       if (!raw) return null;
       const s = JSON.parse(raw);
       return upgradeSave(Object.assign(newState(s.name || 'Hero', s.grade || 0), s));
     } catch (e) { return null; }
   }
+  function newSlot() {
+    const ids = slotIds();
+    let n = 1;
+    while (ids.includes(String(n))) n++;
+    return String(n);
+  }
   function writeSave() {
-    if (!S) return;
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* storage full or blocked */ }
+    if (!S || !slot) return;
+    try {
+      localStorage.setItem(SLOT_PREFIX + slot, JSON.stringify(S));
+      const ids = slotIds();
+      if (ids[0] !== slot) setSlotIds([slot, ...ids.filter((id) => id !== slot)]);
+    } catch (e) { /* storage full or blocked */ }
+  }
+  // "Mia · Sproutle": the name and the buddy picked at Professor Pi's table, plus
+  // a number when two games would read the same.
+  function starterOf(s) {
+    if (s.starterId) return s.starterId;
+    if (!s.flags || !s.flags.starter) return null;
+    return [...(s.party || []), ...(s.box || [])].map((c) => baseForm(c.sp)).find((id) => STARTERS.includes(id)) || null;
+  }
+  function gameLabels(games) {
+    const base = ({ s }) => { const st = starterOf(s); return st ? `${s.name} · ${SPECIES[st].name}` : s.name; };
+    // Numbered in the order the games were made, so a label never changes.
+    const byAge = [...games].sort((x, y) => Number(x.id) - Number(y.id));
+    const nth = new Map(), seen = {};
+    for (const g of byAge) { const b = base(g); seen[b] = (seen[b] || 0) + 1; nth.set(g, seen[b]); }
+    return games.map((g) => (nth.get(g) > 1 ? `${base(g)} ${nth.get(g)}` : base(g)));
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden && mode !== 'title') writeSave(); });
   // Leaving the page (the launcher's home screen, a reload) saves too.
@@ -2663,7 +2704,7 @@
   function importPanel() {
     return filePanel((box, done) => {
       box.append(el('h3', null, 'Load a save file'));
-      box.append(el('p', null, 'Pick a Math Quest Legends save file. It will replace the game on this device.'));
+      box.append(el('p', null, 'Pick a Math Quest Legends save file. It\'s added as another game; the games already here stay.'));
       const label = el('label', 'iobtn', '📂 Choose save file');
       const input = el('input');
       input.type = 'file';
@@ -2690,13 +2731,20 @@
 
   async function saveMenu() {
     for (;;) {
-      const i = await choose(['Save now', 'Export save file', 'Load save file', 'Back'], { cls: 'start-menu' });
+      const i = await choose(['Save now', 'Switch game', 'Export save file', 'Load save file', 'Back'], { cls: 'start-menu' });
       if (i === 0) { writeSave(); await say('Game saved!'); }
-      else if (i === 1) await exportPanel();
-      else if (i === 2) {
+      else if (i === 1) {
+        // Back to the title screen's list of games (this one is saved first).
+        writeSave();
+        await fade(() => location.reload());
+        return true;
+      } else if (i === 2) await exportPanel();
+      else if (i === 3) {
         const loaded = await importPanel();
         if (!loaded) continue;
-        if (!(await yesNo([`Load ${loaded.name}'s game?`, 'The game on this device will be replaced.']))) continue;
+        if (!(await yesNo([`Play ${loaded.name}'s game now?`, 'This game is saved and stays on the title screen.']))) continue;
+        writeSave();
+        slot = newSlot();
         S = loaded;
         writeSave();
         await fade(() => placePlayer(S.map, S.x, S.y, S.dir));
@@ -2795,37 +2843,57 @@
     });
   }
 
+  // The title screen lists every game (last played first), then New Game, Load
+  // save file and Erase a game. Nothing is erased without asking.
   async function title() {
     mode = 'title';
-    const save = loadSave();
+    S = null;
+    slot = null;
+    const games = slotIds().map((id) => ({ id, s: readSlot(id) })).filter((g) => g.s);
+    const labels = gameLabels(games);
     const logo = el('div', 'title');
     const big = el('div', 'logo', 'MATH QUEST');
     big.append(el('span', null, 'LEGENDS'));
     logo.append(big);
     ui.append(logo);
-    const opts = save ? ['Continue', 'New Game', 'Load save file'] : ['New Game', 'Load save file'];
-    const i = await choose(opts, { cancel: false, cls: 'title-menu' });
+    const items = [
+      ...games.map(({ s }, k) => {
+        const st = starterOf(s);
+        const badges = Object.keys(s.badgeGrade || {}).length;
+        return { label: labels[k], sub: `${GRADES[s.grade] || ''} · ${badges} ${badges === 1 ? 'badge' : 'badges'}`, icon: st ? Art.creatureURL(st) : null };
+      }),
+      'New Game', 'Load save file', ...(games.length ? ['Erase a game'] : []),
+    ];
+    const i = await choose(items, { cancel: false, cls: 'title-menu' });
     logo.remove();
-    if (opts[i] === 'Load save file') {
+    if (i < games.length) {
+      slot = games[i].id;
+      S = games[i].s;
+      writeSave(); // now the last played
+      await fade(() => { placePlayer(S.map, S.x, S.y, S.dir); mode = 'world'; });
+      return;
+    }
+    const what = items[i];
+    if (what === 'Load save file') {
       const loaded = await importPanel();
       if (!loaded) return title();
+      slot = newSlot();
       S = loaded;
       writeSave();
       await fade(() => { placePlayer(S.map, S.x, S.y, S.dir); mode = 'world'; });
       await say(`Welcome back, ${S.name}!`);
       return;
     }
-    if (save && i === 0) {
-      S = save;
-      await fade(() => { placePlayer(S.map, S.x, S.y, S.dir); mode = 'world'; });
-      return;
+    if (what === 'Erase a game') {
+      const j = await choose([...labels, 'Back'], { cls: 'title-menu', head: 'Erase which game?' });
+      if (j >= 0 && j < games.length && await yesNo([`Erase ${labels[j]}?`, 'It can\'t be brought back.'])) {
+        try { localStorage.removeItem(SLOT_PREFIX + games[j].id); } catch (e) { /* storage blocked */ }
+        setSlotIds(slotIds().filter((id) => id !== games[j].id));
+        hideDialog();
+      }
+      return title();
     }
-    if (save) {
-      S = save;
-      const sure = await yesNo(['Start a new game?', 'Your old game will be erased.']);
-      S = null;
-      if (!sure) return title();
-    }
+    slot = newSlot();
     await newGame();
   }
 
