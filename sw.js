@@ -3,7 +3,7 @@
 // Bump CACHE (v1 -> v2 ...) when files are renamed or removed.
 const CACHE = 'mql-v7';
 const ASSETS = [
-  './', './index.html', './style.css', './manifest.webmanifest',
+  './', './index.html', './progress.html', './style.css', './manifest.webmanifest',
   './js/version.js', './js/data.js', './js/art.js', './js/math.js', './js/game.js',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png', './favicon-32.png',
 ];

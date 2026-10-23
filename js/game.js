@@ -77,6 +77,8 @@
       flags: {}, seen: {}, caught: {},
       skills: {}, // per math skill: { attempts, correct, ms, n }
       review: [], // missed problems that come back later
+      days: {}, // for the grown-ups' progress page: 'YYYY-MM-DD' -> skill -> [tries, first tries, ms]
+      slips: [], // for the progress page: the last 60 wrong answers
       voice: false,
       visited: { town: true }, // places you can quick-travel to
       healMap: 'town', // the last place with a Rest Center
@@ -960,6 +962,7 @@
           return finish(tries === 0 && hints === 0 ? 'first' : 'helped');
         }
         tries++;
+        noteSlip(p, value);
         sfx('bad');
         if (typing) {
           entry.classList.add('wrong');
@@ -1134,10 +1137,26 @@
 
   // ---------------------------------------------------------------- learning record
 
+  // A wrong answer and what kind of slip it was, for the grown-ups' progress page.
+  function noteSlip(p, given) {
+    const slip = { s: p.skillId, q: MathEngine.fmt(p), g: given, a: p.answer, k: MathEngine.mistakeKind(p, given), t: Date.now() };
+    S.slips = [...(S.slips || []), slip].slice(-60);
+  }
+
   function record(p, result, ms) {
     const s = S.skills[p.skillId] || (S.skills[p.skillId] = { attempts: 0, correct: 0, ms: 0, n: 0 });
     s.attempts++;
     if (result === 'first') { s.correct++; s.ms += Math.min(ms, 120000); s.n++; }
+    if (result === 'helped') s.helped = (s.helped || 0) + 1; // right after a hint or a second try
+    // Each day's tries per skill (the progress page's calendar), the last 120 days.
+    const day = new Date().toLocaleDateString('en-CA'); // 2026-10-23, local time
+    const today = (S.days = S.days || {})[day] || (S.days[day] = {});
+    const t = today[p.skillId] || (today[p.skillId] = [0, 0, 0]);
+    t[0]++;
+    if (result === 'first') t[1]++;
+    t[2] += Math.min(ms, 120000);
+    const old = Object.keys(S.days).sort();
+    for (const k of old.slice(0, Math.max(0, old.length - 120))) delete S.days[k];
     // The last 10 tries (1 = right on the first try), for "How am I doing?".
     s.recent = [...(s.recent || []), result === 'first' ? 1 : 0].slice(-10);
     // 10 first tries in a row: the next wild Legend is golden.
@@ -2399,6 +2418,12 @@
     return panel((box) => {
       box.append(el('h3', null, 'For grown-ups'));
       box.append(el('p', null, `${S.name} · ${GRADES[S.grade]} · first-try accuracy by skill`));
+      // The full report: strengths, kinds of mistakes, days played.
+      const report = el('a', null, 'Open the full progress report');
+      report.href = 'progress.html';
+      const line = el('p');
+      line.append(report);
+      box.append(line);
       const ids = Object.keys(MathEngine.SKILLS).filter((id) => S.skills[id] || MathEngine.gradeSkills(S.grade).includes(id));
       for (const id of ids) {
         const s = S.skills[id];

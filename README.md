@@ -112,6 +112,7 @@ On top of that, wild encounters follow the player's needs: while one skill is cl
   - Windows: Microsoft Edge has natural-sounding online voices built in (for example Aria or Jenny).
   - Chrome on any computer includes Google voices, which sound better than the basic system ones.
 - **Progress:** MENU → Grown-ups shows first-try accuracy and mastery for each skill, which skill is being practiced most, and how many missed problems are waiting for review.
+- **Progress report:** `progress.html` (linked from MENU → Grown-ups, and a tile on the Retroid's grown-up shelf) reads every game on the device and explains it in words: strengths, what needs practice (with missed problems and an idea to try at home), skills that are clicking or slipping, the kinds of mistakes made (added instead of taking away, off by one, carrying, digits swapped…), and the last two weeks of play. Wrong answers and days played are recorded from rev 49 on.
 - Progress is saved on the device (browser storage). Nothing is sent anywhere.
 - **Several games:** the title screen lists every game on the device, labeled with the player's name and starter Legend ("Mia · Sproutle", with a number if two match), last played first. New Game adds a game without erasing any; Erase a game asks first. MENU → Save & load → Switch game goes back to the list.
 - **Save files:** MENU → Save & load → Export save file downloads (or shares) a backup. Load save file adds it as another game, on any device, and the title screen has Load save file too.
@@ -132,6 +133,7 @@ To publish it, push to GitHub and turn on GitHub Pages for the `main` branch (Se
 ## Files
 
 - `index.html`, `style.css`: the page and the handheld-console look
+- `progress.html`: the grown-ups' progress report (reads the saves; uses `js/data.js` and `js/math.js`)
 - `js/data.js`: creatures, moves, people and maps
 - `js/art.js`: all pixel art, drawn in code
 - `js/math.js`: the math engine: skills per grade, adapting, hints and Teach me lessons

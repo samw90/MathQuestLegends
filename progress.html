@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Math progress</title>
+<link rel="icon" href="favicon-32.png" sizes="32x32">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+  /* For grown-ups: how each child on this device is doing, from the game's own
+     saves (same address as the game, so the same storage). Nothing leaves the device. */
+  :root {
+    --ink: #2b2840; --soft: #6a6488; --paper: #fffdf6; --card: #ffffff; --line: #e6e1f0;
+    --bezel: #2d2a4a; --gold: #f2c84b;
+    --good: #2f9e5b; --mid: #d99a1e; --weak: #d2483f; --none: #c9c1dc;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 700 15px/1.35 'Nunito', system-ui, sans-serif; }
+  header { position: sticky; top: 0; z-index: 2; background: var(--bezel); color: #fff; padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
+  header h1 { margin: 0; font-size: 19px; font-weight: 900; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  header small { display: block; font-size: 12.5px; font-weight: 700; color: #cfc8e6; }
+  .switch { border: 0; border-radius: 10px; background: #ffffff1f; color: #fff; font: 900 15px 'Nunito', sans-serif; padding: 6px 10px; }
+  .switch[hidden] { display: none; }
+  main { max-width: 760px; margin: 0 auto; padding: 12px 16px 40px; }
+  h2 { font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; color: var(--soft); margin: 22px 0 8px; }
+  p { margin: 6px 0; }
+  .muted { color: var(--soft); font-weight: 700; }
+
+  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .card { background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 8px 10px; }
+  .card b { display: block; font-size: 24px; font-weight: 900; line-height: 1.1; }
+  .card span { font-size: 12.5px; color: var(--soft); }
+
+  .point { background: var(--card); border: 2px solid var(--line); border-left-width: 6px; border-radius: 12px; padding: 8px 12px; margin: 6px 0; }
+  .point.good { border-left-color: var(--good); }
+  .point.weak { border-left-color: var(--weak); }
+  .point.up { border-left-color: #3b82c4; }
+  .point.down { border-left-color: var(--mid); }
+  .point h3 { margin: 0; font-size: 16px; font-weight: 900; }
+  .point p { margin: 3px 0 0; font-weight: 700; }
+  .point .home { color: var(--soft); }
+  .point .home b { color: var(--ink); }
+
+  .skill { display: grid; grid-template-columns: 1fr 120px 92px; gap: 8px; align-items: center; padding: 6px 2px; border-bottom: 1px solid var(--line); }
+  .skill .name { font-weight: 800; }
+  .skill .name small { display: block; color: var(--soft); font-weight: 700; font-size: 12.5px; }
+  .bar { height: 12px; border-radius: 6px; background: var(--line); overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 6px; }
+  .chip { justify-self: end; font-size: 12px; font-weight: 900; padding: 2px 8px; border-radius: 10px; color: #fff; white-space: nowrap; }
+  .grade { margin-top: 12px; font-weight: 900; }
+
+  .days { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; align-items: end; height: 92px; padding-top: 6px; }
+  .day { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 3px; }
+  .day i { display: block; width: 100%; border-radius: 4px 4px 2px 2px; background: var(--none); min-height: 3px; }
+  .day span { font-size: 11px; color: var(--soft); }
+
+  .slip { background: var(--card); border: 2px solid var(--line); border-radius: 12px; padding: 8px 12px; margin: 6px 0; }
+  .slip h3 { margin: 0; font-size: 15.5px; font-weight: 900; display: flex; justify-content: space-between; gap: 8px; }
+  .slip p { margin: 3px 0 0; }
+  .eg { font-variant-numeric: tabular-nums; color: var(--soft); }
+  .eg b { color: var(--weak); }
+
+  .review { display: flex; flex-wrap: wrap; gap: 6px; }
+  .review span { background: var(--card); border: 2px solid var(--line); border-radius: 10px; padding: 3px 9px; font-variant-numeric: tabular-nums; }
+  .foot { margin-top: 26px; font-size: 12.5px; color: var(--soft); }
+  .empty { padding: 30px 0; text-align: center; color: var(--soft); }
+
+  @media (max-width: 560px) {
+    .cards { grid-template-columns: repeat(2, 1fr); }
+    .skill { grid-template-columns: 1fr 80px 84px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <button class="switch" id="prev" type="button" aria-label="Previous child">◀</button>
+  <h1 id="title">Math progress<small>&nbsp;</small></h1>
+  <button class="switch" id="next" type="button" aria-label="Next child">▶</button>
+</header>
+<main id="main"></main>
+<script src="js/data.js"></script>
+<script src="js/math.js"></script>
+<script>
+(() => {
+  const E = MathEngine;
+  const main = document.getElementById('main');
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const pct = (x) => `${Math.round(x * 100)}%`;
+  const DAY = 86400000;
+
+  // ---------------------------------------------------------------- the saves
+
+  function games() {
+    const read = (key) => { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } };
+    let ids = read('mql:slots') || [];
+    const list = ids.map((id) => ({ id, s: read('mql:save:v2:' + id) })).filter((g) => g.s);
+    // A device that never opened the game since save slots came in.
+    if (!list.length && read('mql:save:v2')) list.push({ id: '1', s: read('mql:save:v2') });
+    return list;
+  }
+  const starterName = (s) => {
+    const id = s.starterId || [...(s.party || []), ...(s.box || [])].map((c) => c.sp).find((sp) => STARTERS.includes(sp));
+    return id && SPECIES[id] ? SPECIES[id].name : null;
+  };
+
+  // ---------------------------------------------------------------- reading a skill
+
+  const tried = (s) => s && s.attempts > 0;
+  const recentAcc = (s) => { const r = s.recent || []; return r.length ? r.reduce((a, b) => a + b, 0) / r.length : E.accuracy(s); };
+  const secs = (s) => (s.n ? s.ms / s.n / 1000 : null);
+  // Recent accuracy pulled toward 50% when there are only a few tries, so 2 of 2
+  // doesn't outrank 9 of 10 and 2 of 3 isn't called weak.
+  const sure = (s) => { const r = s.recent || []; return (r.reduce((a, b) => a + b, 0) + 1) / (r.length + 2); };
+  const label = (id) => E.SKILLS[id].label;
+  const lower = (id) => label(id).toLowerCase();
+  const LEVEL_COLOR = ['var(--weak)', 'var(--mid)', 'var(--good)'];
+  const colorFor = (a) => (a >= 0.85 ? 'var(--good)' : a >= 0.65 ? 'var(--mid)' : 'var(--weak)');
+  function recentText(s) {
+    const r = s.recent || [];
+    const right = r.reduce((a, b) => a + b, 0);
+    const t = secs(s);
+    return `${right} of the last ${r.length} right on the first try` + (t ? ` · about ${Math.round(t)} s each` : '');
+  }
+
+  // Something to try away from the screen, for each skill.
+  const AT_HOME = {
+    'count-10': 'Count real things together (stairs, grapes, toy cars), touching each one once as you say the number.',
+    'compare-10': 'Make two small piles of snacks: which has more? Line them up side by side to check.',
+    'add-10': 'Use fingers or blocks: start with one group and count on as you add the second.',
+    'sub-10': 'Put out some toys, hide a few under a cup, and ask how many are left.',
+    'skip-10': 'Count out loud by 10s on walks or while tidying: 10, 20, 30…',
+    'parts-10': 'Hide some of 10 pennies under your hand: "There are 6 showing. How many are hiding?"',
+    'add-20': 'Practise "make a ten": 8 + 5 is 8 + 2 (makes 10) + 3 more. An egg carton works great as a ten-frame.',
+    'sub-20': 'Count back from the bigger number on a number line or a tape measure.',
+    compare: 'Pick two numbers on house doors or price tags: which is bigger, and how do you know?',
+    'place-tens': 'Bundle straws or popsicle sticks in tens with a hair tie: 3 bundles and 4 loose sticks make 34.',
+    doubles: 'Doubles are everywhere: legs on a chair, eggs in a carton row, dots on dominoes.',
+    'missing-20': 'Play "I have 7, I need 12. How many more?" with coins or snacks; count up to find out.',
+    'add-100': 'Add tens first, then ones: 34 + 25 is 30 + 20 and 4 + 5.',
+    'sub-100': 'Count up from the smaller number to the bigger one in jumps of 10, then 1s.',
+    'place-100': 'Count by 2s, 5s and 10s together; spot the pattern in the last digit.',
+    'equal-groups': 'Make equal plates of snacks: 3 plates with 4 crackers. How many altogether?',
+    halves: 'Share things fairly between two people: pizza slices, coins, cards.',
+    'add-1000': 'Add hundreds, then tens, then ones, saying each part out loud.',
+    'sub-1000': 'Talk through borrowing with money: break a dollar into dimes.',
+    round: 'At the shop, round prices to the nearest 10 or 100 and guess the total.',
+    'mult-facts': 'A few facts a day: start with 2s, 5s and 10s, then the tricky ones (6, 7, 8).',
+    'div-facts': 'Turn each division into a times fact: 24 ÷ 6 means 6 times what is 24?',
+    'add-multi': 'Line up the columns on squared paper and check each carry.',
+    'sub-multi': 'Line up the columns on squared paper; check each borrow by adding back.',
+    'round-big': 'Round big numbers from the news or a map (distances, populations).',
+    'mult-1digit': 'Split the big number: 34 × 6 is 30 × 6 plus 4 × 6.',
+    'div-1digit': 'Share out a bag of beans or coins into equal groups.',
+    'equiv-frac': 'Fold paper in halves, then quarters: 1/2 covers the same as 2/4.',
+    'dec-add': 'Use money: $3.50 + $1.25 lines up the dots by itself.',
+    'dec-sub': 'Use money for change: pay $5.00 for $3.40.',
+    'dec-place': 'Compare prices like $2.5 and $2.45: tenths first.',
+    'mult-2digit': 'Use a box (area) drawing: split each number into tens and ones.',
+    'div-long': 'Long division with real sharing: 156 stickers between 4 friends.',
+    'frac-add': 'Pizza or chocolate bar pieces: make the pieces the same size before adding.',
+  };
+
+  // What each kind of slip says about understanding.
+  const SLIP_MEANS = {
+    'Off by one': 'Usually a counting slip: counting the starting number twice, or stopping one early. Counting on from the bigger number helps.',
+    'Mixing up the operation': 'Did the other operation (added instead of taking away). Saying the sign out loud before solving helps.',
+    'Carrying and borrowing': 'Regrouping isn\'t solid yet: a ten wasn\'t carried or borrowed.',
+    'Digits in the wrong order': 'Wrote the digits backwards (21 for 12): tens and ones are still settling.',
+    'Rounding the wrong way': 'Rounded to the wrong neighbour: check the digit to the right.',
+    Decimals: 'The decimal point ended up in the wrong place, or the points weren\'t lined up.',
+    Fractions: 'Changed only one part of the fraction, or added before matching the bottoms.',
+    'Mystery numbers': 'In 9 + _ = 15, added the two numbers shown or wrote the total: the idea of "how many more" isn\'t there yet. Counting up from 9 to 15 on fingers helps.',
+    'Counting by the wrong step': 'Counted by 1 when the pattern goes up by more.',
+    'No clear pattern': 'Often a guess, a mis-tap, or a fact that isn\'t known yet.',
+  };
+
+  // ---------------------------------------------------------------- the page
+
+  let all = games(), at = 0;
+  function render() {
+    main.replaceChildren();
+    const title = document.getElementById('title');
+    document.getElementById('prev').hidden = document.getElementById('next').hidden = all.length < 2;
+    if (!all.length) {
+      title.innerHTML = 'Math progress<small>No games on this device yet</small>';
+      main.append(el('p', 'empty', 'Play Math Quest Legends on this device first. Progress shows up here as puzzles get solved.'));
+      return;
+    }
+    const { s } = all[at];
+    const skills = s.skills || {};
+    const grade = s.grade || 0;
+    const starter = starterName(s);
+    title.replaceChildren(`${s.name || 'Hero'}'s math`, el('small', null,
+      `${GRADES[grade]}${starter ? ' · ' + starter : ''}${all.length > 1 ? ` · game ${at + 1} of ${all.length}` : ''}`));
+    window.scrollTo(0, 0);
+
+    const ids = Object.keys(E.SKILLS);
+    const triedIds = ids.filter((id) => tried(skills[id]));
+    const total = triedIds.reduce((n, id) => n + skills[id].attempts, 0);
+    if (!total) {
+      main.append(el('p', 'empty', `${s.name || 'This game'} hasn't solved any puzzles yet.`));
+      return;
+    }
+    const firsts = triedIds.reduce((n, id) => n + skills[id].correct, 0);
+    const thisGrade = E.gradeSkills(grade);
+    const mastered = thisGrade.filter((id) => E.stretchLevel(skills[id]) === 2).length;
+
+    // Days played: from the daily log (newer saves) or the review list's dates.
+    const days = s.days || {};
+    const today = new Date();
+    const dayKey = (d) => d.toLocaleDateString('en-CA');
+    const last14 = [...Array(14)].map((_, i) => { const d = new Date(today); d.setDate(d.getDate() - 13 + i); return d; });
+    const playedDays = last14.filter((d) => days[dayKey(d)]).length;
+
+    // ---- at a glance
+    const cards = el('div', 'cards');
+    const card = (big, small) => { const c = el('div', 'card'); c.append(el('b', null, big), el('span', null, small)); cards.append(c); };
+    card(String(total), 'puzzles solved');
+    card(pct(firsts / total), 'right on the first try');
+    card(`${mastered} / ${thisGrade.length}`, `${GRADES[grade]} skills mastered`);
+    card(Object.keys(days).length ? `${playedDays}` : '–', 'days played (2 weeks)');
+    main.append(cards);
+
+    // ---- summary in words
+    const enough = triedIds.filter((id) => skills[id].attempts >= 3);
+    const weak = enough.filter((id) => sure(skills[id]) < 0.6)
+      .sort((a, b) => sure(skills[a]) - sure(skills[b]) || skills[b].attempts - skills[a].attempts)
+      .slice(0, 3);
+    // Changing: the last 10 tries are well above or below the whole record.
+    const up = enough.filter((id) => !weak.includes(id) && (skills[id].recent || []).length >= 5 && recentAcc(skills[id]) - E.accuracy(skills[id]) >= 0.15);
+    const down = enough.filter((id) => !weak.includes(id) && (skills[id].recent || []).length >= 5 && E.accuracy(skills[id]) - recentAcc(skills[id]) >= 0.2);
+    const strong = enough.filter((id) => !up.includes(id) && sure(skills[id]) >= 0.75)
+      .sort((a, b) => sure(skills[b]) - sure(skills[a]) || skills[b].attempts - skills[a].attempts)
+      .slice(0, 3);
+    const untried = thisGrade.filter((id) => !tried(skills[id]));
+
+    const name = s.name || 'They';
+    const sum = el('p');
+    const bits = [];
+    if (strong.length) bits.push(`${name} is strongest at ${strong.map(lower).join(', ').replace(/, ([^,]*)$/, ' and $1')}.`);
+    if (up.length) bits.push(`${up.map((id) => label(id)).join(' and ')} ${up.length > 1 ? 'are' : 'is'} clicking: much better lately than at first.`);
+    if (weak.length) bits.push(`Still learning ${weak.map(lower).join(' and ')}; the game asks these more often.`);
+    if (!weak.length && !untried.length) bits.push('No weak spots right now.');
+    sum.textContent = bits.join(' ');
+    main.append(el('h2', null, 'In a nutshell'), sum);
+
+    // ---- strengths, needs practice, trends
+    const point = (cls, head, ...lines) => {
+      const d = el('div', 'point ' + cls);
+      d.append(el('h3', null, head));
+      for (const l of lines) if (l) d.append(typeof l === 'string' ? el('p', null, l) : l);
+      main.append(d);
+    };
+    const slips = s.slips || [];
+    const slipFor = (id) => {
+      const counts = {};
+      for (const x of slips) if (x.s === id && x.k) counts[x.k] = (counts[x.k] || 0) + 1;
+      const k = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+      return k ? `Most common slip: ${E.SLIPS[k].group.toLowerCase()} (${counts[k]}×).` : null;
+    };
+    // Problems of this skill missed lately (still in the game's review list).
+    const review = s.review || [];
+    const question = (x) => E.fmt(x).replace(' = ?', '').replace('?', '_');
+    const missedLately = (id) => {
+      const qs = review.filter((x) => x.skillId === id).slice(-3).reverse().map(question);
+      return qs.length ? `Missed lately: ${qs.join(' · ')}` : null;
+    };
+    const atHome = (id) => { const p = el('p', 'home'); p.append(el('b', null, 'Try at home: '), AT_HOME[id] || ''); return p; };
+
+    if (strong.length) {
+      main.append(el('h2', null, 'Strengths'));
+      for (const id of strong) {
+        const lv = E.stretchLevel(skills[id]);
+        point('good', label(id), `${recentText(skills[id])}.` + (lv ? ` The game rates it ${E.MASTERY[lv].toLowerCase()}.` : ''));
+      }
+    }
+    if (weak.length || untried.length) {
+      main.append(el('h2', null, 'Needs practice'));
+      for (const id of weak) {
+        const sk = skills[id];
+        point('weak', label(id), `${recentText(sk)} (${sk.correct} of ${sk.attempts} overall).`, missedLately(id), slipFor(id), atHome(id));
+      }
+      if (untried.length) point('', `Not tried yet in ${GRADES[grade]}`, untried.map(label).join(', ') + '. These come up as the game goes on.');
+    }
+    if (up.length || down.length) {
+      main.append(el('h2', null, 'Changing'));
+      for (const id of up) {
+        const sk = skills[id];
+        point('up', `↑ ${label(id)}`, `${pct(E.accuracy(sk))} first-try overall, ${pct(recentAcc(sk))} in the last ${(sk.recent || []).length}. Practice is working.`);
+      }
+      for (const id of down) {
+        const sk = skills[id];
+        point('down', `↓ ${label(id)}`, `${pct(E.accuracy(sk))} first-try overall, but ${pct(recentAcc(sk))} lately. Might be the bigger numbers the game gives once a skill is strong.`, atHome(id));
+      }
+    }
+
+    // ---- mistakes
+    main.append(el('h2', null, 'Kinds of mistakes'));
+    if (!slips.length) {
+      main.append(el('p', 'muted', 'Wrong answers are recorded from today on (the game didn\'t keep them before). Check back after a few sessions.'));
+    } else {
+      const groups = {};
+      for (const x of slips) {
+        const g = x.k && E.SLIPS[x.k] ? E.SLIPS[x.k].group : 'No clear pattern';
+        (groups[g] = groups[g] || []).push(x);
+      }
+      main.append(el('p', 'muted', `From the last ${slips.length} wrong answer${slips.length === 1 ? '' : 's'}:`));
+      for (const g of Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length)) {
+        const list = groups[g];
+        const d = el('div', 'slip');
+        const h = el('h3');
+        h.append(el('span', null, g), el('span', 'muted', `${list.length}×`));
+        d.append(h, el('p', null, SLIP_MEANS[g] || ''));
+        for (const x of list.slice(-2).reverse()) {
+          const eg = el('p', 'eg');
+          eg.append(`${x.q.replace('= ?', '=').replace('?', '_')}  answered `, el('b', null, E.show(x.g)), ` (right: ${E.show(x.a)}) · ${label(x.s)}`);
+          d.append(eg);
+        }
+        main.append(d);
+      }
+    }
+
+    // ---- the last two weeks
+    main.append(el('h2', null, 'Last two weeks'));
+    if (!Object.keys(days).length) {
+      main.append(el('p', 'muted', 'Daily play is recorded from today on. The chart fills in as the days go by.'));
+    } else {
+      const tot = (k) => Object.values(days[k] || {}).reduce((t, x) => [t[0] + x[0], t[1] + x[1], t[2] + x[2]], [0, 0, 0]);
+      const per = last14.map((d) => tot(dayKey(d)));
+      const most = Math.max(1, ...per.map((t) => t[0]));
+      const chart = el('div', 'days');
+      per.forEach((t, i) => {
+        const d = el('div', 'day');
+        const bar = el('i');
+        bar.style.height = `${Math.max(3, (t[0] / most) * 70)}px`;
+        if (t[0]) bar.style.background = colorFor(t[1] / t[0]);
+        bar.title = t[0] ? `${t[0]} puzzles, ${pct(t[1] / t[0])} first try, ${Math.round(t[2] / 60000)} min` : 'not played';
+        d.append(bar, el('span', null, 'SMTWTFS'[last14[i].getDay()]));
+        chart.append(d);
+      });
+      main.append(chart);
+      const played = per.filter((t) => t[0]);
+      const mins = played.reduce((n, t) => n + t[2], 0) / 60000;
+      main.append(el('p', 'muted', played.length
+        ? `Played ${played.length} of the last 14 days, about ${Math.max(1, Math.round(mins / played.length))} min of puzzle-solving a day. Bar height: puzzles; color: first-try accuracy.`
+        : 'Not played in the last 14 days.'));
+    }
+
+    // ---- every skill
+    main.append(el('h2', null, 'Every skill'));
+    main.append(el('p', 'muted', 'Bar: first-try accuracy over the last 10 tries.'));
+    const shown = E.LEVELS.map((L, g) => [g, ids.filter((id) => E.SKILLS[id].level === L && (g === grade || tried(skills[id])))]).filter(([, l]) => l.length);
+    for (const [g, list] of shown.sort((a, b) => (b[0] === grade) - (a[0] === grade) || b[0] - a[0])) {
+      main.append(el('div', 'grade', GRADES[g] + (g === grade ? ' (playing now)' : g < grade ? ' (review)' : '')));
+      for (const id of list) {
+        const sk = skills[id];
+        const row = el('div', 'skill');
+        const nm = el('div', 'name', label(id));
+        nm.append(el('small', null, tried(sk) ? `${sk.attempts} ${sk.attempts === 1 ? 'try' : 'tries'}` + (secs(sk) ? ` · ${Math.round(secs(sk))} s each` : '') : 'not tried yet'));
+        const bar = el('div', 'bar'), fill = el('i');
+        if (tried(sk)) { fill.style.width = pct(recentAcc(sk)); fill.style.background = colorFor(recentAcc(sk)); }
+        bar.append(fill);
+        const lv = tried(sk) ? E.stretchLevel(sk) : -1;
+        const chip = el('span', 'chip', lv < 0 ? '–' : E.MASTERY[lv]);
+        chip.style.background = lv < 0 ? 'var(--none)' : LEVEL_COLOR[lv];
+        row.append(nm, bar, chip);
+        main.append(row);
+      }
+    }
+
+    // ---- coming back
+    if (review.length) {
+      main.append(el('h2', null, 'Missed problems coming back'));
+      const by = {};
+      for (const x of review) by[x.skillId] = (by[x.skillId] || 0) + 1;
+      const top = Object.keys(by).sort((a, b) => by[b] - by[a]);
+      main.append(el('p', null, `${review.length} missed problem${review.length === 1 ? '' : 's'} waiting, mostly ` +
+        top.slice(0, 3).map((id) => `${lower(id)} (${by[id]})`).join(', ') + '.'));
+      main.append(el('p', 'muted', `The game brings each one back after 1, 3 and 7 days until it's right. ${review.filter((x) => x.due <= Date.now()).length} are due now.`));
+      const box = el('div', 'review');
+      for (const x of review.slice().reverse()) box.append(el('span', null, question(x)));
+      main.append(box);
+    }
+
+    main.append(el('p', 'foot', 'From this device\'s saved games. Mastered: at least 12 tries, 92% right on the first try, and quick (about 15 s or less). The game gives weak skills more often and strong skills bigger numbers.'));
+  }
+
+  function go(d) { if (all.length > 1) { at = (at + d + all.length) % all.length; render(); } }
+  document.getElementById('prev').onclick = () => go(-1);
+  document.getElementById('next').onclick = () => go(1);
+  // Homebase's controller: up/down scroll, left/right switch games.
+  window.LauncherPad = {
+    set(btn, down) {
+      if (!down) return;
+      if (btn === 'up' || btn === 'down') window.scrollBy({ top: (btn === 'down' ? 1 : -1) * 160, behavior: 'smooth' });
+      else if (btn === 'left' || btn === 'right') go(btn === 'right' ? 1 : -1);
+    },
+  };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') go(-1);
+    else if (e.key === 'ArrowRight') go(1);
+  });
+  render();
+})();
+</script>
+</body>
+</html>

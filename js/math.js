@@ -484,49 +484,71 @@ const MathEngine = (() => {
   }
 
   // After a wrong answer: a hint about the likely mistake (Math Quest's rules).
-  function mistakeHint(p, given) {
-    if (p.op === 'or') {
-      if (p.dec && given === Math.min(p.a, p.b)) return 'More digits doesn\'t mean bigger! Compare the tenths first.';
-      return null;
-    }
-    if (p.missing) return null;
+  // What kind of slip a wrong answer is (null: no known pattern). The game says
+  // SLIPS[kind].hint to the child; the grown-ups' progress page groups by SLIPS[kind].group.
+  function mistakeKind(p, given) {
+    if (p.op === 'or') return p.dec && given === Math.min(p.a, p.b) ? 'dec-compare' : null;
+    if (p.missing) return given === p.a + p.total ? 'missing-add' : given === p.total ? 'missing-total' : null;
     if (p.dec) {
-      if (given === tenth(p.answer * 10) || given === tenth(p.answer / 10) || given === Math.round(p.answer * 100) / 100) return 'So close! Check where the decimal point goes.';
+      if (given === tenth(p.answer * 10) || given === tenth(p.answer / 10) || given === Math.round(p.answer * 100) / 100) return 'dec-point';
       // Added or subtracted with the points out of line: 3.5 + 59.9 treated as 3.5 + 599.
       const off = p.op === '+' ? [tenth(p.a + p.b * 10), tenth(p.a * 10 + p.b)] : [tenth(p.a - p.b * 10), tenth(p.a * 10 - p.b)];
-      if (off.includes(given)) return 'Line up the decimal points first, so tenths sit under tenths.';
-      if (Math.abs(given - p.answer) < 1) return 'Almost! Line up the decimal points and try again.';
+      if (off.includes(given)) return 'dec-line';
+      if (Math.abs(given - p.answer) < 1) return 'dec-close';
       return null;
     }
     if (p.op === 'round') {
       const lo = Math.floor(p.a / p.b) * p.b;
-      if (given === lo || given === lo + p.b) return 'Check the digit to the right of the place you\'re rounding to. 5 or more rounds up. 4 or less rounds down.';
-      if (given === p.a) return 'Rounding changes the number to a nearby round number.';
+      if (given === lo || given === lo + p.b) return 'round-way';
+      if (given === p.a) return 'round-same';
       return null;
     }
-    if (p.op === 'frac' && given === p.a) return 'The bottom got bigger, so the top has to grow by the same amount.';
-    if (p.op === 'fracadd' && given === p.a + p.c) return 'Make the bottom numbers match before you add the tops.';
-    if (p.op === 'half' && given === p.a * 2) return 'Half means splitting into 2 equal groups. The answer is smaller.';
-    if (p.op === 'seq' && given === p.seq[2] + 1 && p.step !== 1) return `Look again. It goes up by ${p.step} each time, not 1.`;
+    if (p.op === 'frac' && given === p.a) return 'frac-top';
+    if (p.op === 'fracadd' && given === p.a + p.c) return 'frac-bottom';
+    if (p.op === 'half' && given === p.a * 2) return 'half-double';
+    if (p.op === 'seq' && given === p.seq[2] + 1 && p.step !== 1) return 'seq-step';
     const d = Math.abs(given - p.answer);
     if (d === 0) return null;
-    if (d === 1) return 'So close! You\'re just one off. Count again carefully.';
-    if (p.op === '+' && given === p.a - p.b) return 'Careful! This one\'s adding, not taking away.';
-    if (p.op === '−' && given === p.a + p.b) return 'Careful! This one\'s taking away, not adding.';
-    if (p.op === '×' && given === p.a + p.b) return 'That\'s what you get when you add. This one\'s multiplying!';
+    if (d === 1) return 'off-one';
+    if (p.op === '+' && given === p.a - p.b) return 'add-sub';
+    if (p.op === '−' && given === p.a + p.b) return 'sub-add';
+    if (p.op === '×' && given === p.a + p.b) return 'mult-add';
     if (p.op === '−' && p.a >= 20) {
       // Took the smaller digit from the bigger one in each column instead of borrowing.
       const A = String(p.a), B = String(p.b).padStart(A.length, '0');
       const noBorrow = Number([...A].map((x, i) => Math.abs(Number(x) - Number(B[i]))).join(''));
-      if (given === noBorrow) return 'Careful! When the top digit is smaller, you need to borrow.';
+      if (given === noBorrow) return 'no-borrow';
     }
-    if (p.answer >= 10 && String(given) === String(p.answer).split('').reverse().join('')) {
-      return 'So close! Check the order of your digits.';
-    }
-    if ((p.op === '+' || p.op === '−') && d % 10 === 0 && d < 100) {
-      return p.op === '+' ? 'Check the tens. Did you forget to carry the 1?' : 'Check the tens. Did you remember to borrow?';
-    }
+    if (p.answer >= 10 && String(given) === String(p.answer).split('').reverse().join('')) return 'digit-order';
+    if ((p.op === '+' || p.op === '−') && d % 10 === 0 && d < 100) return p.op === '+' ? 'carry' : 'borrow-tens';
     return null;
+  }
+  const SLIPS = {
+    'dec-compare': { hint: 'More digits doesn\'t mean bigger! Compare the tenths first.', group: 'Decimals' },
+    'dec-point': { hint: 'So close! Check where the decimal point goes.', group: 'Decimals' },
+    'dec-line': { hint: 'Line up the decimal points first, so tenths sit under tenths.', group: 'Decimals' },
+    'dec-close': { hint: 'Almost! Line up the decimal points and try again.', group: 'Decimals' },
+    'round-way': { hint: 'Check the digit to the right of the place you\'re rounding to. 5 or more rounds up. 4 or less rounds down.', group: 'Rounding the wrong way' },
+    'round-same': { hint: 'Rounding changes the number to a nearby round number.', group: 'Rounding the wrong way' },
+    'frac-top': { hint: 'The bottom got bigger, so the top has to grow by the same amount.', group: 'Fractions' },
+    'frac-bottom': { hint: 'Make the bottom numbers match before you add the tops.', group: 'Fractions' },
+    'half-double': { hint: 'Half means splitting into 2 equal groups. The answer is smaller.', group: 'Mixing up the operation' },
+    'seq-step': { hint: '', group: 'Counting by the wrong step' },
+    'missing-add': { hint: 'This one asks how many more. Start at the first number and count up to the total.', group: 'Mystery numbers' },
+    'missing-total': { hint: 'That\'s the total! How many do we add to get there?', group: 'Mystery numbers' },
+    'off-one': { hint: 'So close! You\'re just one off. Count again carefully.', group: 'Off by one' },
+    'add-sub': { hint: 'Careful! This one\'s adding, not taking away.', group: 'Mixing up the operation' },
+    'sub-add': { hint: 'Careful! This one\'s taking away, not adding.', group: 'Mixing up the operation' },
+    'mult-add': { hint: 'That\'s what you get when you add. This one\'s multiplying!', group: 'Mixing up the operation' },
+    'no-borrow': { hint: 'Careful! When the top digit is smaller, you need to borrow.', group: 'Carrying and borrowing' },
+    'digit-order': { hint: 'So close! Check the order of your digits.', group: 'Digits in the wrong order' },
+    carry: { hint: 'Check the tens. Did you forget to carry the 1?', group: 'Carrying and borrowing' },
+    'borrow-tens': { hint: 'Check the tens. Did you remember to borrow?', group: 'Carrying and borrowing' },
+  };
+  function mistakeHint(p, given) {
+    const kind = mistakeKind(p, given);
+    if (kind === 'seq-step') return `Look again. It goes up by ${p.step} each time, not 1.`;
+    return kind ? SLIPS[kind].hint : null;
   }
 
   // ---------------------------------------------------------------- Teach me (step by step)
@@ -985,7 +1007,7 @@ const MathEngine = (() => {
   return {
     SKILLS, MASTERY, LEVELS,
     pickSkill, weakestSkill, gradeSkills, stretchLevel, accuracy,
-    make, twin, fromReview, saveable, tip, mistakeHint, teach, show,
+    make, twin, fromReview, saveable, tip, mistakeHint, mistakeKind, SLIPS, teach, show, fmt,
     TRICKS: ['Count on', 'Make a ten', 'Count back', 'Think adding', 'Column adding', 'Borrowing', 'Skip counting', 'Friendly fives',
       'Think multiplication', 'Find the pattern', 'Tens and ones', 'Split and halve', 'Round on a number line', 'Split and multiply',
       'Long division', 'Grow the fraction', 'Match the bottoms', 'Line up the points', 'The mystery number'],
