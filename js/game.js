@@ -130,10 +130,14 @@
     while (ids.includes(String(n))) n++;
     return String(n);
   }
+  // While a battle is on, saves keep the team as it was before it (leaving mid-battle,
+  // say with the Home button, is as if the battle never happened). What was learned
+  // in it (skills, wrong answers, review problems) is kept: that practice was real.
+  let preBattle = null;
   function writeSave() {
     if (!S || !slot) return;
     try {
-      localStorage.setItem(SLOT_PREFIX + slot, JSON.stringify(S));
+      localStorage.setItem(SLOT_PREFIX + slot, JSON.stringify(preBattle ? { ...S, ...preBattle } : S));
       const ids = slotIds();
       if (ids[0] !== slot) setSlotIds([slot, ...ids.filter((id) => id !== slot)]);
     } catch (e) { /* storage full or blocked */ }
@@ -1908,6 +1912,8 @@
   }
 
   async function battle(foes, opts = {}) {
+    // A golden Legend that slips away this way comes back next time.
+    preBattle = { party: JSON.parse(JSON.stringify(S.party)), goldenReady: !!S.goldenReady || foes.some((f) => f.golden) };
     await encounterFlash();
     await fade(() => {
       mode = 'battle';
@@ -1934,6 +1940,7 @@
       B.ph.remove();
       hideDialog();
       B = null;
+      preBattle = null;
       mode = 'world';
       if (result === 'lose') {
         healAll();
