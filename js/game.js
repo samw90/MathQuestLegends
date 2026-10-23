@@ -1293,6 +1293,7 @@
           } else placePlayer(w.to, w.tx, w.ty, w.dir);
           writeSave();
         });
+        if (w.to === '@return' && S.rivalWait != null && S.party.some(alive)) await rivalRematch();
       }
       busy = false;
       return;
@@ -1961,7 +1962,10 @@
   // Remy's battle in this area, if you haven't won it yet.
   function rivalHere() {
     if (!map().area || !S.party.some(alive)) return -1;
-    return RIVAL.findIndex((r, i) => r.area === map().area && !S.flags['rival' + i]);
+    // Not while Remy is waiting at the Rest Center for a rematch, and not once you
+    // beat him or let him go on ahead.
+    if (S.rivalWait != null) return -1;
+    return RIVAL.findIndex((r, i) => r.area === map().area && !S.flags['rival' + i] && !S.flags['rivalSkip' + i]);
   }
   // The buddy you picked at Professor Pi's table (older saves: the first starter
   // on your team or in the Terminal, even if you've since picked a new buddy).
@@ -2064,8 +2068,45 @@
       const out = route.slice(1);
       const gone = out.findIndex(offScreen);
       await walkNpc(remy, gone < 0 ? out : out.slice(0, gone + 1));
+    } else if (result === 'lose') {
+      // He'll be waiting outside the Rest Center (rivalRematch).
+      S.rivalWait = i;
+      writeSave();
     }
     m.npcs.splice(m.npcs.indexOf(remy), 1);
+  }
+
+  // After you lose to Remy, he waits outside the Rest Center: a rematch with a
+  // rested team, or he goes on ahead and you meet him again at his next stop.
+  async function rivalRematch() {
+    const i = S.rivalWait, m = map();
+    const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [P.x + dx, P.y + dy])
+      .find(([x, y]) => !blocked(x, y) && !(F.x === x && F.y === y) && !m.warps.some((w) => w.x === x && w.y === y));
+    if (!spot) return;
+    const [x, y] = spot;
+    const remy = { x, y, look: 'rival', dir: x > P.x ? 'left' : x < P.x ? 'right' : y > P.y ? 'up' : 'down' };
+    m.npcs.push(remy);
+    P.dir = S.dir = OPPOSITE[remy.dir];
+    sfx('select');
+    await say(['REMY: There you are! Is your team feeling better?']);
+    const again = await yesNo('REMY: Want a rematch with your rested team?');
+    let result = null;
+    if (again) {
+      await say('REMY: Yes! Here I come!');
+      result = await battle(rivalTeam(i), { trainer: 'Remy' });
+      if (result === 'win') {
+        S.flags['rival' + i] = true;
+        S.rivalWait = null;
+        await say(RIVAL[i].win);
+      }
+      // Lost again: he'll be waiting outside the Rest Center next time too.
+    } else {
+      S.flags['rivalSkip' + i] = true;
+      S.rivalWait = null;
+      await say(['REMY: Okay! I\'m going on ahead to practice.', 'See you at the next stop. I\'ll be ready!']);
+    }
+    m.npcs.splice(m.npcs.indexOf(remy), 1);
+    writeSave();
   }
 
   // ---------------------------------------------------------------- route trainers
