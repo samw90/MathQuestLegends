@@ -95,11 +95,11 @@ Skills, number ranges and difficulty follow Math Quest's grade scheme (Common Co
 | Grade 4 | to 10,000 | to 10,000 | rounding big numbers | multi-digit × one digit | dividing by one digit, equal fractions |
 | Grade 5 | decimals | decimals | decimal place value | two-digit × two-digit | long division, adding fractions |
 
-Also from Math Quest: weak skills come up more often, mastered skills stretch to bigger numbers, 15% of problems review earlier grades, Grades 2–4 include short story problems, and missed problems come back after 1, 3 and 7 days.
+Also from Math Quest: weak skills come up more often (each skill's record is halved at 20 tries, so recent tries count most and an early struggle fades), mastered skills stretch to bigger numbers, 15% of problems review earlier grades, Grades 2–4 include short story problems, and missed problems come back after 1, 3 and 7 days.
 
 **Research behind it:** typed answers use retrieval practice; review after 1, 3 and 7 days is spaced practice; wrong-answer hints give specific feedback; pictures (ten-frames, blocks, arrays, number lines, fraction bars) come before symbols; Teach me uses worked examples that fade as a kid gets familiar; number lines build number sense (Siegler & Booth); asking which trick was used prompts self-explanation; and praise names the strategy that worked, not the child ("Making a ten worked!").
 
-On top of that, wild encounters follow the player's needs: while one skill is clearly weak, extra encounters bring the Legend that practices it. As the skill improves, that Legend shows up at higher levels with bigger numbers.
+On top of that, wild encounters follow the player's needs: while a skill is a real struggle lately (under 70% right on the first try over its last 10 tries), 40% of encounters bring the Legend that practices it. As the skill improves, that Legend shows up at higher levels with bigger numbers.
 
 ## For grown-ups
 

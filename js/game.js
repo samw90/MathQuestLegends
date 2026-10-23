@@ -1145,6 +1145,10 @@
 
   function record(p, result, ms) {
     const s = S.skills[p.skillId] || (S.skills[p.skillId] = { attempts: 0, correct: 0, ms: 0, n: 0 });
+    // Like Math Quest: at 20 tries the record is halved, so newer tries count for more
+    // and an early struggle fades. `all` keeps the real number of tries.
+    s.all = (s.all ?? s.attempts) + 1;
+    if (s.attempts >= 20) for (const k of ['attempts', 'correct', 'ms', 'n', 'helped']) if (s[k]) s[k] = Math.round(s[k] / 2);
     s.attempts++;
     if (result === 'first') { s.correct++; s.ms += Math.min(ms, 120000); s.n++; }
     if (result === 'helped') s.helped = (s.helped || 0) + 1; // right after a hint or a second try
@@ -1464,7 +1468,7 @@
 
   // A friendly progress report built from the last 10 tries of each skill.
   async function buddyProgress() {
-    const total = Object.values(S.skills).reduce((n, s) => n + s.attempts, 0);
+    const total = Object.values(S.skills).reduce((n, s) => n + (s.all ?? s.attempts), 0);
     const mine = MathEngine.gradeSkills(S.grade).filter((id) => S.skills[id] && S.skills[id].attempts >= 3);
     if (!mine.length) {
       await say([`${buddyName()}: We're just getting started!`, 'Let\'s solve some puzzles together, and I\'ll keep track.']);
@@ -2232,10 +2236,11 @@
   // Wild Legends match the math the player needs: weak skills come up more
   // often, and a Legend's level grows as its skill is mastered.
   async function wildBattle() {
-    // Focus: while one skill is clearly weak, 40% of encounters target it directly.
-    const weak = MathEngine.weakestSkill(S.grade, S.skills);
-    const ws = S.skills[weak];
-    const focus = ws && ws.attempts >= 3 && MathEngine.stretchLevel(ws) === 0 && Math.random() < 0.4;
+    // Focus: while a skill is a real struggle lately (under 70% on its last 10 tries),
+    // 40% of encounters target it directly. Not in Math Quest; there, the weighting
+    // in pickSkill does it all.
+    const weak = MathEngine.strugglingSkill(S.grade, S.skills);
+    const focus = weak && Math.random() < 0.4;
     const skill = focus ? weak : MathEngine.pickSkill(S.grade, S.skills);
     const area = AREAS[map().area] || AREAS.meadow;
     const sp = area.species[MathEngine.SKILLS[skill].family];

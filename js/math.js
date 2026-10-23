@@ -273,6 +273,22 @@ const MathEngine = (() => {
     return ts[ts.length - 1].skill;
   }
 
+  // The last 10 tries (1 = right on the first try); the whole record before there were any.
+  const recentAccuracy = (s) => { const r = (s && s.recent) || []; return r.length ? r.reduce((a, b) => a + b, 0) / r.length : accuracy(s); };
+
+  // A skill this grade that's a real struggle right now: under 70% right on the first
+  // try over its last 10 tries (at least 5 of them). The lowest one, or null.
+  function strugglingSkill(grade, skills) {
+    let worst = null, low = 0.7;
+    for (const id of gradeSkills(grade)) {
+      const s = skills[id];
+      if (!s || (s.recent || []).length < 5) continue;
+      const a = recentAccuracy(s);
+      if (a < low) { worst = id; low = a; }
+    }
+    return worst;
+  }
+
   // The skill with the lowest accuracy this grade (untried skills count as weak).
   function weakestSkill(grade, skills) {
     let best = null, bestScore = Infinity;
@@ -1006,7 +1022,7 @@ const MathEngine = (() => {
 
   return {
     SKILLS, MASTERY, LEVELS,
-    pickSkill, weakestSkill, gradeSkills, stretchLevel, accuracy,
+    pickSkill, weakestSkill, strugglingSkill, gradeSkills, stretchLevel, accuracy, recentAccuracy,
     make, twin, fromReview, saveable, tip, mistakeHint, mistakeKind, SLIPS, teach, show, fmt,
     TRICKS: ['Count on', 'Make a ten', 'Count back', 'Think adding', 'Column adding', 'Borrowing', 'Skip counting', 'Friendly fives',
       'Think multiplication', 'Find the pattern', 'Tens and ones', 'Split and halve', 'Round on a number line', 'Split and multiply',

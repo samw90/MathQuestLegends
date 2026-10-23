@@ -197,12 +197,15 @@
 
     const ids = Object.keys(E.SKILLS);
     const triedIds = ids.filter((id) => tried(skills[id]));
-    const total = triedIds.reduce((n, id) => n + skills[id].attempts, 0);
+    // `all` is every try; `attempts` and `correct` are halved at 20 (newer tries count more).
+    const triesOf = (sk) => sk.all ?? sk.attempts;
+    const total = triedIds.reduce((n, id) => n + triesOf(skills[id]), 0);
     if (!total) {
       main.append(el('p', 'empty', `${s.name || 'This game'} hasn't solved any puzzles yet.`));
       return;
     }
-    const firsts = triedIds.reduce((n, id) => n + skills[id].correct, 0);
+    // Weighted the game's way: each skill's accuracy times its real number of tries.
+    const firsts = triedIds.reduce((n, id) => n + E.accuracy(skills[id]) * triesOf(skills[id]), 0);
     const thisGrade = E.gradeSkills(grade);
     const mastered = thisGrade.filter((id) => E.stretchLevel(skills[id]) === 2).length;
 
@@ -224,8 +227,10 @@
 
     // ---- summary in words
     const enough = triedIds.filter((id) => skills[id].attempts >= 3);
-    const weak = enough.filter((id) => sure(skills[id]) < 0.6)
-      .sort((a, b) => sure(skills[a]) - sure(skills[b]) || skills[b].attempts - skills[a].attempts)
+    // The game's own rule for extra practice (MathEngine.strugglingSkill): under 70% on
+    // the last 10 tries, with at least 5 of them.
+    const weak = enough.filter((id) => (skills[id].recent || []).length >= 5 && recentAcc(skills[id]) < 0.7)
+      .sort((a, b) => recentAcc(skills[a]) - recentAcc(skills[b]))
       .slice(0, 3);
     // Changing: the last 10 tries are well above or below the whole record.
     const up = enough.filter((id) => !weak.includes(id) && (skills[id].recent || []).length >= 5 && recentAcc(skills[id]) - E.accuracy(skills[id]) >= 0.15);
@@ -240,7 +245,7 @@
     const bits = [];
     if (strong.length) bits.push(`${name} is strongest at ${strong.map(lower).join(', ').replace(/, ([^,]*)$/, ' and $1')}.`);
     if (up.length) bits.push(`${up.map((id, i) => (i ? lower(id) : label(id))).join(' and ')} ${up.length > 1 ? 'are' : 'is'} clicking: much better lately than at first.`);
-    if (weak.length) bits.push(`Still learning ${weak.map(lower).join(' and ')}; the game asks these more often.`);
+    if (weak.length) bits.push(`Still learning ${weak.map(lower).join(' and ')}; the game gives ${weak.length > 1 ? 'the hardest of these' : 'it'} extra practice.`);
     if (!weak.length && !untried.length) bits.push('Nothing is a struggle right now.');
     sum.textContent = bits.join(' ');
     main.append(el('h2', null, 'In a nutshell'), sum);
@@ -279,7 +284,7 @@
       main.append(el('h2', null, 'Needs practice'));
       for (const id of weak) {
         const sk = skills[id];
-        point('weak', label(id), `${recentText(sk)} (${sk.correct} of ${sk.attempts} overall).`, missedLately(id), slipFor(id), atHome(id));
+        point('weak', label(id), `${recentText(sk)} (${pct(E.accuracy(sk))} over time).`, missedLately(id), slipFor(id), atHome(id));
       }
       if (untried.length) point('', `Not tried yet in ${GRADES[grade]}`, untried.map(label).join(', ') + '. These come up as the game goes on.');
     }
@@ -288,12 +293,12 @@
       for (const id of up) {
         const sk = skills[id];
         const back = review.filter((x) => x.skillId === id).length;
-        point('up', `↑ ${label(id)}`, `${pct(E.accuracy(sk))} first-try overall, ${pct(recentAcc(sk))} in the last ${(sk.recent || []).length}. Practice is working.` +
+        point('up', `↑ ${label(id)}`, `${pct(E.accuracy(sk))} first-try over time, ${pct(recentAcc(sk))} in the last ${(sk.recent || []).length}. Practice is working.` +
           (back ? ` ${back} missed one${back === 1 ? ' is' : 's are'} still coming back for review.` : ''));
       }
       for (const id of down) {
         const sk = skills[id];
-        point('down', `↓ ${label(id)}`, `${pct(E.accuracy(sk))} first-try overall, but ${pct(recentAcc(sk))} lately. Might be the bigger numbers the game gives once a skill is strong.`, atHome(id));
+        point('down', `↓ ${label(id)}`, `${pct(E.accuracy(sk))} first-try over time, but ${pct(recentAcc(sk))} lately. Might be the bigger numbers the game gives once a skill is strong.`, atHome(id));
       }
     }
 
@@ -359,12 +364,12 @@
         const sk = skills[id];
         const row = el('div', 'skill');
         const nm = el('div', 'name', label(id));
-        nm.append(el('small', null, tried(sk) ? `${sk.attempts} ${sk.attempts === 1 ? 'try' : 'tries'}` + (secs(sk) ? ` · ${Math.round(secs(sk))} s each` : '') : 'not tried yet'));
+        nm.append(el('small', null, tried(sk) ? `${triesOf(sk)} ${triesOf(sk) === 1 ? 'try' : 'tries'}` + (secs(sk) ? ` · ${Math.round(secs(sk))} s each` : '') : 'not tried yet'));
         const bar = el('div', 'bar'), fill = el('i');
         if (tried(sk)) { fill.style.width = pct(recentAcc(sk)); fill.style.background = colorFor(recentAcc(sk)); }
         bar.append(fill);
         // The game's own rating needs at least 6 tries.
-        const lv = tried(sk) && sk.attempts >= 6 ? E.stretchLevel(sk) : -1;
+        const lv = tried(sk) && triesOf(sk) >= 6 ? E.stretchLevel(sk) : -1;
         const chip = el('span', 'chip', !tried(sk) ? '–' : lv < 0 ? 'Few tries' : E.MASTERY[lv]);
         chip.style.background = lv < 0 ? 'var(--none)' : LEVEL_COLOR[lv];
         row.append(nm, bar, chip);
