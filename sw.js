@@ -38,9 +38,12 @@ self.addEventListener('fetch', (e) => {
     const fresh = req.mode === 'navigate'
       ? fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' })
       : fetch(req, { cache: 'no-cache' });
+    // A server error (the Mac's server down behind Tailscale answers 502) counts
+    // as offline too: use the saved copy if there is one.
+    const saved = () => caches.match(req).then((hit) => hit || (req.mode === 'navigate' ? caches.match('./index.html') : undefined));
     e.respondWith(
-      fresh.then((resp) => save(req, resp))
-        .catch(() => caches.match(req).then((hit) => hit || (req.mode === 'navigate' ? caches.match('./index.html') : undefined)))
+      fresh.then((resp) => (resp.ok || resp.type === 'opaque' ? save(req, resp) : saved().then((hit) => hit || resp)))
+        .catch(saved)
     );
   } else {
     // Fonts: cache first, they never change.
