@@ -150,6 +150,8 @@ To publish it, push to GitHub and turn on GitHub Pages for the `main` branch (Se
 
 **Quality checks:** serve the folder, open `tools/qc.html` and read the report (it runs about 33,000 checks). For the in-game checks, open the game with `?dev`, then in the browser console run `await import('./tools/layout-qc.js'); await layoutQC()` (try phone and tablet sizes) or `await import('./tools/flow-qc.js'); await flowQC()`.
 
+**Dev tools on the Retroid:** MENU → Settings → Dev tools, then the grown-up PIN (Homebase asks for it). It's saved per game, so make a test game and switch it on there; Liam's game stays normal. It shows the same Dev items as `?dev`.
+
 **Dev unlock:** open the game with `?dev` in the address (for example https://samw90.github.io/MathQuestLegends/?dev). MENU → Settings then shows *Dev: unlock everything* (all badges, places, Legends and portals, plus a level 30 team) and *Dev: go to Portal Shrine*. Unlocking changes the save, so export it first to keep a copy.
 
 For testing, open the game with `?dev` in the address to get `MQL.ask(MQL.MathEngine.make('sub-100', 2))` in the browser console, or `?dev&quiz=sub-100&grade=2` to jump straight into practice questions (handy on a phone or simulator).

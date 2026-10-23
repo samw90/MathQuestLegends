@@ -2772,7 +2772,11 @@
 
   async function settingsMenu() {
     for (;;) {
-      const i = await choose([
+      // Dev tools: with ?dev in the address, or switched on in this save. In Homebase
+      // (the Retroid) a grown-up can switch them on with the PIN, e.g. in a test game.
+      const dev = DEV || !!S.devTools;
+      const canSwitch = DEV || !!(window.Launcher && Launcher.askPin);
+      const items = [
         `Grade: ${GRADES[S.grade]}`,
         `Read aloud: ${S.voice ? 'On' : 'Off'}`,
         `Voice: ${currentVoice() ? currentVoice().name.replace(/\s*\(.*\)$/, '') : 'None'}`,
@@ -2780,11 +2784,13 @@
         `Sound: ${soundOn ? 'On' : 'Off'}`,
         `Answers: ${answerLabel()}`,
         `Controls: ${layoutLabel()}`,
-        ...(DEV ? ['Dev: unlock everything'] : []),
-        ...(DEV && !B ? ['Dev: go to Portal Shrine'] : []), // not mid-battle
+        ...(canSwitch ? [`Dev tools: ${S.devTools ? 'On' : 'Off'}`] : []),
+        ...(dev ? ['Dev: unlock everything'] : []),
+        ...(dev && !B ? ['Dev: go to Portal Shrine'] : []), // not mid-battle
         'Back',
-      ], { cls: 'start-menu' });
-      const devItem = !DEV ? -1 : i === 7 ? 0 : i === 8 && !B ? 1 : -1;
+      ];
+      const i = await choose(items, { cls: 'start-menu' });
+      const label = items[i] || 'Back';
       if (i === 0) {
         const g = await choose(GRADES, { cls: 'start-menu', start: S.grade });
         if (g >= 0) S.grade = g;
@@ -2808,12 +2814,18 @@
         layout = LAYOUTS[(LAYOUTS.indexOf(layout) + 1) % LAYOUTS.length];
         try { localStorage.setItem('mql:layout', layout); } catch (e) { /* ignore */ }
         applyLayout();
-      } else if (devItem === 0) {
+      } else if (label.startsWith('Dev tools')) {
+        if (S.devTools) S.devTools = false;
+        else if (await grownUpOk()) {
+          S.devTools = true;
+          await say('Dev tools are on for this game. They\'re here in Settings.');
+        } else await say('Only a grown-up can turn on dev tools.');
+      } else if (label === 'Dev: unlock everything') {
         if (await yesNo('Unlock every badge, place, Legend and portal in this save? (Export your save first to keep a copy.)')) {
           devUnlockAll();
           await say('Done! Everything is unlocked.');
         }
-      } else if (devItem === 1) {
+      } else if (label === 'Dev: go to Portal Shrine') {
         await fade(() => { placePlayer('shrine', 6, 7, 'up'); writeSave(); });
         return 'closed';
       } else {
@@ -2823,7 +2835,7 @@
     }
   }
 
-  // Testing helper (only with ?dev in the address): opens everything in this save.
+  // Testing helper (with ?dev in the address, or Dev tools on): opens everything in this save.
   function devUnlockAll() {
     S.flags.starter = true;
     S.flags.devAll = true;
