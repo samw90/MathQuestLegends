@@ -703,6 +703,8 @@ body:has(.console.side) { align-items: stretch; padding: 0; }
   pointer-events: none;
 }
 .console.side .rev { color: #c9c1dc; }
+/* The same rev in the corner of the title screen. */
+.title-rev { position: absolute; right: 2.4cqw; bottom: 1.6cqw; font-size: 3.4cqw; font-weight: 900; color: #fffdf6; text-shadow: 0 .4cqw 0 #2b2840; opacity: .85; pointer-events: none; }
 
 /* ---------- handheld layout: a game controller with its own buttons ----------
    Used once a gamepad is pressed (Retroid Pocket, Bluetooth pads), with ?handheld

@@ -3196,7 +3196,9 @@
     const big = el('div', 'logo', 'MATH QUEST');
     big.append(el('span', null, 'LEGENDS'));
     logo.append(big);
-    ui.append(logo);
+    // Which version this is, also in controller mode (where the controls and their rev are hidden).
+    const rev = el('div', 'title-rev', typeof REV !== 'undefined' ? `rev ${REV.n}` : '');
+    ui.append(logo, rev);
     const items = [
       ...games.map(({ s }, k) => {
         const st = starterOf(s);
@@ -3207,6 +3209,7 @@
     ];
     const i = await choose(items, { cancel: false, cls: 'title-menu' });
     logo.remove();
+    rev.remove();
     if (i < games.length) {
       slot = games[i].id;
       S = games[i].s;
