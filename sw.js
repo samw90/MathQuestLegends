@@ -41,10 +41,14 @@ self.addEventListener('fetch', (e) => {
     // A server error (the Mac's server down behind Tailscale answers 502) counts
     // as offline too: use the saved copy if there is one.
     const saved = () => caches.match(req).then((hit) => hit || (req.mode === 'navigate' ? caches.match('./index.html') : undefined));
-    e.respondWith(
-      fresh.then((resp) => (resp.ok || resp.type === 'opaque' ? save(req, resp) : saved().then((hit) => hit || resp)))
-        .catch(saved)
-    );
+    const net = fresh.then((resp) => (resp.ok || resp.type === 'opaque' ? save(req, resp) : saved().then((hit) => hit || resp)))
+      .catch(saved);
+    // A network that hangs instead of failing (the Retroid's VPN still "connected"
+    // with no internet behind it) counts as offline after 4 s if there's a saved
+    // copy. The download carries on, so the copy is still brought up to date.
+    const slow = new Promise((res) => setTimeout(res, 4000)).then(saved).then((hit) => hit || net);
+    e.waitUntil(net.catch(() => {}));
+    e.respondWith(Promise.race([net, slow]));
   } else {
     // Fonts: cache first, they never change.
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((resp) => save(req, resp))));
