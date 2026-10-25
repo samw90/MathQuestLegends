@@ -1692,10 +1692,10 @@
       const won = S.flags[b.flag], wonAt = S.badgeGrade[b.flag] ?? -1;
       if (won && (S.badgeWins[b.flag] || []).includes(S.grade)) return say(b.after);
       if (!bossOpen(areaId)) {
-        const n = areaFriends(areaId).length;
-        return say([`${b.name.toUpperCase()}: Hold on! A real Legend trainer knows the Legends around here.`,
-          `Make ${GATE_FRIENDS} friends in ${area.name} first. You have ${n} so far.`,
-          'Your stamp card (MENU → Stamp card) shows who lives here.']);
+        const n = trainersBeaten(areaId), need = trainersNeeded(areaId);
+        return say([`${b.name.toUpperCase()}: Hold on! First, show the trainers around ${area.name} what you can do.`,
+          `Beat ${need} of them, then come back and battle me. You've beaten ${n} so far.`,
+          'Your stamp card (MENU → Stamp card) keeps track.']);
       }
       const tier = BADGE_TIERS[S.grade];
       let lv = area.base;
@@ -2230,8 +2230,9 @@
       }
       return placed;
     }
+    // Three per area if the map has room (the boss wants 3 beaten), else as many as fit.
     let placed = pass(false);
-    if (placed.length < 2) placed = pass(true);
+    if (placed.length < 3) { const more = pass(true); if (more.length > placed.length) placed = more; }
     return placed.map((p, k) => {
       const looks = TRAINER_LOOKS[m.area] || ['kid', 'girl', 'hiker'];
       const look = looks[k % looks.length];
@@ -2288,11 +2289,21 @@
       await walkNpc(n, tiles);
       P.dir = S.dir = OPPOSITE[n.dir];
     }
-    await say([`${n.trainer.name.toUpperCase()}: Hey! You've got Legends too!`, TRAINER_HI[fams[0]], 'Let\'s battle!']);
+    const who = n.trainer.name.toUpperCase(), boss = BOSSES[map().area];
+    await say(S.flags[boss.flag]
+      ? [`${who}: Hey! You've got Legends too!`, TRAINER_HI[fams[0]], 'Let\'s battle!']
+      : [`${who}: Hey! Going to battle ${boss.name}?`, 'You have to get past us trainers first!', TRAINER_HI[fams[0]], 'Let\'s battle!']);
     const result = await battle(trainerTeam(n), { trainer: n.trainer.name });
     if (result === 'win') {
       S.flags['tr:' + n.trainer.id] = true;
       await say([`${n.trainer.name.toUpperCase()}: Wow, you're quick!`, TRAINER_TIP[fams[0]]]);
+      // The stamp that opens this area's boss.
+      const here = map().area;
+      if (here && !S.flags[BOSSES[here].flag] && trainersBeaten(here) === trainersNeeded(here)) {
+        sfx('level');
+        await say([`That's ${trainersNeeded(here)} trainers beaten in ${AREAS[here].name}! Your stamp card got a new stamp.`,
+          `${BOSSES[here].name} is ready to battle you now!`]);
+      }
       writeSave();
     }
     // Back to where they stand (after a loss you're at the Rest Center anyway).
@@ -2307,20 +2318,27 @@
   }
 
   // ---------------------------------------------------------------- the boss gate
-  // A boss only battles once you've made 3 friends among the area's Legends
-  // (Professor Pi's stamp card shows them), so an area gets explored first.
-  const GATE_FRIENDS = 3;
-  const areaFriends = (areaId) => [...new Set(Object.values(AREAS[areaId].species))].filter((sp) => S.caught[sp]);
-  const bossOpen = (areaId) => !!S.flags[BOSSES[areaId].flag] || !!S.flags.devAll || areaFriends(areaId).length >= GATE_FRIENDS;
+  // A boss only battles once you've beaten 3 of the area's route trainers (all of
+  // them where the map only has room for 2), so an area gets played before the
+  // boss. Professor Pi's stamp card keeps track.
+  const GATE_TRAINERS = 3;
+  const areaTrainers = (areaId) => {
+    const m = Object.values(MAPS).find((mm) => mm.area === areaId && mm.wild);
+    return m ? m.npcs.filter((n) => n.trainer) : [];
+  };
+  const trainersNeeded = (areaId) => Math.min(GATE_TRAINERS, areaTrainers(areaId).length);
+  const trainersBeaten = (areaId) => areaTrainers(areaId).filter(trainerBeaten).length;
+  const bossOpen = (areaId) => !!S.flags[BOSSES[areaId].flag] || !!S.flags.devAll || trainersBeaten(areaId) >= trainersNeeded(areaId);
 
-  // Professor Pi's stamp card: the Legends of each area in this world, and whose boss is open.
+  // Professor Pi's stamp card: each area's Legends (friends in color) and trainers
+  // beaten toward its boss.
   function stampCard() {
     sfx('select');
     const w = WORLDS[worldOf(S.map) - 1];
     return panel((box) => {
       box.classList.add('stamps');
       box.append(el('h3', null, `Stamp card · ${w.name}`));
-      box.append(el('p', 'note', `Make ${GATE_FRIENDS} friends in an area and its boss will battle you.`));
+      box.append(el('p', 'note', `Beat ${GATE_TRAINERS} trainers in an area and its boss will battle you.`));
       for (const a of w.areas) {
         const row = el('div', 'srow');
         const visited = Object.keys(MAPS).some((k) => MAPS[k].area === a && (S.visited[k] || S.map === k)) || S.flags[BOSSES[a].flag];
@@ -2334,8 +2352,8 @@
           else img.classList.add('none');
           row.append(img);
         }
-        const won = !!S.flags[BOSSES[a].flag], n = areaFriends(a).length;
-        row.append(el('span', 'stamp' + (won ? ' won' : n >= GATE_FRIENDS ? ' ready' : ''), won ? '★' : n >= GATE_FRIENDS ? '✓' : `${n}/${GATE_FRIENDS}`));
+        const won = !!S.flags[BOSSES[a].flag], n = trainersBeaten(a), need = trainersNeeded(a);
+        row.append(el('span', 'stamp' + (won ? ' won' : n >= need ? ' ready' : ''), won ? '★' : n >= need ? '✓' : `${n}/${need}`));
         box.append(row);
       }
     });
@@ -2507,7 +2525,6 @@
       if (await yesNo([`${nameOf(c)} really likes you!`, 'It wants to come with you. Take it along?'])) {
         c.hp = maxHp(c);
         delete c.skill;
-        const here = map().area, before = here ? areaFriends(here).length : 0;
         S.caught[c.sp] = true;
         if (c.golden) S.goldens[c.sp] = true;
         if (S.party.length < 6) {
@@ -2516,11 +2533,6 @@
         } else {
           S.box.push(c);
           await say(['Your team is full.', `${nameOf(c)} will wait in the Legend Terminal.`, 'There\'s a Terminal in every Rest Center and in Professor Pi\'s lab.']);
-        }
-        // The stamp that opens this area's boss.
-        if (here && !S.flags[BOSSES[here].flag] && before < GATE_FRIENDS && areaFriends(here).length >= GATE_FRIENDS) {
-          sfx('level');
-          await say([`That's ${GATE_FRIENDS} friends from ${AREAS[here].name}! Your stamp card got a new stamp.`, `${BOSSES[here].name} is ready to battle you now!`]);
         }
       } else {
         await say(B.special ? `${nameOf(c)} will wait for you right here.` : `${nameOf(c)} waves goodbye!`);
