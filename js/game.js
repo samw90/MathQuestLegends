@@ -1920,7 +1920,7 @@
       mode = 'battle';
       B = {
         foes, ei: 0, enemy: foes[0], me: S.party.find(alive), trainer: opts.trainer || null, special: opts.special || null,
-        fx: { e: { dx: 0, dy: 0, hide: false }, p: { dx: 0, dy: 0, hide: false } }, idle: true, firstTries: 0,
+        fx: { e: { dx: 0, dy: 0, hide: false }, p: { dx: 0, dy: 0, hide: false } }, idle: true, firstTries: 0, hits: new Map(),
       };
       foes.forEach((f) => { S.seen[f.sp] = true; });
       B.eh = hud('enemy');
@@ -2447,7 +2447,9 @@
     if (S.streak === GOLD_STREAK) await say([`${GOLD_STREAK} in a row on the first try!`, 'Something golden is sparkling in the tall grass...']);
     const mult = r.result === 'first' ? (fast ? 1.5 : 1) : 0.6;
     await say(`${nameOf(B.me)} uses ${move}!`);
+    const before = B.enemy.hp;
     await hurt(B.enemy, damage(40, atkOf(B.me), mult), 'e');
+    B.hits.set(B.me, (B.hits.get(B.me) || 0) + before - B.enemy.hp);
     if (r.result === 'first') await say(fast ? 'Quick thinking! Extra power!' : praiseFor(p));
     else await say('You kept trying and figured it out!');
     if (!alive(B.enemy)) return foeCalmed();
@@ -2481,7 +2483,9 @@
     await faintAnim('p');
     await say(`${nameOf(B.me)} is all tired out!`);
     if (!S.party.some(alive)) {
-      await say(['Your whole team is tired out.', 'You hurry back to the Rest Center.']);
+      await say('Your whole team is tired out.');
+      await helperXp(Math.round(foeXp() / 2), null);
+      await say('You hurry back to the Rest Center.');
       return 'lose';
     }
     let i = await teamPicker('Who should go next?', false, S.party.findIndex(alive));
@@ -2500,9 +2504,11 @@
   async function foeCalmed() {
     await faintAnim('e');
     await say(B.trainer ? `${nameOf(B.enemy)} is all done!` : B.special || B.enemy.golden ? `${B.enemy.golden ? 'The golden ' : ''}${nameOf(B.enemy)} calmed down!` : `The wild ${nameOf(B.enemy)} calmed down!`);
-    const gain = Math.round(B.enemy.lv * 6 * (B.trainer ? 1.5 : 1));
+    const gain = foeXp();
     await gainXp(B.me, gain);
+    await helperXp(gain, B.me);
     B.ei++;
+    B.hits = new Map();
     if (B.ei < B.foes.length) {
       B.enemy = B.foes[B.ei];
       B.fx.e = { dx: 0, dy: 0, hide: false };
@@ -2541,14 +2547,26 @@
     return 'win';
   }
 
-  async function gainXp(c, n) {
+  const foeXp = () => Math.round(B.enemy.lv * 6 * (B.trainer ? 1.5 : 1));
+
+  // Teammates who helped wear the foe down (and then got tired out or swapped)
+  // learn too: a share of the XP for the part of its energy they took.
+  async function helperXp(gain, skip) {
+    for (const [c, dealt] of B.hits) {
+      if (c === skip || !dealt || !S.party.includes(c)) continue;
+      await gainXp(c, Math.max(1, Math.min(gain, Math.round(gain * dealt / maxHp(B.enemy)))), 'helped and got');
+    }
+  }
+
+  async function gainXp(c, n, verb = 'got') {
     c.xp += n;
     updHud();
-    await say(`${nameOf(c)} got ${n} XP!`);
+    await say(`${nameOf(c)} ${verb} ${n} XP!`);
     while (c.xp >= xpNeed(c.lv)) {
       c.xp -= xpNeed(c.lv);
       c.lv++;
-      c.hp = Math.min(maxHp(c), c.hp + 3);
+      // A tired-out Legend still grows, but stays resting until the Rest Center.
+      if (alive(c)) c.hp = Math.min(maxHp(c), c.hp + 3);
       updHud();
       sfx('level');
       await say(`${nameOf(c)} grew to level ${c.lv}!`);
