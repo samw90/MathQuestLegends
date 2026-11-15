@@ -558,6 +558,7 @@ const MathEngine = (() => {
     'mult-add': { hint: 'That\'s what you get when you add. This one\'s multiplying!', group: 'Mixing up the operation' },
     'no-borrow': { hint: 'Careful! When the top digit is smaller, you need to borrow.', group: 'Carrying and borrowing' },
     'digit-order': { hint: 'So close! Check the order of your digits.', group: 'Digits in the wrong order' },
+    'lesson-step': { hint: '', group: 'Teach me steps' }, // a wrong answer on a step of a lesson
     carry: { hint: 'Check the tens. Did you forget to carry the 1?', group: 'Carrying and borrowing' },
     'borrow-tens': { hint: 'Check the tens. Did you remember to borrow?', group: 'Carrying and borrowing' },
   };
@@ -972,8 +973,13 @@ const MathEngine = (() => {
     ] };
   }
 
-  // A Teach me lesson for p. After a kid has seen a lesson twice, the first worked
-  // step is skipped (faded worked examples, Renkl & Atkinson).
+  // A Teach me lesson for p, faded as the kid sees it more (faded worked examples,
+  // Renkl & Atkinson): after 2 lessons on a skill the first worked step is skipped,
+  // after 6 only the last two steps are left, and after 10 it's one prompt: use the
+  // trick on the problem itself.
+  // Steps are typed in Grade 1 up (the game decides). A step with `pick` is a real
+  // either/or (which has more tens, round up or down) and keeps its two buttons;
+  // the others also get `choices` for Kindergarten, which picks instead of typing.
   function teach(p, seen = 0) {
     let lesson;
     if (p.missing) lesson = teachMissing(p);
@@ -1001,8 +1007,33 @@ const MathEngine = (() => {
         default: return null;
       }
     }
-    if (p.story) lesson.intro = `This story is really ${p.equation.replace(' = ?', '')}. ` + lesson.intro;
-    if (seen >= 2 && lesson.steps.length >= 3) {
+    const eq = p.equation || fmt(p);
+    if (p.story) lesson.intro = `This story is really ${eq.replace(' = ?', '')}. ` + lesson.intro;
+    // Explicit choices: two are an either/or; more than two were only there to pick
+    // from, so those steps are typed like the rest.
+    lesson.steps.forEach((s) => {
+      if (s.choices && new Set(s.choices).size === 2) s.pick = true;
+      else delete s.choices;
+    });
+    if (seen >= 10) {
+      const first = lesson.steps[0], last = lesson.steps[lesson.steps.length - 1];
+      const q = p.op === 'or' ? `Which is bigger, ${show(p.a)} or ${show(p.b)}?` : eq;
+      lesson.steps = [{
+        work: [p.op === 'or' ? `${show(p.a)}  or  ${show(p.b)}` : eq],
+        prompt: `Use the "${lesson.title}" trick: ${q}`,
+        answer: p.answer,
+        hint: first.hint,
+        after: last.after,
+        ...(p.op === 'or' ? { choices: [p.a, p.b], pick: true } : {}),
+        ...(p.dec ? { dec: true } : {}),
+      }];
+      lesson.intro = 'You know this trick! Which trick fits? Use it.';
+      lesson.faded = true;
+    } else if (seen >= 6 && lesson.steps.length > 2) {
+      lesson.steps = lesson.steps.slice(-2);
+      lesson.intro = 'You know this trick! Here are the last steps. ' + lesson.intro;
+      lesson.faded = true;
+    } else if (seen >= 2 && lesson.steps.length >= 3) {
       lesson.steps = lesson.steps.slice(1);
       lesson.intro = 'You know this trick! Let\'s skip ahead. ' + lesson.intro;
       lesson.faded = true;
@@ -1010,7 +1041,8 @@ const MathEngine = (() => {
     lesson.steps.forEach((s) => {
       if (!s.choices) {
         const set = new Set([s.answer]);
-        for (const c of shuffle([s.answer + 1, s.answer - 1, s.answer + 2, s.answer >= 20 ? s.answer + 10 : s.answer - 2])) {
+        const near = s.dec && !Number.isInteger(s.answer) ? 0.1 : 1;
+        for (const c of shuffle([s.answer + near, s.answer - near, s.answer + 2 * near, s.answer >= 20 ? s.answer + 10 : s.answer - 2 * near].map((x) => tenth(x)))) {
           if (set.size >= 3) break;
           if (c >= 0) set.add(c);
         }

@@ -435,6 +435,10 @@ body.kb .ans.sel { outline: .9cqw solid var(--accent); outline-offset: .3cqw; }
 .teach .ans { font-size: 6.4cqw; padding: 1cqw 0; }
 .teach .answers { margin-top: 0; }
 .teach .hintbtn { align-self: center; }
+/* Typed lesson steps: a smaller entry than a question's, right under the prompt. */
+.teach .entry { margin: 0 auto; font-size: 8cqw; min-width: 30%; }
+.teach .entry[hidden], .teach .answers[hidden] { display: none; }
+.teach .vis { flex: none; zoom: .7; } /* a smaller picture, so the step still fits */
 
 /* battle hud */
 .hud {
@@ -614,6 +618,9 @@ body.kb .ans.sel { outline: .9cqw solid var(--accent); outline-offset: .3cqw; }
   .start { font-size: 18px; padding: 10px 34px; }
   .keypad { max-width: 560px; gap: 14px; }
   .keypad .key { height: 70px; font-size: 34px; border-radius: 18px; }
+  /* Grade 5's fifth row (✓ on its own) has to fit too. */
+  .keypad.dec { gap: 10px; }
+  .keypad.dec .key { height: 50px; font-size: 30px; }
   .keys { font-size: 15px; }
 }
 

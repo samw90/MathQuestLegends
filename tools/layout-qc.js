@@ -43,8 +43,8 @@ window.layoutQC = async function () {
     press('x'); // open the hint (X is the B button): tip, picture and bubble
     await wait(450);
     if (box.querySelector('.bubble').hidden) issues.push(`${name}: the hint didn't open`);
-    const typing = !!box.querySelector('.entry');
-    const target = typing ? box.querySelector('.entry') : box.querySelector('.answers');
+    const typing = !!box.querySelector('.entry:not([hidden])');
+    const target = typing ? box.querySelector('.entry:not([hidden])') : box.querySelector('.answers');
     if (!visibleIn(target, box)) issues.push(`${name}: answer ${typing ? 'box' : 'buttons'} out of view after the hint`);
     const hb = box.querySelector('.hintbtn');
     if (hb && !visibleIn(hb, box)) issues.push(`${name}: Teach me button out of view after the hint`);
@@ -83,12 +83,12 @@ window.layoutQC = async function () {
     const box = document.querySelector('.teach');
     if (!box) { issues.push(`${name}: the lesson didn't open`); continue; }
     const cur = MQL.lesson, s = cur && cur.lesson.steps[cur.step];
-    const entry = box.querySelector('.entry'), prompt = box.querySelector('.prompt'), next = box.querySelector('.hintbtn');
+    const entry = box.querySelector('.entry:not([hidden])'), prompt = box.querySelector('.prompt'), next = box.querySelector('.hintbtn');
     if (grade > 0 && !entry) issues.push(`${name}: no typed entry in the lesson step`);
     if (!s) { issues.push(`${name}: MQL.lesson is missing`); continue; }
     const shows = (x) => x && visibleIn(x, box) && inView(x);
     if (entry) {
-      typeIn(s.answer + 1); await wait(300); typeIn(s.answer + 1); await wait(500);
+      typeIn(s.answer + 1); await wait(800); typeIn(s.answer + 1); await wait(800);
       if (!shows(prompt) || !shows(entry)) issues.push(`${name}: prompt or entry out of view after two misses`);
       for (const k of document.querySelectorAll('.keypad .key')) if (k.offsetParent && !inView(k)) { issues.push(`${name}: keypad off screen`); break; }
       if (s.dec && document.querySelector('.keypad .key.dot').offsetParent === null) issues.push(`${name}: no decimal point key`);

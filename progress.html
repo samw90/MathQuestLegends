@@ -257,7 +257,9 @@
       for (const l of lines) if (l) d.append(typeof l === 'string' ? el('p', null, l) : l);
       main.append(d);
     };
-    const slips = s.slips || [];
+    // Wrong steps inside Teach me lessons are counted under "Teach me", not with the answers.
+    const allSlips = s.slips || [];
+    const slips = allSlips.filter((x) => x.k !== 'lesson-step');
     const slipFor = (id) => {
       const counts = {};
       for (const x of slips) if (x.s === id && x.k) counts[x.k] = (counts[x.k] || 0) + 1;
@@ -326,6 +328,21 @@
         }
         main.append(d);
       }
+    }
+
+    // ---- Teach me
+    const lessonLog = s.lessonLog || Object.fromEntries(Object.entries(s.lessons || {}).map(([id, n]) => [id, { opened: n, shown: 0 }]));
+    const taught = Object.keys(lessonLog).filter((id) => E.SKILLS[id] && lessonLog[id].opened).sort((a, b) => lessonLog[b].opened - lessonLog[a].opened);
+    if (taught.length) {
+      main.append(el('h2', null, 'Teach me'));
+      const opened = taught.reduce((n, id) => n + lessonLog[id].opened, 0), shownAll = taught.reduce((n, id) => n + (lessonLog[id].shown || 0), 0);
+      const stepSlips = allSlips.filter((x) => x.k === 'lesson-step').length;
+      main.append(el('p', null, `Lessons: ${opened} opened, ${shownAll} needed the answer shown.` + (stepSlips ? ` ${stepSlips} of the last ${allSlips.length} wrong answers were on lesson steps.` : '')));
+      for (const id of taught) {
+        const x = lessonLog[id];
+        main.append(el('p', 'muted', `${label(id)}: ${x.opened} opened, ${x.shown || 0} needed the answer shown.`));
+      }
+      main.append(el('p', 'muted', 'Each lesson step needs an answer: after two misses the buddy shows the step worked out and it is typed again. Answers shown are counted from 2026-11-15 on.'));
     }
 
     // ---- the last two weeks

@@ -76,6 +76,7 @@
       party: [], box: [], sidekick: null,
       flags: {}, seen: {}, caught: {},
       skills: {}, // per math skill: { attempts, correct, ms, n }
+      lessonLog: {}, // per skill: Teach me lessons { opened, shown } (shown: steps where the answer had to be shown)
       review: [], // missed problems that come back later
       days: {}, // for the grown-ups' progress page: 'YYYY-MM-DD' -> skill -> [tries, first tries, ms]
       slips: [], // for the progress page: the last 60 wrong answers
@@ -98,6 +99,9 @@
     for (const f of BADGE_FLAGS) if (f in s.badgeGrade && !s.badgeWins[f]) s.badgeWins[f] = [s.badgeGrade[f]];
     s.goldens = s.goldens && typeof s.goldens === 'object' ? s.goldens : {};
     s.streak = Number(s.streak) || 0;
+    // Teach me: lessons opened per skill (from the older count) and steps where the answer was shown.
+    s.lessonLog = s.lessonLog && typeof s.lessonLog === 'object' ? s.lessonLog : {};
+    for (const [id, n] of Object.entries(s.lessons || {})) if (!s.lessonLog[id]) s.lessonLog[id] = { opened: Number(n) || 0, shown: 0 };
     return s;
   }
   // Several games on one device (brothers and sisters, or a fresh start), each in
@@ -890,8 +894,15 @@
       const setEntry = () => { entry.textContent = typed || '?'; entry.classList.toggle('empty', !typed); };
       box.append(bubble, typing ? entry : grid, foot);
 
-      let sel = 0, tries = 0, hints = 0, locked = false;
+      // Choice questions: on a controller nothing is picked until the D-pad moves, and
+      // A or 1-4 do nothing for the first half second (a press meant for the line
+      // before must not answer). Taps aren't held back.
+      let sel = !typing && padSeen ? -1 : 0, tries = 0, hints = 0, locked = false, tryFirst = false;
       const t0 = performance.now();
+      let guardUntil = t0 + 500;
+      const twoChoice = !typing && p.choices.length === 2;
+      // A skill whose lesson has been opened 5 times: Teach me waits for one try.
+      const familiar = ((S.lessonLog || {})[p.skillId] || {}).opened >= 5;
       const btns = typing ? [] : p.choices.map((c, i) => {
         const b = el('button', 'ans', MathEngine.show(c));
         b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); answer(i); });
@@ -900,6 +911,7 @@
       });
       const live = () => btns.map((b, i) => i).filter((i) => !btns[i].disabled);
       const draw = () => btns.forEach((b, i) => b.classList.toggle('sel', i === sel));
+      const guarded = () => performance.now() < guardUntil;
 
       const finish = (result) => {
         locked = true;
@@ -914,21 +926,34 @@
         handler = null;
         hideKeypad();
         box.remove();
-        S.lessons = S.lessons || {};
-        const seen = S.lessons[p.skillId] || 0;
-        S.lessons[p.skillId] = seen + 1;
+        // Lessons opened and steps where the answer had to be shown, per skill
+        // (S.lessons is the older count, kept for older copies of the game).
+        S.lessonLog = S.lessonLog || {};
+        const log = S.lessonLog[p.skillId] || (S.lessonLog[p.skillId] = { opened: 0, shown: 0 });
+        const seen = log.opened;
+        log.opened++;
+        S.lessons = { ...(S.lessons || {}), [p.skillId]: log.opened };
         const lesson = MathEngine.teach(p, seen);
         let lead = `${buddyName()}: Your turn! Try one just like it.`;
         if (lesson) {
-          await teachPanel(lesson);
+          const mode = S.answerMode || 'auto';
+          const r = await teachPanel(lesson, { typed: mode === 'type' || (mode === 'auto' && S.grade > 0), visual: p.visual, skill: p.skillId });
+          log.shown += r.shown;
           // Naming the strategy helps it stick (self-explanation). Grade 1 and up.
+          // A wrong pick shows the right name and asks once more (not scored).
           if (S.grade > 0) {
             const others = MathEngine.TRICKS.filter((x) => x !== lesson.title).sort(() => Math.random() - 0.5).slice(0, 2);
             const opts = [lesson.title, ...others].sort(() => Math.random() - 0.5);
             const i = await choose(opts, { cls: 'start-menu', head: 'Which trick did we use?', cancel: false });
-            lead = opts[i] === lesson.title
-              ? `${buddyName()}: Yes! ${lesson.title}. Use it on this one!`
-              : `${buddyName()}: We used "${lesson.title}". Try it on this one!`;
+            if (opts[i] === lesson.title) lead = `${buddyName()}: Yes! ${lesson.title}. Use it on this one!`;
+            else {
+              await say(`${buddyName()}: We used "${lesson.title}".`);
+              const again = [lesson.title, opts[i]].sort(() => Math.random() - 0.5);
+              const j = await choose(again, { cls: 'start-menu', head: 'So which trick did we use?', cancel: false });
+              lead = again[j] === lesson.title
+                ? `${buddyName()}: That's it! ${lesson.title}. Use it on this one!`
+                : `${buddyName()}: It was "${lesson.title}". Try it on this one!`;
+            }
           }
         }
         const t = MathEngine.twin(p);
@@ -947,6 +972,11 @@
           if (!canTeach) hintBtn.remove();
           else hintBtn.textContent = '🦉 Teach me';
         } else if (canTeach) {
+          if (familiar && tries === 0) {
+            tryFirst = true;
+            sayBubble('You know this trick. Have one try, then I\'ll help.');
+            return;
+          }
           teachThenTwin();
         }
       }
@@ -974,7 +1004,14 @@
           btns[i].classList.add('wrong');
           btns[i].disabled = true;
         }
-        if (tries === 1) {
+        // Asked to try first: a wrong try opens the lesson straight away.
+        if (tryFirst && canTeach) {
+          locked = true;
+          await sleep(700);
+          return teachThenTwin();
+        }
+        // Two choices: after one wrong pick the other is the answer, so it's a miss.
+        if (tries === 1 && !twoChoice) {
           showVisual();
           sayBubble(MathEngine.mistakeHint(p, value) || (p.visual ? 'Almost! Look at the picture and give it another try.' : 'Almost! Give it another try. You\'ve got this!'));
           if (typing) {
@@ -985,14 +1022,16 @@
             typed = '';
             setEntry();
           } else {
-            sel = live()[0];
+            sel = padSeen ? -1 : live()[0];
+            guardUntil = performance.now() + 500;
             draw();
           }
           return;
         }
-        // Second miss: show the answer and offer a lesson.
+        // Second miss (or a two-choice miss): show the answer and offer a lesson.
         locked = true;
         hush();
+        showVisual();
         if (typing) {
           hideKeypad();
           await sleep(500);
@@ -1039,12 +1078,13 @@
       handler = (btn) => {
         const ids = live(), n = btns.length;
         if (btn === 'b') return hint();
-        if (btn === 'a') return answer(sel);
-        if (/^n[1-4]$/.test(btn)) { const i = Number(btn[1]) - 1; if (i < n) answer(i); return; }
+        if (btn === 'a') { if (!guarded() && sel >= 0) answer(sel); return; }
+        if (/^n[1-4]$/.test(btn)) { const i = Number(btn[1]) - 1; if (i < n && !guarded()) answer(i); return; }
         const step = { left: -1, right: 1, up: -1, down: 1 }[btn];
         if (!step) return;
         let next = sel;
-        for (let k = 0; k < n; k++) { next = (next + step + n) % n; if (ids.includes(next)) break; }
+        if (sel < 0) next = ids[0];
+        else for (let k = 0; k < n; k++) { next = (next + step + n) % n; if (ids.includes(next)) break; }
         sel = next;
         sfx('move');
         draw();
@@ -1053,7 +1093,15 @@
   }
 
   // Step-by-step lesson from the buddy (Math Quest's "Teach me" tutor).
-  function teachPanel(lesson) {
+  // Every step needs an answer the child gives. Steps are typed on the keypad when
+  // questions are (Grade 1 up); real either/or steps and Kindergarten pick.
+  //   1st miss on a typed step: the step's hint and the picture; the entry clears.
+  //   2nd miss (1st on a choice step): the step worked out, then the child gives
+  //   that answer to go on. Wrong choices never drop out, so they can't be
+  //   eliminated down to the right one. Resolves to { misses, shown, steps }.
+  let currentLesson = null; // { lesson, step }, for the test tools
+  function teachPanel(lesson, opts = {}) {
+    const { typed = false, visual = null, skill = null } = opts;
     return new Promise((res) => {
       const box = el('div', 'box teach');
       const head = el('div', 'qhead');
@@ -1061,76 +1109,163 @@
       const intro = el('p', 'intro', lesson.intro);
       const work = el('pre', 'work');
       const prompt = el('p', 'prompt');
-      head.append(hearButton(() => `${intro.hidden ? '' : intro.textContent} ${prompt.textContent}`));
+      head.append(hearButton(() => `${intro.hidden ? '' : intro.textContent} ${prompt.textContent} ${note.textContent}`));
       const grid = el('div', 'answers three');
+      const entry = el('div', 'entry empty', '?');
       const note = el('p', 'note');
       const next = el('button', 'hintbtn', 'Next ▶');
       next.type = 'button';
-      box.append(head, intro, work, prompt, grid, note, next);
+      box.append(head, intro, work, prompt, grid, entry, note, next);
       ui.append(box);
+      let visEl = null;
+      const showPicture = () => {
+        if (visEl || !visual) return;
+        visEl = renderVisual(visual);
+        if (visEl) work.after(visEl);
+      };
 
-      let step = 0, sel = 0, solved = false, btns = [];
+      let step = 0, sel = 0, solved = false, btns = [], typing = false, typedVal = '', busyUntil = 0;
+      let misses = 0, shown = 0, stepMisses = 0, stepShown = false;
+      currentLesson = { lesson, step: 0 };
+      const setEntry = () => { entry.textContent = typedVal || '?'; entry.classList.toggle('empty', !typedVal); };
+      const draw = () => btns.forEach((b, i) => b.classList.toggle('sel', i === sel));
       function show() {
         const s = lesson.steps[step];
+        currentLesson.step = step;
         solved = false;
+        stepMisses = 0;
+        stepShown = false;
         intro.hidden = step > 0;
         work.textContent = s.work.join('\n');
         prompt.textContent = s.prompt;
         note.textContent = '';
         next.hidden = true;
         grid.textContent = '';
-        const longest = Math.max(...s.choices.map((c) => MathEngine.show(c).length));
-        grid.className = 'answers ' + (s.choices.length === 2 || longest >= 7 ? 'two' : 'three') + (longest >= 9 ? ' xlong' : longest >= 6 ? ' long' : '');
+        btns = [];
+        typing = typed && !s.pick;
+        entry.hidden = !typing;
+        grid.hidden = typing;
+        entry.className = 'entry empty';
+        typedVal = '';
+        setEntry();
+        if (typing) {
+          showKeypad(onKey, !!s.dec);
+        } else {
+          hideKeypad();
+          const longest = Math.max(...s.choices.map((c) => MathEngine.show(c).length));
+          grid.className = 'answers ' + (s.choices.length === 2 || longest >= 7 ? 'two' : 'three') + (longest >= 9 ? ' xlong' : longest >= 6 ? ' long' : '');
+          btns = s.choices.map((c, i) => {
+            const b = el('button', 'ans', MathEngine.show(c));
+            b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); pickStep(i); });
+            grid.append(b);
+            return b;
+          });
+          // On a controller nothing is picked until the D-pad moves.
+          sel = padSeen ? -1 : 0;
+          draw();
+        }
         box.scrollTop = 0;
-        btns = s.choices.map((c, i) => {
-          const b = el('button', 'ans', MathEngine.show(c));
-          b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); pickStep(i); });
-          grid.append(b);
-          return b;
-        });
-        sel = 0;
-        draw();
         speak((step === 0 ? lesson.intro + ' ' : '') + s.prompt);
       }
-      const draw = () => btns.forEach((b, i) => b.classList.toggle('sel', i === sel));
+      function solve() {
+        const s = lesson.steps[step];
+        solved = true;
+        if (typing) {
+          entry.classList.remove('wrong');
+          entry.classList.add('right');
+          cursor = keyAt('ok'); // A (the key under the cursor) now goes on
+          drawCursor();
+        }
+        btns.forEach((b) => { b.disabled = true; });
+        note.textContent = '✓ ' + s.after;
+        next.hidden = false;
+        next.textContent = step === lesson.steps.length - 1 ? 'Done ✓' : 'Next ▶';
+        next.scrollIntoView({ block: 'nearest' });
+        sfx('good');
+        speak(s.after);
+      }
+      function miss(given) {
+        const s = lesson.steps[step];
+        misses++;
+        stepMisses++;
+        S.slips = [...(S.slips || []), { s: skill, q: s.prompt, g: given, a: s.answer, k: 'lesson-step', t: Date.now() }].slice(-60);
+        sfx('bad');
+        showPicture();
+        let text;
+        if (typing && stepMisses === 1) text = '💡 ' + s.hint;
+        else {
+          if (!stepShown) { stepShown = true; shown++; }
+          const ans = MathEngine.show(s.answer);
+          text = `🦉 It's ${ans}. ${s.after} ${typing ? 'Type' : 'Pick'} ${ans} to go on.`;
+        }
+        note.textContent = text;
+        speak(text);
+        note.scrollIntoView({ block: 'nearest' });
+      }
+      function check(value) {
+        const s = lesson.steps[step];
+        if (value === s.answer) return solve();
+        miss(value);
+        entry.classList.add('wrong');
+        busyUntil = performance.now() + 600;
+        setTimeout(() => { if (solved) return; entry.classList.remove('wrong'); typedVal = ''; setEntry(); }, 600);
+      }
+      function onKey(k) {
+        if (solved) { if (k === 'ok') go(); return; }
+        if (performance.now() < busyUntil) return;
+        const s = lesson.steps[step];
+        if (k === 'ok') { if (typedVal && typedVal !== '.') check(Number(typedVal)); return; }
+        if (k === 'del') typedVal = typedVal.slice(0, -1);
+        else if (k === '.') { if (!s.dec || typedVal.includes('.')) return; typedVal = (typedVal || '0') + '.'; }
+        else if (typedVal.length < 7) typedVal = (typedVal === '0' ? '' : typedVal) + k;
+        sfx('move');
+        setEntry();
+      }
       function pickStep(i) {
-        if (solved || btns[i].disabled) return;
+        if (solved || !btns[i] || performance.now() < busyUntil) return;
         const s = lesson.steps[step];
         if (s.choices[i] === s.answer) {
-          solved = true;
           btns[i].classList.add('right');
-          btns.forEach((b) => { b.disabled = true; });
-          note.textContent = '✓ ' + s.after;
-          next.hidden = false;
-          next.textContent = step === lesson.steps.length - 1 ? 'Done ✓' : 'Next ▶';
-          next.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-          sfx('good');
-          speak(s.after);
-        } else {
-          btns[i].classList.add('wrong');
-          btns[i].disabled = true;
-          note.textContent = '💡 ' + s.hint;
-          sfx('bad');
-          speak(s.hint);
+          return solve();
         }
+        // A wrong pick shows the step worked out. The buttons rest a moment, then
+        // all of them come back: picking the shown answer is what goes on.
+        miss(s.choices[i]);
+        btns[i].classList.add('wrong');
+        btns.forEach((b) => { b.disabled = true; });
+        busyUntil = performance.now() + 800;
+        setTimeout(() => {
+          if (solved) return;
+          btns.forEach((b) => { b.disabled = false; b.classList.remove('wrong'); });
+          sel = padSeen ? -1 : sel;
+          draw();
+        }, 800);
       }
       function go() {
         if (!solved) return;
         sfx('blip');
         if (++step >= lesson.steps.length) {
+          hideKeypad();
           handler = null;
           box.remove();
-          res();
+          currentLesson = null;
+          res({ misses, shown, steps: lesson.steps.length });
         } else show();
       }
       next.addEventListener('pointerdown', (e) => { e.preventDefault(); go(); });
       handler = (btn) => {
         if (solved && (btn === 'a' || btn === 'b')) return go();
+        if (typing) {
+          // B (X or Y on a controller) repeats the step's hint; A checks what's typed.
+          if (btn === 'b') { const s = lesson.steps[step]; showPicture(); note.textContent = '💡 ' + s.hint; speak(s.hint); }
+          else if (btn === 'a') onKey('ok');
+          return;
+        }
         const n = btns.length;
-        if (btn === 'a') return pickStep(sel);
+        if (btn === 'a') { if (sel >= 0) pickStep(sel); return; }
         if (/^n[1-3]$/.test(btn)) { const i = Number(btn[1]) - 1; if (i < n) pickStep(i); return; }
-        if (btn === 'left' || btn === 'up') sel = (sel + n - 1) % n;
-        else if (btn === 'right' || btn === 'down') sel = (sel + 1) % n;
+        if (btn === 'left' || btn === 'up') sel = sel < 0 ? 0 : (sel + n - 1) % n;
+        else if (btn === 'right' || btn === 'down') sel = sel < 0 ? 0 : (sel + 1) % n;
         else return;
         sfx('move');
         draw();
@@ -2822,8 +2957,10 @@
       const i = await choose(items, { cls: 'start-menu' });
       const label = items[i] || 'Back';
       if (i === 0) {
-        const g = await choose(GRADES, { cls: 'start-menu', start: S.grade });
-        if (g >= 0) S.grade = g;
+        if (await grownUpHere()) {
+          const g = await choose(GRADES, { cls: 'start-menu', start: S.grade });
+          if (g >= 0) S.grade = g;
+        } else await say('Only a grown-up can change the grade.');
       } else if (i === 1) {
         S.voice = !S.voice;
         if (S.voice) speak('Okay! I\'ll read things out loud now.');
@@ -2838,8 +2975,10 @@
         soundOn = !soundOn;
         try { localStorage.setItem('mql:sound', soundOn ? 'on' : 'off'); } catch (e) { /* ignore */ }
       } else if (i === 5) {
-        const modes = ['auto', 'type', 'pick'];
-        S.answerMode = modes[(modes.indexOf(S.answerMode || 'auto') + 1) % modes.length];
+        if (await grownUpHere()) {
+          const modes = ['auto', 'type', 'pick'];
+          S.answerMode = modes[(modes.indexOf(S.answerMode || 'auto') + 1) % modes.length];
+        } else await say('Only a grown-up can change how answers work.');
       } else if (i === 6) {
         layout = LAYOUTS[(LAYOUTS.indexOf(layout) + 1) % LAYOUTS.length];
         try { localStorage.setItem('mql:layout', layout); } catch (e) { /* ignore */ }
@@ -3296,6 +3435,12 @@
     });
   }
 
+  // Grade and Answers in Settings: the PIN in Homebase, elsewhere a question first.
+  async function grownUpHere() {
+    if (window.Launcher && Launcher.askPin) return grownUpOk();
+    return yesNo('Is a grown-up with you?');
+  }
+
   async function newGame() {
     const name = await askName();
     S = newState(name, 0);
@@ -3325,7 +3470,7 @@
   title();
 
   // Exposed for debugging in the browser console.
-  window.MQL = { get state() { return S; }, get problem() { return currentProblem; }, MathEngine };
+  window.MQL = { get state() { return S; }, get problem() { return currentProblem; }, get lesson() { return currentLesson; }, MathEngine };
   // Test hook (only with ?dev in the address): show any problem, e.g. MQL.ask(MathEngine.make('sub-100', 2)).
   if (/[?&]dev\b/.test(location.search)) {
     window.MQL.ask = ask;
@@ -3345,6 +3490,8 @@
       S.sidekick = 'sproutle';
       ui.textContent = '';
       handler = null;
+      hideKeypad();
+      currentLesson = null;
       return S;
     };
   }

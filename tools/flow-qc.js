@@ -48,13 +48,13 @@ window.flowQC = async function () {
       const cur = MQL.lesson || { lesson: fallback, step: steps };
       const s = cur.lesson.steps[cur.step];
       const next = box.querySelector('.hintbtn');
-      const entry = box.querySelector('.entry');
+      const entry = box.querySelector('.entry:not([hidden])');
       const note = () => (box.querySelector('.note') || {}).textContent || '';
       const shown = E.show(s.answer);
       if (entry) {
         for (let k = 0; k < 3; k++) {
           typeIn(s.answer + 1);
-          await wait(250);
+          await wait(800); // a wrong answer shows for a moment before the entry clears
           if (!next.hidden) { issues.push(`${skill}: a wrong typed answer finished step ${steps}`); break; }
           if (k === 1 && !note().includes(shown)) issues.push(`${skill}: two misses on step ${steps} didn't show the answer (${note()})`);
         }
@@ -67,9 +67,9 @@ window.flowQC = async function () {
           for (const b of btns.filter((x) => valOf(x) !== s.answer)) { tap(b); await wait(120); }
         }
         if (!next.hidden) issues.push(`${skill}: picking only wrong choices finished step ${steps}`);
-        if (btns.length > 2 && btns.some((b) => b.disabled && b.classList.contains('wrong'))) issues.push(`${skill}: wrong choices drop out, so the last one left is right (step ${steps})`);
         if (!note().includes(shown)) issues.push(`${skill}: a wrong pick on step ${steps} didn't show the answer (${note()})`);
-        await wait(1000);
+        await wait(1000); // after a wrong pick the buttons rest a moment
+        if (btns.length > 2 && btns.some((b) => b.disabled)) issues.push(`${skill}: wrong choices drop out, so the last one left is right (step ${steps})`);
         const right = [...box.querySelectorAll('.ans')].find((b) => valOf(b) === s.answer);
         if (right) tap(right);
       }
