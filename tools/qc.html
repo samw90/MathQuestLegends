@@ -214,7 +214,7 @@ suite('Math problems', ({ check, bad }) => {
   const fail = (key, msg) => { if (!seenFail.has(key)) { seenFail.add(key); bad(msg); } };
   const renderable = (v) => {
     if (!v) return true;
-    if (v.kind === 'tenframe') return (v.mode === 'add' ? v.a + v.b : v.a) <= 20;
+    if (v.kind === 'tenframe') return (v.mode === 'sub' ? v.a : v.a + v.b) <= 20;
     if (v.kind === 'baseten') return v.a < 100 && v.b < 100;
     if (v.kind === 'array') return v.rows <= 10 && v.cols <= 10;
     if (v.kind === 'numberline') { const n = Math.round((v.to - v.from) / v.step); return n >= 1 && n <= 20 && v.marks.every((m) => m.at >= v.from && m.at <= v.to); }
@@ -317,6 +317,127 @@ suite('Math problems', ({ check, bad }) => {
     const target = E.gradeSkills(grade).slice(-1)[0];
     weak[target] = { attempts: 10, correct: 2, ms: 1, n: 1 };
     check(E.weakestSkill(grade, weak) === target, `G${grade}: weakestSkill misses ${target}`);
+  }
+});
+
+// ------------------------------------------------------------- Lessons, stretching and review (QC plan, 2026-11-15)
+suite('Lessons, stretching and review', ({ check, bad }) => {
+  const E = MathEngine;
+  const statsFor = (lvl) => lvl === 1 ? { attempts: 10, correct: 9, ms: 50000, n: 10 } : { attempts: 20, correct: 20, ms: 60000, n: 20 };
+  const seenFail = new Set();
+  const fail = (key, msg) => { if (!seenFail.has(key)) { seenFail.add(key); bad(msg); } };
+  const nums = (t) => (String(t).replace(/(\d),(\d)/g, '$1$2').match(/\d+(\.\d+)?/g) || []).map(Number);
+  const gradeOf = (id) => E.LEVELS.indexOf(E.SKILLS[id].level);
+  // The review key: the engine's, or the old one (a + op + b) so this check shows the clash.
+  const keyOf = E.reviewKey || ((p) => `${p.a}${p.op}${p.b}`);
+  const keys = new Map();
+  // The in-grade stretch table (plan A3).
+  const TABLE = {
+    'add-10': (p, lvl) => p.a + p.b <= (lvl === 1 ? 12 : 15),
+    'sub-10': (p, lvl) => p.a <= (lvl === 1 ? 12 : 15),
+    'add-20': (p, lvl) => {
+      if (!p.stretched) return p.a + p.b <= 20;
+      const small = Math.min(p.a, p.b), big = Math.max(p.a, p.b);
+      if (small === 10) return big + 10 <= (lvl === 1 ? 49 : 50);
+      if (small > 9 || big + small > (lvl === 1 ? 39 : 50)) return false;
+      return lvl === 2 || (big % 10) + small <= 9; // level 1: no new ten
+    },
+    'sub-20': (p, lvl) => {
+      if (!p.stretched) return p.a <= 20;
+      if (p.b === 10) return p.a <= 50;
+      return p.b <= 9 && p.a <= 50 && (lvl === 2 || p.b <= p.a % 10); // level 1: inside the decade
+    },
+    'mult-facts': (p, lvl) => Math.max(p.a, p.b) <= (lvl === 1 ? 11 : 12) && Math.min(p.a, p.b) <= 10,
+  };
+  for (const skill of Object.keys(E.SKILLS)) {
+    const grade = gradeOf(skill);
+    for (let lvl = 0; lvl < 3; lvl++) for (let i = 0; i < 200; i++) {
+      const p = E.make(skill, grade, lvl ? { [skill]: statsFor(lvl) } : {});
+      const tag = `${skill} lvl${lvl}`;
+      // Lessons rebuilt from the review bank (A5), plain and faded.
+      const back = E.fromReview(JSON.parse(JSON.stringify(E.saveable(p))));
+      for (const seen of [0, 2, 6, 10]) {
+        const L = E.teach(back, seen);
+        if (L && /undefined|NaN/.test(JSON.stringify(L))) fail(tag + 'revl' + seen, `${tag}: review lesson for ${back.text} is broken: ${JSON.stringify(L).match(/.{40}(undefined|NaN).{20}/)}`);
+      }
+      // Fading (Part B 6): after 6 lessons the last two steps; after 10 one prompt.
+      const L6 = E.teach(p, 6), L10 = E.teach(p, 10);
+      if (L6 && L6.steps.length > 2) fail(tag + 'fade6', `${tag}: 7th lesson still has ${L6.steps.length} steps (want 2 or fewer)`);
+      if (L10 && (L10.steps.length !== 1 || L10.steps[0].answer !== p.answer)) fail(tag + 'fade10', `${tag}: 11th lesson should be one step that asks the problem`);
+      // Lesson steps that are typed have no guessable choices; either/or steps have two (Part B 1).
+      const L = E.teach(p);
+      if (L) for (const s of L.steps) if (s.pick && s.choices.length !== 2) fail(tag + 'pick', `${tag}: either/or step with ${s.choices.length} choices (${s.prompt})`);
+      // Stretched problems: inside the grade (A3) with lessons no harder than the problem.
+      if (TABLE[skill] && lvl && !TABLE[skill](p, lvl)) fail(tag + 'table', `${tag}: ${p.text} is outside the stretch table`);
+      if (p.stretched && L) {
+        const top = Math.max(p.a, p.b, p.answer, p.total || 0);
+        // (Division lessons try "5 groups" first, which can overshoot on purpose.)
+        if (p.op !== '÷') for (const s of L.steps) {
+          const big = Math.max(s.answer, ...nums(s.prompt));
+          if (big > top) fail(tag + 'sbig', `${tag}: lesson step for ${p.text} uses ${big}: "${s.prompt}"`);
+        }
+        for (const t of [L.intro, ...L.steps.map((s) => s.prompt)]) {
+          const ten = t.match(/(\d+) is 10 and (\d+)/);
+          if (ten && (+ten[2] > 9 || +ten[1] !== 10 + +ten[2])) fail(tag + 'ten', `${tag}: "${ten[0]}" in the lesson for ${p.text}`);
+          const ones = t.match(/[Aa]dd the ones: (\d+) \+ (\d+)/);
+          if (ones && (+ones[1] > 9 || (p.op === '+' && +ones[2] > 10))) fail(tag + 'ones', `${tag}: "${ones[0]}" in the lesson for ${p.text}`);
+          const span = t.match(/[Cc]ount (?:up|back) from (\d+) to (\d+)/);
+          if (span && grade <= 1 && Math.abs(span[2] - span[1]) > 10) fail(tag + 'span', `${tag}: "${span[0]}" is a long count for ${p.text}`);
+        }
+        if (p.op === '×' && Math.max(p.a, p.b) > 10 && L.title !== 'Split and multiply') fail(tag + 'x10', `${tag}: ${p.text} is taught with "${L.title}", not split into 10 + the rest`);
+        if (E.inBase && E.inBase(p) && TABLE[skill]) fail(tag + 'inbase', `${tag}: stretched ${p.text} counts as in the grade's base range`);
+      }
+      if (!p.stretched && E.inBase && !E.inBase(p)) fail(tag + 'base', `${tag}: ${p.text} isn't stretched but is outside the base range`);
+      // "Try one just like it" is the same kind of problem (A6).
+      const t = E.twin(p);
+      if (t.op !== p.op) fail(tag + 'twinop', `${tag}: twin of ${p.text} is "${t.text}"`);
+      if (p.op === 'round' && t.b !== p.b) fail(tag + 'twinround', `${tag}: twin rounds to ${t.b}, not ${p.b}`);
+      if (p.op === 'seq' && t.step !== p.step) fail(tag + 'twinseq', `${tag}: twin counts by ${t.step}, not ${p.step}`);
+      // Review keys never clash across skills (A7).
+      const k = keyOf(p), other = keys.get(k);
+      if (other && other !== skill) fail('key' + other + skill, `Review key "${k}" is shared by ${other} and ${skill}`);
+      else keys.set(k, skill);
+    }
+  }
+  check(typeof E.inBase === 'function', 'No inBase(): stretched review problems can\'t be told apart from base ones');
+  if (E.inBase) {
+    for (const x of [{ skillId: 'add-20', a: 45, b: 3, op: '+' }, { skillId: 'add-20', a: 12, b: 22, op: '+' }, { skillId: 'sub-20', a: 23, b: 17, op: '−' }, { skillId: 'sub-20', a: 31, b: 9, op: '−' }, { skillId: 'mult-facts', a: 14, b: 7, op: '×' }]) {
+      check(!E.inBase(x), `${x.a} ${x.op} ${x.b} (${x.skillId}) should be outside the base range`);
+    }
+    for (const x of [{ skillId: 'add-20', a: 9, b: 8, op: '+' }, { skillId: 'sub-20', a: 17, b: 9, op: '−' }, { skillId: 'missing-20', a: 6, b: 6, op: '+', missing: true, total: 12 }]) {
+      check(E.inBase(x), `${x.a} ${x.op} ${x.b} (${x.skillId}) should be inside the base range`);
+    }
+  }
+  // Mystery numbers have a picture (A9).
+  check(!!E.make('missing-20', 1, {}).visual, 'Mystery numbers have no picture');
+  // A skill under 50% lately gets easier, not just more frequent (A9).
+  const weak = { attempts: 10, correct: 2, ms: 1, n: 2, recent: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0] };
+  for (const skill of ['add-20', 'sub-20', 'missing-20']) {
+    let ok = true;
+    for (let i = 0; i < 100; i++) {
+      const p = E.make(skill, 1, { [skill]: weak });
+      const total = p.missing ? p.total : p.op === '+' ? p.a + p.b : p.a;
+      if (total > 10 || !p.visual || p.visualMode !== 'always') { ok = false; break; }
+    }
+    check(ok, `${skill}: under 50% lately, but problems don't drop to 10 with the picture showing`);
+  }
+  // Focus cap (A9): never the same skill 3 times in a row, at most 7 of any 20.
+  if (check(typeof E.pickWild === 'function' && typeof E.capSkill === 'function', 'No focus cap (pickWild / capSkill)')) {
+    for (const grade of [1, 2, 3]) {
+      const skills = Object.fromEntries(E.gradeSkills(grade).map((s) => [s, { attempts: 10, correct: 10, ms: 1, n: 1, recent: Array(10).fill(1) }]));
+      const target = E.gradeSkills(grade)[0];
+      skills[target] = { attempts: 10, correct: 6, ms: 1, n: 1, recent: [1, 0, 1, 0, 1, 0, 1, 0, 1, 1] }; // 60%: struggling
+      const hist = [];
+      for (let b = 0; b < 300; b++) {
+        const foe = E.pickWild(grade, skills, hist);
+        for (let k = 0; k < 2; k++) hist.push(E.capSkill(foe, grade, hist));
+      }
+      let three = false, most = 0;
+      for (let i = 2; i < hist.length; i++) if (hist[i] === hist[i - 1] && hist[i] === hist[i - 2]) three = true;
+      for (let i = 0; i + 20 <= hist.length; i++) { const c = {}; for (const s of hist.slice(i, i + 20)) c[s] = (c[s] || 0) + 1; most = Math.max(most, ...Object.values(c)); }
+      check(!three, `G${grade}: the same skill came up 3 times in a row`);
+      check(most <= 7, `G${grade}: one skill took ${most} of 20 puzzles`);
+    }
   }
 });
 

@@ -1,4 +1,5 @@
-// Layout checks for the question screen. Open the game with ?dev, then in the console:
+// Layout checks for the question and lesson screens. Open the game with ?dev (and
+// &handheld for the Retroid's controller layout), keep the window visible, then in the console:
 //   await import('./tools/layout-qc.js'); await layoutQC();
 // It shows the hardest questions (long stories, big pictures, open hint) and reports
 // anything pushed off screen. Try it at phone and tablet sizes, upright and sideways.
@@ -12,6 +13,7 @@ window.layoutQC = async function () {
   if (document.documentElement.scrollWidth > vw + 1) issues.push(`page scrolls sideways (${document.documentElement.scrollWidth} > ${vw})`);
   const inView = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.left >= -1 && r.right <= vw + 1 && r.top >= -1 && r.bottom <= vh + 1; };
   const visibleIn = (el, box) => { const a = el.getBoundingClientRect(), b = box.getBoundingClientRect(); return a.top >= b.top - 1 && a.bottom <= b.bottom + 1; };
+  const tap = (el) => el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
   const make = (skill, grade, want) => { for (let i = 0; i < 2000; i++) { const p = E.make(skill, grade, {}); if (want(p)) return p; } return E.make(skill, grade, {}); };
   const cases = [
     ['K ten-frame', 0, make('add-10', 0, (p) => p.a + p.b >= 9)],
@@ -61,6 +63,52 @@ window.layoutQC = async function () {
     await done;
     await wait(150);
   }
+  // Teach me with typed steps (Grade 1 up): after two misses (hint, picture and the
+  // worked answer showing) and once solved, the prompt, the entry and Next all show.
+  const lessons = [
+    ['K count-on lesson (choices)', 0, make('add-10', 0, (p) => Math.min(p.a, p.b) >= 3)],
+    ['G1 make-a-ten lesson', 1, make('add-20', 1, (p) => p.a + p.b > 10 && Math.max(p.a, p.b) < 10)],
+    ['G1 take-away lesson', 1, make('sub-20', 1, (p) => p.a > 15 && p.b > 5)],
+    ['G2 column adding lesson', 2, make('add-100', 2, (p) => !p.story)],
+    ['G4 borrowing lesson', 4, make('sub-multi', 4, (p) => !p.story && /0/.test(String(p.a)))],
+    ['G5 decimals lesson', 5, make('dec-sub', 5, () => true)],
+  ];
+  const typeIn = (v) => { for (const d of String(v)) press(d); press('Enter'); };
+  for (const [name, grade, p] of lessons) {
+    MQL.testState(grade).grade = grade;
+    MQL.ask(p);
+    await wait(350);
+    press('x'); await wait(350); press('x'); // Hint, then Teach me
+    await wait(600);
+    const box = document.querySelector('.teach');
+    if (!box) { issues.push(`${name}: the lesson didn't open`); continue; }
+    const cur = MQL.lesson, s = cur && cur.lesson.steps[cur.step];
+    const entry = box.querySelector('.entry'), prompt = box.querySelector('.prompt'), next = box.querySelector('.hintbtn');
+    if (grade > 0 && !entry) issues.push(`${name}: no typed entry in the lesson step`);
+    if (!s) { issues.push(`${name}: MQL.lesson is missing`); continue; }
+    const shows = (x) => x && visibleIn(x, box) && inView(x);
+    if (entry) {
+      typeIn(s.answer + 1); await wait(300); typeIn(s.answer + 1); await wait(500);
+      if (!shows(prompt) || !shows(entry)) issues.push(`${name}: prompt or entry out of view after two misses`);
+      for (const k of document.querySelectorAll('.keypad .key')) if (k.offsetParent && !inView(k)) { issues.push(`${name}: keypad off screen`); break; }
+      if (s.dec && document.querySelector('.keypad .key.dot').offsetParent === null) issues.push(`${name}: no decimal point key`);
+      typeIn(s.answer);
+    } else {
+      const btns = [...box.querySelectorAll('.ans')];
+      tap(btns.find((b) => Number(b.textContent.replace(/,/g, '')) !== s.answer));
+      await wait(1100);
+      if (btns.some((b) => !inView(b))) issues.push(`${name}: lesson choice off screen`);
+      tap([...box.querySelectorAll('.ans')].find((b) => Number(b.textContent.replace(/,/g, '')) === s.answer));
+    }
+    await wait(700);
+    if (next.hidden) issues.push(`${name}: the right answer didn't finish the step`);
+    else {
+      if (!shows(next)) issues.push(`${name}: Next out of view`);
+      if (!shows(prompt) || (entry && !shows(entry))) issues.push(`${name}: prompt or entry out of view once solved`);
+    }
+    if (!inView(box)) issues.push(`${name}: lesson box off screen`);
+  }
+  MQL.testState(0);
   for (const b of document.querySelectorAll('.pad button, .start')) {
     if (b.offsetParent && !inView(b)) issues.push(`control ${b.dataset.btn} off screen`); // hidden in controller mode
   }
