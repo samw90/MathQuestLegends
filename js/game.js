@@ -101,6 +101,14 @@
     s.streak = Number(s.streak) || 0;
     // Stretched problems (outside the skill's base range) don't belong in the review bank.
     s.review = Array.isArray(s.review) ? s.review.filter((x) => x && MathEngine.SKILLS[x.skillId] && MathEngine.inBase(x)) : [];
+    // Review keys are per skill now (6 + ? = 12 and 6 + 6 used to share "6+6"); one item per key.
+    const keys = new Set();
+    s.review = s.review.filter((x) => { x.key = MathEngine.reviewKey(x); if (keys.has(x.key)) return false; keys.add(x.key); return true; });
+    // The buddy is marked on the creature (two of one kind on the team are told apart).
+    if (s.sidekick && Array.isArray(s.party) && !s.party.some((c) => c.buddy)) {
+      const c = s.party.find((x) => x.sp === s.sidekick);
+      if (c) c.buddy = true;
+    }
     // Teach me: lessons opened per skill (from the older count) and steps where the answer was shown.
     s.lessonLog = s.lessonLog && typeof s.lessonLog === 'object' ? s.lessonLog : {};
     for (const [id, n] of Object.entries(s.lessons || {})) if (!s.lessonLog[id]) s.lessonLog[id] = { opened: Number(n) || 0, shown: 0 };
@@ -873,7 +881,7 @@
 
       const bubble = el('div', 'bubble');
       const face = el('img');
-      const bm = S.party.find((c) => c.sp === S.sidekick);
+      const bm = buddyMon();
       face.src = Art.creatureURL(S.sidekick || 'sproutle', !!(bm && bm.golden));
       face.alt = '';
       const bubbleText = el('span');
@@ -1322,7 +1330,8 @@
     S.streak = result === 'first' ? (S.streak || 0) + 1 : 0;
     if (S.streak >= GOLD_STREAK) S.goldenReady = true;
     // Missed problems come back after 1, 3, then 7 days (Math Quest's schedule).
-    const key = `${p.a}${p.op}${p.b}`;
+    // Missed again: back to the start, tomorrow (not again within minutes).
+    const key = MathEngine.reviewKey(p);
     const existing = S.review.find((x) => x.key === key);
     if (result === 'first') {
       if (existing) {
@@ -1330,7 +1339,10 @@
         if (existing.box > 3) S.review.splice(S.review.indexOf(existing), 1);
         else existing.due = Date.now() + [1, 3, 7][existing.box - 1] * DAY;
       }
-    } else if (!existing && !p.stretched) { // stretched misses aren't saved for review
+    } else if (existing) {
+      existing.box = 1;
+      existing.due = Date.now() + DAY;
+    } else if (!p.stretched) { // stretched misses aren't saved for review
       S.review.push({ ...MathEngine.saveable(p), key, box: 1, due: Date.now() + DAY });
       if (S.review.length > 30) S.review.shift();
     }
@@ -1562,7 +1574,7 @@
     go: 'Let\'s practice together!',
     done: ['Great teamwork!', 'We make a good team!'],
   };
-  const buddyMon = () => S.party.find((c) => c.sp === S.sidekick);
+  const buddyMon = () => S.party.find((c) => c.buddy) || S.party.find((c) => c.sp === S.sidekick);
 
   // Talking to the buddy: a hello, then practice, a progress check or a tip.
   async function buddyTalk() {
@@ -1690,7 +1702,7 @@
       // hop then (it looked like shaking); it hops while walking sideways and when idle.
       const vertical = P.moving && F.fx === F.tx;
       const hop = vertical ? 0 : P.moving ? (P.t < STEP_MS / 2 ? 1 : 0) : Math.floor(now / 500) % 2;
-      const bm = S.party.find((c) => c.sp === S.sidekick);
+      const bm = buddyMon();
       const img = Art.creatureSmall(S.sidekick, hop, !!(bm && bm.golden));
       ents.push({ y: F.py, sy: F.py - 0.5, x: Math.round(F.px) - 2, img, oy: -5, flip: F.dir === 'right' });
     }
@@ -1753,7 +1765,7 @@
       const close = popCreature(id);
       const ok = await yesNo([`This is ${sp.name}!`, sp.dex, `Want ${sp.name} to be your buddy?`]);
       if (!ok) { close(); return; }
-      S.party.push(mon(id, 5));
+      S.party.push({ ...mon(id, 5), buddy: true });
       S.sidekick = id;
       S.starterId = id;
       S.flags.starter = true;
@@ -2560,7 +2572,7 @@
     c.sp = to;
     c.hp = maxHp(c);
     delete c.evoHint;
-    if (S.sidekick === from) S.sidekick = to;
+    if (c.buddy) S.sidekick = to;
     S.seen[to] = S.caught[to] = true;
     if (c.golden) S.goldens[to] = true;
     await say([`Hooray! ${SPECIES[from].name} evolved into ${SPECIES[to].name}!`, SPECIES[to].dex]);
@@ -2747,7 +2759,7 @@
 
   function teamItems() {
     return S.party.map((c) => ({
-      label: `${nameOf(c)}${c.golden ? ' ✨' : ''}  Lv ${c.lv}${c.sp === S.sidekick ? '  ★' : ''}`,
+      label: `${nameOf(c)}${c.golden ? ' ✨' : ''}  Lv ${c.lv}${c.buddy ? '  ★' : ''}`,
       sub: alive(c) ? `HP ${c.hp} / ${maxHp(c)}` : 'Needs a rest',
       icon: Art.creatureURL(c.sp, !!c.golden),
       dim: !alive(c),
@@ -2763,7 +2775,7 @@
       const img = el('img', 'pic');
       img.src = Art.creatureURL(c.sp, !!c.golden);
       img.alt = '';
-      box.append(img, el('h3', null, (c.golden ? 'Golden ' : '') + sp.name + (c.sp === S.sidekick ? ' ★' : '')));
+      box.append(img, el('h3', null, (c.golden ? 'Golden ' : '') + sp.name + (c.buddy ? ' ★' : '')));
       box.append(el('p', null, `Level ${c.lv} · HP ${c.hp} / ${maxHp(c)}`));
       box.append(el('p', null, `XP ${c.xp} / ${xpNeed(c.lv)}`));
       box.append(el('p', null, puzzleLabel(c.sp)));
@@ -2777,11 +2789,13 @@
       const i = await teamPicker('Your team (★ = buddy)');
       if (i < 0) return;
       const c = S.party[i];
-      const isBuddy = c.sp === S.sidekick;
+      const isBuddy = !!c.buddy;
       const a = await choose(['Look', isBuddy ? 'Buddy ★' : 'Make buddy', 'Go first', 'Back'], { cls: 'start-menu' });
       if (a === 0) await creatureInfo(c);
       if (a === 1) {
         if (isBuddy) { await say(`${nameOf(c)} is already your buddy!`); continue; }
+        for (const x of [...S.party, ...S.box]) delete x.buddy;
+        c.buddy = true;
         S.sidekick = c.sp;
         S.party.splice(i, 1);
         S.party.unshift(c);
@@ -2826,7 +2840,7 @@
           const k = await teamPicker(`Team is full (6/6). Swap ${nameOf(c)} with...`);
           if (k < 0) continue;
           const out = S.party[k];
-          if (out.sp === S.sidekick) { await say(`${nameOf(out)} is your buddy, so it stays with you.`); continue; }
+          if (out.buddy) { await say(`${nameOf(out)} is your buddy, so it stays with you.`); continue; }
           S.party[k] = c;
           S.box[j] = out;
           sfx('friend');
@@ -2837,7 +2851,7 @@
         const k = await teamPicker(`Put away which Legend? (Team: ${S.party.length}/6)`);
         if (k < 0) continue;
         const c = S.party[k];
-        if (c.sp === S.sidekick) { await say(`${nameOf(c)} is your buddy, so it stays with you. You can pick a new buddy in MENU, Team.`); continue; }
+        if (c.buddy) { await say(`${nameOf(c)} is your buddy, so it stays with you. You can pick a new buddy in MENU, Team.`); continue; }
         S.party.splice(k, 1);
         c.hp = maxHp(c);
         S.box.push(c);
@@ -3026,7 +3040,7 @@
   function devUnlockAll() {
     S.flags.starter = true;
     S.flags.devAll = true;
-    if (!S.sidekick) { S.sidekick = 'sproutle'; S.party.unshift(mon('sproutle', 30)); }
+    if (!S.sidekick) { S.sidekick = 'sproutle'; S.party.unshift({ ...mon('sproutle', 30), buddy: true }); }
     for (const f of BADGE_FLAGS) { S.flags[f] = true; if (!(f in S.badgeGrade)) S.badgeGrade[f] = S.grade; }
     for (const [id, m] of Object.entries(MAPS)) if (m.heal) S.visited[id] = true;
     // Rare Legends stay un-befriended so their encounters can be tried (they all show up with devAll).

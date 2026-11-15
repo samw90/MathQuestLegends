@@ -488,20 +488,29 @@ const MathEngine = (() => {
     return finish(p);
   }
 
-  // A fresh problem just like `p` (same skill, no story), used after "Teach me".
+  // A fresh problem just like `p`, used after "Teach me": same skill and kind (same
+  // operation, the same unit for rounding, the same step for counting patterns), no story.
   function twin(p) {
     const t = templateFor(p.skillId);
-    for (let i = 0; i < 200; i++) {
+    const like = (q) => !!q.missing === !!p.missing && q.op === p.op && (p.op !== 'round' || q.b === p.b) && (p.op !== 'seq' || q.step === p.step);
+    let near = null;
+    for (let i = 0; i < 400; i++) {
       const q = t.gen();
-      if (!q.story && !!q.missing === !!p.missing && !(q.a === p.a && q.b === p.b)) return finish(q);
+      if (q.story || !like(q)) continue;
+      if (!(q.a === p.a && q.b === p.b)) return finish(q);
+      near = q;
     }
-    return finish(t.gen());
+    return finish(near || { ...p, story: null });
   }
+
+  // The review bank's key for a problem: unique across skills, so 6 + ? = 12 (a mystery
+  // number) and 6 + 6 (doubles) are different problems.
+  const reviewKey = (p) => `${p.skillId}|${p.op}|${p.a}|${p.b}${p.missing ? '|m' : ''}`;
 
   // The fields a problem needs to be rebuilt later (for the review bank).
   function saveable(p) {
     const keep = {};
-    for (const k of ['skillId', 'a', 'b', 'c', 'd', 'op', 'answer', 'missing', 'total', 'visual', 'visualMode', 'dec', 'seq', 'step', 'prompt']) {
+    for (const k of ['skillId', 'a', 'b', 'c', 'd', 'o', 'op', 'answer', 'missing', 'total', 'visual', 'visualMode', 'dec', 'seq', 'step', 'prompt']) {
       if (p[k] !== undefined) keep[k] = p[k];
     }
     return keep;
@@ -1003,7 +1012,7 @@ const MathEngine = (() => {
         { work: [`${t} tens = ${10 * t}`, `${o} ones = ${o}`], prompt: `${10 * t} + ${o} = ?`, answer: p.answer, hint: `Start at ${10 * t} and count up ${o}.`, after: `${t} tens and ${o} ones is ${p.answer}.` },
       ] };
     }
-    const h = p.a, t = p.b, o = p.o;
+    const h = p.a, t = p.b, o = p.o ?? p.answer % 10; // older review copies didn't keep the ones
     return { title: 'Hundreds, tens and ones', intro: 'Build the number one place at a time: hundreds, then tens, then ones.', steps: [
       { work: [p.prompt], prompt: `${h} hundreds = ?`, answer: 100 * h, hint: `Count by 100s, ${h} times.`, after: `${h} hundreds is ${100 * h}.` },
       { work: [p.prompt, `${h} hundreds = ${100 * h}`], prompt: `Add the tens: ${100 * h} + ${10 * t} = ?`, answer: 100 * h + 10 * t, hint: `${t} tens is ${10 * t}.`, after: `Now we have ${100 * h + 10 * t}.` },
@@ -1027,10 +1036,11 @@ const MathEngine = (() => {
   function teachRound(p) {
     const { a, b } = p, lo = Math.floor(a / b) * b, hi = lo + b;
     const place = { 10: 'ones', 100: 'tens', 1000: 'hundreds' }[b], d = Math.floor((a % b) / (b / 10));
-    return { title: 'Round on a number line', intro: `Find the two round numbers ${a} sits between. Then see which one it's closer to.`, steps: [
-      { work: [`${lo} ... ${a} ... ?`], prompt: `${a} is between ${lo} and what?`, answer: hi, hint: `Count up ${b} from ${lo}.`, after: `${a} is between ${lo} and ${hi}.` },
-      { work: [`${lo} ... ${a} ... ${hi}`], prompt: `What is the ${place} digit of ${a}?`, answer: d, hint: `Look at the ${place} place.`, after: d >= 5 ? `${d} is 5 or more, so we round up.` : `${d} is less than 5, so we round down.` },
-      { work: [`${lo} ... ${a} ... ${hi}`, d >= 5 ? 'round up' : 'round down'], prompt: `So ${a} rounds to ?`, answer: p.answer, choices: [lo, hi], hint: d >= 5 ? 'Round up to the bigger one.' : 'Round down to the smaller one.', after: `${a} rounds to ${p.answer}.` },
+    const A = show(a), LO = show(lo), HI = show(hi), B = show(b);
+    return { title: 'Round on a number line', intro: `Find the two round numbers ${A} sits between. Then see which one it's closer to.`, steps: [
+      { work: [`${LO} ... ${A} ... ?`], prompt: `${A} is between ${LO} and what?`, answer: hi, hint: `Count up ${B} from ${LO}.`, after: `${A} is between ${LO} and ${HI}.` },
+      { work: [`${LO} ... ${A} ... ${HI}`], prompt: `What is the ${place} digit of ${A}?`, answer: d, hint: `Look at the ${place} place.`, after: d >= 5 ? `${d} is 5 or more, so we round up.` : `${d} is less than 5, so we round down.` },
+      { work: [`${LO} ... ${A} ... ${HI}`, d >= 5 ? 'round up' : 'round down'], prompt: `So ${A} rounds to ?`, answer: p.answer, choices: [lo, hi], hint: d >= 5 ? 'Round up to the bigger one.' : 'Round down to the smaller one.', after: `${A} rounds to ${show(p.answer)}.` },
     ] };
   }
 
@@ -1209,7 +1219,7 @@ const MathEngine = (() => {
   return {
     SKILLS, MASTERY, LEVELS,
     pickSkill, pickWild, capSkill, inBase, weakestSkill, strugglingSkill, gradeSkills, stretchLevel, accuracy, recentAccuracy,
-    make, twin, fromReview, saveable, tip, mistakeHint, mistakeKind, SLIPS, teach, show, fmt,
+    make, twin, fromReview, saveable, reviewKey, tip, mistakeHint, mistakeKind, SLIPS, teach, show, fmt,
     TRICKS: ['Count on', 'Make a ten', 'Ones first', 'Back to ten', 'Count back', 'Think adding', 'Column adding', 'Borrowing', 'Skip counting', 'Friendly fives',
       'Think multiplication', 'Find the pattern', 'Tens and ones', 'Split and halve', 'Round on a number line', 'Split and multiply',
       'Long division', 'Grow the fraction', 'Match the bottoms', 'Line up the points', 'The mystery number'],
