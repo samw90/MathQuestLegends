@@ -99,6 +99,8 @@
     for (const f of BADGE_FLAGS) if (f in s.badgeGrade && !s.badgeWins[f]) s.badgeWins[f] = [s.badgeGrade[f]];
     s.goldens = s.goldens && typeof s.goldens === 'object' ? s.goldens : {};
     s.streak = Number(s.streak) || 0;
+    // Stretched problems (outside the skill's base range) don't belong in the review bank.
+    s.review = Array.isArray(s.review) ? s.review.filter((x) => x && MathEngine.SKILLS[x.skillId] && MathEngine.inBase(x)) : [];
     // Teach me: lessons opened per skill (from the older count) and steps where the answer was shown.
     s.lessonLog = s.lessonLog && typeof s.lessonLog === 'object' ? s.lessonLog : {};
     for (const [id, n] of Object.entries(s.lessons || {})) if (!s.lessonLog[id]) s.lessonLog[id] = { opened: Number(n) || 0, shown: 0 };
@@ -756,7 +758,8 @@
     if (!v) return null;
     const wrap = el('div', 'vis ' + v.kind);
     if (v.kind === 'tenframe') {
-      const total = v.mode === 'add' ? v.a + v.b : v.a;
+      // add: two colors; sub: the taken ones crossed out; missing: the missing part as empty spots.
+      const total = v.mode === 'sub' ? v.a : v.a + v.b;
       const frames = Math.ceil(total / 10);
       if (frames > 2) return null;
       for (let f = 0; f < frames; f++) {
@@ -767,6 +770,9 @@
           if (v.mode === 'add') {
             if (n < v.a) cell.classList.add('dot', 'a');
             else if (n < v.a + v.b) cell.classList.add('dot', 'b');
+          } else if (v.mode === 'missing') {
+            if (n < v.a) cell.classList.add('dot', 'a');
+            else if (n < v.a + v.b) cell.classList.add('q');
           } else if (n < v.a) {
             cell.classList.add('dot', 'a');
             if (n >= v.a - v.b) cell.classList.add('gone');
@@ -1284,13 +1290,23 @@
 
   function record(p, result, ms) {
     const s = S.skills[p.skillId] || (S.skills[p.skillId] = { attempts: 0, correct: 0, ms: 0, n: 0 });
-    // Like Math Quest: at 20 tries the record is halved, so newer tries count for more
-    // and an early struggle fades. `all` keeps the real number of tries.
     s.all = (s.all ?? s.attempts) + 1;
-    if (s.attempts >= 20) for (const k of ['attempts', 'correct', 'ms', 'n', 'helped']) if (s[k]) s[k] = Math.round(s[k] / 2);
-    s.attempts++;
-    if (result === 'first') { s.correct++; s.ms += Math.min(ms, 120000); s.n++; }
-    if (result === 'helped') s.helped = (s.helped || 0) + 1; // right after a hint or a second try
+    // The skills of the last 20 puzzles, for the focus cap.
+    S.lastSkills = [...(S.lastSkills || []), p.skillId].slice(-20);
+    if (p.stretched) {
+      // Stretched problems (bigger numbers for a strong skill) have their own record:
+      // the skill's record, and so its rating, stays about the grade's own numbers.
+      const x = s.stretch || (s.stretch = { attempts: 0, correct: 0 });
+      x.attempts++;
+      if (result === 'first') x.correct++;
+    } else {
+      // Like Math Quest: at 20 tries the record is halved, so newer tries count for more
+      // and an early struggle fades. `all` keeps the real number of tries.
+      if (s.attempts >= 20) for (const k of ['attempts', 'correct', 'ms', 'n', 'helped']) if (s[k]) s[k] = Math.round(s[k] / 2);
+      s.attempts++;
+      if (result === 'first') { s.correct++; s.ms += Math.min(ms, 120000); s.n++; }
+      if (result === 'helped') s.helped = (s.helped || 0) + 1; // right after a hint or a second try
+    }
     // Each day's tries per skill (the progress page's calendar), the last 120 days.
     const day = new Date().toLocaleDateString('en-CA'); // 2026-10-23, local time
     const today = (S.days = S.days || {})[day] || (S.days[day] = {});
@@ -1301,7 +1317,7 @@
     const old = Object.keys(S.days).sort();
     for (const k of old.slice(0, Math.max(0, old.length - 120))) delete S.days[k];
     // The last 10 tries (1 = right on the first try), for "How am I doing?".
-    s.recent = [...(s.recent || []), result === 'first' ? 1 : 0].slice(-10);
+    if (!p.stretched) s.recent = [...(s.recent || []), result === 'first' ? 1 : 0].slice(-10);
     // 10 first tries in a row: the next wild Legend is golden.
     S.streak = result === 'first' ? (S.streak || 0) + 1 : 0;
     if (S.streak >= GOLD_STREAK) S.goldenReady = true;
@@ -1314,7 +1330,7 @@
         if (existing.box > 3) S.review.splice(S.review.indexOf(existing), 1);
         else existing.due = Date.now() + [1, 3, 7][existing.box - 1] * DAY;
       }
-    } else if (!existing) {
+    } else if (!existing && !p.stretched) { // stretched misses aren't saved for review
       S.review.push({ ...MathEngine.saveable(p), key, box: 1, due: Date.now() + DAY });
       if (S.review.length > 30) S.review.shift();
     }
@@ -1325,13 +1341,17 @@
   // The next problem for a battle against `foe`.
   function problemFor(foe) {
     const fam = SPECIES[foe.sp].family;
-    const due = S.review.filter((x) => x.due <= Date.now() && (fam === 'mixed' || MathEngine.SKILLS[x.skillId].family === fam));
+    const hist = S.lastSkills || [];
+    const capped = (id) => MathEngine.capSkill(id, S.grade, hist) !== id;
+    const due = S.review.filter((x) => x.due <= Date.now() && (fam === 'mixed' || MathEngine.SKILLS[x.skillId].family === fam) && !capped(x.skillId));
     if (due.length && Math.random() < 0.3) {
       const p = MathEngine.fromReview(pick(due));
       p.review = true;
       return p;
     }
-    const skill = foe.skill || MathEngine.pickSkill(S.grade, S.skills);
+    // The focus cap: a skill asked twice in a row (or 7 of the last 20) gives way to
+    // another of the same kind of math.
+    const skill = MathEngine.capSkill(foe.skill || MathEngine.pickSkill(S.grade, S.skills), S.grade, hist);
     return MathEngine.make(skill, S.grade, S.skills);
   }
 
@@ -2712,11 +2732,9 @@
   // often, and a Legend's level grows as its skill is mastered.
   async function wildBattle() {
     // Focus: while a skill is a real struggle lately (under 70% on its last 10 tries),
-    // 40% of encounters target it directly. Not in Math Quest; there, the weighting
-    // in pickSkill does it all.
-    const weak = MathEngine.strugglingSkill(S.grade, S.skills);
-    const focus = weak && Math.random() < 0.4;
-    const skill = focus ? weak : MathEngine.pickSkill(S.grade, S.skills);
+    // 40% of encounters target it directly, but under 50% its problems get easier
+    // instead, and no skill takes over (twice in a row at most, 7 of any 20).
+    const skill = MathEngine.pickWild(S.grade, S.skills, S.lastSkills || []);
     const area = AREAS[map().area] || AREAS.meadow;
     const sp = area.species[MathEngine.SKILLS[skill].family];
     const lv = area.base + 2 * MathEngine.stretchLevel(S.skills[skill]) + rnd(0, 1);
@@ -3476,6 +3494,9 @@
     window.MQL.ask = ask;
     window.MQL.say = say;
     window.MQL.checkEvolutions = checkEvolutions;
+    // Test hooks: a save as it loads (with its migrations), without touching storage; record a result.
+    window.MQL.loadSave = (raw) => { const s = JSON.parse(typeof raw === 'string' ? raw : JSON.stringify(raw)); return upgradeSave(Object.assign(newState(s.name || 'Hero', s.grade || 0), s)); };
+    window.MQL.record = (p, result, ms = 5000) => record(p, result, ms);
     // Test hook: jump into the world at a spot, e.g. MQL.warp('room', 2, 2).
     window.MQL.warp = (mapId, x, y, dir = 'up') => { ui.textContent = ''; handler = null; placePlayer(mapId, x, y, dir); mode = 'world'; };
     window.MQL.interact = () => interact();

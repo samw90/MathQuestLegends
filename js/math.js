@@ -125,7 +125,7 @@ const MathEngine = (() => {
       { skill: 'compare', weight: 8, gen() { const a = r(5, 20); let b = r(5, 20); while (b === a) b = r(5, 20); return base('compare', a, b, 'or', Math.max(a, b), line(0, 20, 2, [{ at: a, label: a }, { at: b, label: b }]), 'hint'); } },
       { skill: 'place-tens', weight: 7, gen() { const t = r(1, 9), o = r(0, 9), n = 10 * t + o; return { ...base('place-tens', t, o, 'place', n, { kind: 'baseten', a: n, b: 0, mode: 'show' }, 'hint'), prompt: `${t} tens and ${o} ones = ?` }; } },
       { skill: 'doubles', weight: 7, gen() { const a = r(2, 9); return base('doubles', a, a, '+', 2 * a, { kind: 'tenframe', a, b: a, mode: 'add' }, 'hint'); } },
-      { skill: 'missing-20', weight: 8, gen() { const a = r(3, 15), b = r(2, Math.min(20 - a, 12)); return missingOf('missing-20', a, b, null); } },
+      { skill: 'missing-20', weight: 8, gen() { const a = r(3, 15), b = r(2, Math.min(20 - a, 12)); return missingOf('missing-20', a, b, { kind: 'tenframe', a, b, mode: 'missing' }); } },
     ],
     g2: [
       { skill: 'add-100', weight: 30, gen() { const a = r(12, 70), b = r(11, 99 - a); return story(base('add-100', a, b, '+', a + b, { kind: 'baseten', a, b, mode: 'add' }, 'hint'), 'add'); } },
@@ -223,16 +223,53 @@ const MathEngine = (() => {
   // Pictures only work for small numbers: ten-frames up to 20, blocks under 100.
   function fitVisual(p) {
     const v = p.visual;
-    const fits = !v || (v.kind === 'tenframe' ? (v.mode === 'add' ? v.a + v.b : v.a) <= 20 : v.kind === 'baseten' ? v.a < 100 && v.b < 100 : true);
+    const fits = !v || (v.kind === 'tenframe' ? (v.mode === 'sub' ? v.a : v.a + v.b) <= 20 : v.kind === 'baseten' ? v.a < 100 && v.b < 100 : true);
     return fits ? p : { ...p, visual: null, visualMode: 'none' };
   }
 
-  // Strong skills sometimes get bigger numbers.
+  // Strong skills sometimes get bigger numbers. Kindergarten, Grade 1 adding and
+  // taking away and Grade 3 times tables follow a table of steps that stays inside
+  // the grade's standards (QC plan A3); the other skills scale the numbers up.
+  //   add-10 / sub-10 (K): within 12, then within 15
+  //   add-20 (G1): two-digit + one-digit with no new ten to 39 (23 + 5) or + 10 (34 + 10);
+  //                then across a ten, to 50 (27 + 6)
+  //   sub-20 (G1): two-digit − one-digit inside the decade (37 − 4) or − 10 (46 − 10);
+  //                then across a ten (32 − 5)
+  //   mult-facts (G3): one factor to 11, then to 12
+  function stretchTable(p, level) {
+    const id = p.skillId;
+    const v = (a, b, mode) => (a + (mode === 'add' ? b : 0) <= 20 ? { kind: 'tenframe', a, b, mode } : { kind: 'baseten', a, b, mode });
+    const add = (a, b) => ({ ...p, a, b, answer: a + b, visual: v(a, b, 'add'), stretched: true });
+    const sub = (a, b) => ({ ...p, a, b, answer: a - b, visual: v(a, b, 'sub'), stretched: true });
+    if (id === 'add-10') { const t = r(11, level === 1 ? 12 : 15), a = r(Math.max(2, t - 10), Math.min(10, t - 2)); return add(a, t - a); }
+    if (id === 'sub-10') { const a = r(11, level === 1 ? 12 : 15); return sub(a, r(1, a - 1)); }
+    if (id === 'add-20') {
+      if (level === 2 && Math.random() < 0.7) {
+        for (;;) { const a = r(21, 47), o = a % 10, lo = Math.max(2, 10 - o), hi = Math.min(9, 50 - a); if (o && lo <= hi) return add(a, r(lo, hi)); }
+      }
+      if (Math.random() < 0.3) return add(r(11, 39), 10);
+      for (;;) { const a = r(21, 38), o = a % 10, hi = Math.min(9 - o, 39 - a); if (hi >= 1) return add(a, r(1, hi)); }
+    }
+    if (id === 'sub-20') {
+      if (level === 2 && Math.random() < 0.7) {
+        for (;;) { const a = r(21, 50), o = a % 10; if (o <= 8) return sub(a, r(o + 1, 9)); }
+      }
+      if (Math.random() < 0.3) return sub(r(21, 50), 10);
+      for (;;) { const a = r(21, 49), o = a % 10; if (o) return sub(a, r(1, o)); }
+    }
+    if (id === 'mult-facts') {
+      const big = level === 1 ? 11 : pick([11, 12]), small = r(2, 10);
+      return { ...p, a: big, b: small, answer: big * small, visual: null, visualMode: 'none', stretched: true };
+    }
+    return null;
+  }
+  const TABLED = new Set(['add-10', 'sub-10', 'add-20', 'sub-20', 'mult-facts']);
   const STRETCHY = new Set(['add-10', 'sub-10', 'add-20', 'sub-20', 'add-100', 'sub-100', 'equal-groups', 'mult-facts', 'div-facts',
     'add-1000', 'sub-1000', 'add-multi', 'sub-multi', 'mult-1digit', 'div-1digit', 'mult-2digit', 'div-long']);
   function stretch(p, level, grade) {
     if (!level || p.story || p.missing || p.dec || !STRETCHY.has(p.skillId)) return p;
     if (Math.random() > (level === 2 ? 0.85 : 0.5)) return p;
+    if (TABLED.has(p.skillId)) return fitVisual(stretchTable(p, level));
     const L = LEVELS[grade];
     const cap = { k: 10, g1: 20, g2: 99, g3: 999, g4: 9999, g5: 9999 }[L];
     const f = level === 2 ? 2.5 : 1.7;
@@ -258,6 +295,25 @@ const MathEngine = (() => {
     }
     return p;
   }
+
+  // The numbers a skill uses before any stretching. Review problems outside it were
+  // stretched (they're dropped from the review bank; QC plan A3).
+  const BASE = {
+    'add-10': (p) => p.a + p.b <= 10, 'sub-10': (p) => p.a <= 10, 'parts-10': (p) => (p.total ?? p.a + p.b) <= 10,
+    'add-20': (p) => p.a + p.b <= 20, 'sub-20': (p) => p.a <= 20, 'missing-20': (p) => (p.total ?? p.a + p.b) <= 20,
+    'add-100': (p) => p.a + p.b <= 99, 'sub-100': (p) => p.a <= 99, 'equal-groups': (p) => p.a <= 5 && p.b <= 5,
+    'mult-facts': (p) => p.a <= 10 && p.b <= 10, 'div-facts': (p) => p.b <= 10 && p.a / p.b <= 10,
+    'add-1000': (p) => p.a + p.b <= 999, 'sub-1000': (p) => p.a <= 999,
+    'add-multi': (p) => p.a + p.b <= 9999, 'sub-multi': (p) => p.a <= 9999,
+    'mult-1digit': (p) => p.a <= 999 && p.b <= 9, 'div-1digit': (p) => p.a / p.b <= 99,
+    'mult-2digit': (p) => p.a <= 99 && p.b <= 99, 'div-long': (p) => p.a / p.b <= 999,
+  };
+  const inBase = (p) => !BASE[p.skillId] || BASE[p.skillId](p);
+
+  // Under 50% right lately (at least 5 tries): easier problems, not more of them.
+  // Grade 1 adding, taking away and mystery numbers drop to 10, with the picture showing.
+  const struggling = (s) => (s && s.recent || []).length >= 5 && recentAccuracy(s) < 0.5;
+  const EASY_TO_10 = new Set(['add-20', 'sub-20', 'missing-20']);
 
   const gradeSkills = (grade) => TEMPLATES[LEVELS[grade]].map((t) => t.skill);
   const earlierSkills = (grade) => LEVELS.slice(0, grade).flatMap((L) => TEMPLATES[L].map((t) => t.skill));
@@ -287,6 +343,38 @@ const MathEngine = (() => {
       if (a < low) { worst = id; low = a; }
     }
     return worst;
+  }
+
+  // Focus cap (QC plan A9): never the same skill more than twice in a row, and at most
+  // 7 of any 20 puzzles. `hist` is the skills of the last puzzles, newest last.
+  const capped = (skill, hist = []) => {
+    const n = hist.length;
+    if (n >= 2 && hist[n - 1] === skill && hist[n - 2] === skill) return true;
+    return hist.slice(-19).filter((x) => x === skill).length >= 7;
+  };
+  // The skill for the next puzzle of a Legend that asks `skill`: itself, or when it's
+  // capped another skill of the same kind of math (this grade first, then earlier).
+  function capSkill(skill, grade, hist) {
+    if (!capped(skill, hist)) return skill;
+    const fam = SKILLS[skill].family;
+    const ok = (s) => s !== skill && SKILLS[s].family === fam && !capped(s, hist);
+    const here = gradeSkills(grade).filter(ok), before = earlierSkills(grade).filter(ok);
+    if (here.length || before.length) return pick(here.length ? here : before);
+    // No other skill of that kind is free: any free skill of the grade.
+    const any = gradeSkills(grade).filter((x) => x !== skill && !capped(x, hist));
+    return any.length ? pick(any) : skill;
+  }
+  // The skill a wild Legend asks. While a skill is a struggle (under 70% on its last
+  // 10 tries) 40% of encounters target it, unless it's under 50%: then make() eases
+  // its problems instead. Capped skills are passed over.
+  function pickWild(grade, skills, hist) {
+    const weak = strugglingSkill(grade, skills);
+    const focus = weak && !struggling(skills[weak]) && Math.random() < 0.4;
+    for (let i = 0; i < 20; i++) {
+      const s = i === 0 && focus ? weak : pickSkill(grade, skills);
+      if (!capped(s, hist)) return s;
+    }
+    return capSkill(pickSkill(grade, skills), grade, hist);
   }
 
   // The skill with the lowest accuracy this grade (untried skills count as weak).
@@ -387,6 +475,14 @@ const MathEngine = (() => {
   function make(skillId, grade, skills = {}) {
     const t = templateFor(skillId) || TEMPLATES[LEVELS[grade]][0];
     let p = t.gen();
+    if (struggling(skills[t.skill])) {
+      if (EASY_TO_10.has(t.skill)) {
+        const total = (q) => (q.missing ? q.total : q.op === '+' ? q.a + q.b : q.a);
+        for (let i = 0; i < 300 && total(p) > 10; i++) p = t.gen();
+      }
+      if (p.visual) p = { ...p, visualMode: 'always' };
+      return finish({ ...p, eased: true });
+    }
     // Review problems from an earlier grade are never stretched.
     if (LEVELS.indexOf(SKILLS[t.skill].level) === grade) p = stretch(p, stretchLevel(skills[t.skill]), grade);
     return finish(p);
@@ -676,6 +772,35 @@ const MathEngine = (() => {
 
   function teachCountOn(p) {
     const big = Math.max(p.a, p.b), small = Math.min(p.a, p.b);
+    const T = Math.floor(big / 10) * 10, O = big % 10;
+    // Adding a ten: 34 + 10 is 30 + 10, then the 4.
+    if (small === 10 && big > 10) {
+      const steps = [{ work: [`${p.a} + ${p.b}`, `= ${T} + 10${O ? ` + ${O}` : ''}`], prompt: `Add the tens: ${T} + 10 = ?`, answer: T + 10, hint: `Count on 10 from ${T}.`, after: `${T} + 10 = ${T + 10}.` }];
+      if (O) steps.push({ work: [`${p.a} + ${p.b}`, `= ${T + 10} + ${O}`], prompt: `Now the ones: ${T + 10} + ${O} = ?`, answer: p.answer, hint: `${T + 10} and ${O} more.`, after: `So ${p.a} + ${p.b} = ${p.answer}.` });
+      return { title: 'Tens and ones', intro: `${big} is ${T} and ${O}. Add the ten to the tens, then put the ones back.`, steps };
+    }
+    // 10 + 7 is just ten and 7 more.
+    if (big === 10) {
+      return { title: 'Tens and ones', intro: 'Ten and some more is easy: the ten, then the ones.', steps: [
+        { work: [`${p.a} + ${p.b}`], prompt: `10 + ${small} is ten and ${small} more. 10 + ${small} = ?`, answer: p.answer, hint: `Say ten, then the ${small}: ${10 + small} is ten and ${small}.`, after: `So ${p.a} + ${p.b} = ${p.answer}.` },
+      ] };
+    }
+    // A number of 20 or more: split it. 25 + 6 is 20 and 5 + 6.
+    if (big >= 20 && small > 3) {
+      if (!O) {
+        return { title: 'Tens and ones', intro: `${big} is ${T / 10} tens. Add the ones to it.`, steps: [
+          { work: [`${p.a} + ${p.b}`], prompt: `${T} + ${small} = ?`, answer: p.answer, hint: `${T} and ${small} more.`, after: `So ${p.a} + ${p.b} = ${p.answer}.` },
+        ] };
+      }
+      return {
+        title: 'Ones first',
+        intro: `${big} is ${T} and ${O}. Add the ones first, then the tens.`,
+        steps: [
+          { work: [`${big} + ${small}`, `= ${T} + ${O} + ${small}`], prompt: `Add the ones: ${O} + ${small} = ?`, answer: O + small, hint: `Start at ${Math.max(O, small)}. Count up ${Math.min(O, small)}.`, after: `${O} + ${small} = ${O + small}.` },
+          { work: [`${big} + ${small}`, `= ${T} + ${O + small}`], prompt: `Now add the tens: ${T} + ${O + small} = ?`, answer: p.answer, hint: O + small >= 10 ? `${O + small} is 10 and ${O + small - 10}. So that's ${T + 10} and ${O + small - 10}.` : `${T} and ${O + small} more.`, after: `So ${p.a} + ${p.b} = ${p.answer}.` },
+        ],
+      };
+    }
     if (p.a + p.b > 10 && big < 10) {
       const need = 10 - big, rest = small - need;
       return {
@@ -719,6 +844,33 @@ const MathEngine = (() => {
 
   function teachTakeAway(p) {
     const { a, b } = p;
+    // From more than 20, taking away more than 5: tens and ones, or back to the ten.
+    if (a > 20 && b > 5) {
+      const T = Math.floor(a / 10) * 10, O = a % 10;
+      if (b === 10) {
+        const steps = [{ work: [`${a} − 10`, `= ${T} − 10${O ? ` + ${O}` : ''}`], prompt: `Take away the ten: ${T} − 10 = ?`, answer: T - 10, hint: `Count back 10 from ${T}.`, after: `${T} − 10 = ${T - 10}.` }];
+        if (O) steps.push({ work: [`${a} − 10`, `= ${T - 10} + ${O}`], prompt: `Now put the ones back: ${T - 10} + ${O} = ?`, answer: p.answer, hint: `${T - 10} and ${O} more.`, after: `So ${a} − 10 = ${p.answer}.` });
+        return { title: 'Tens and ones', intro: `${a} is ${T} and ${O}. Take the ten from the tens.`, steps };
+      }
+      if (b <= O) {
+        return { title: 'Ones first', intro: `${a} is ${T} and ${O}. Take away from the ones.`, steps: [
+          { work: [`${a} − ${b}`, `= ${T} + ${O} − ${b}`], prompt: `Take away the ones: ${O} − ${b} = ?`, answer: O - b, hint: `Count back ${b} from ${O}.`, after: `${O} − ${b} = ${O - b}.` },
+          { work: [`${a} − ${b}`, `= ${T} + ${O - b}`], prompt: `Now put the tens back: ${T} + ${O - b} = ?`, answer: p.answer, hint: `${T} and ${O - b} more.`, after: `So ${a} − ${b} = ${p.answer}.` },
+        ] };
+      }
+      if (!O) {
+        // 40 − 7: take it from one of the tens. 40 is 30 and 10.
+        return { title: 'Back to ten', intro: `${a} is ${T - 10} and 10. Take the ${b} from the 10.`, steps: [
+          { work: [`${a} − ${b}`, `= ${T - 10} + 10 − ${b}`], prompt: `Take it from the ten: 10 − ${b} = ?`, answer: 10 - b, hint: `Count back ${b} from 10.`, after: `10 − ${b} = ${10 - b}.` },
+          { work: [`${a} − ${b}`, `= ${T - 10} + ${10 - b}`], prompt: `Now put them together: ${T - 10} + ${10 - b} = ?`, answer: p.answer, hint: `${T - 10} and ${10 - b} more.`, after: `So ${a} − ${b} = ${p.answer}.` },
+        ] };
+      }
+      const rest = b - O;
+      return { title: 'Back to ten', intro: `Take away in two jumps: first back to ${T}, then the rest. ${b} is ${O} and ${rest}.`, steps: [
+        { work: [`${a} − ${b}`, `= ${a} − ${O} − ${rest}`], prompt: `Back to the ten: ${a} − ${O} = ?`, answer: T, hint: `Take away the ${O} ones.`, after: `${a} − ${O} = ${T}. ${rest} more to take away.` },
+        { work: [`${a} − ${b}`, `= ${T} − ${rest}`], prompt: `Now take away the rest: ${T} − ${rest} = ?`, answer: p.answer, hint: `Count back ${rest} from ${T}.`, after: `So ${a} − ${b} = ${p.answer}.` },
+      ] };
+    }
     if (b <= 5) {
       const steps = [];
       let at = a;
@@ -783,6 +935,8 @@ const MathEngine = (() => {
   }
 
   function teachMult(p) {
+    // A factor over 10 (11 × 7): split it into 10 and the rest.
+    if (Math.max(p.a, p.b) > 10) return teachPartial(p.a >= p.b ? p : { ...p, a: p.b, b: p.a });
     const t = p.a, n = p.b, q = `${p.a} × ${p.b}`, steps = [];
     if (t <= 5) {
       const seen = [n];
@@ -1054,9 +1208,9 @@ const MathEngine = (() => {
 
   return {
     SKILLS, MASTERY, LEVELS,
-    pickSkill, weakestSkill, strugglingSkill, gradeSkills, stretchLevel, accuracy, recentAccuracy,
+    pickSkill, pickWild, capSkill, inBase, weakestSkill, strugglingSkill, gradeSkills, stretchLevel, accuracy, recentAccuracy,
     make, twin, fromReview, saveable, tip, mistakeHint, mistakeKind, SLIPS, teach, show, fmt,
-    TRICKS: ['Count on', 'Make a ten', 'Count back', 'Think adding', 'Column adding', 'Borrowing', 'Skip counting', 'Friendly fives',
+    TRICKS: ['Count on', 'Make a ten', 'Ones first', 'Back to ten', 'Count back', 'Think adding', 'Column adding', 'Borrowing', 'Skip counting', 'Friendly fives',
       'Think multiplication', 'Find the pattern', 'Tens and ones', 'Split and halve', 'Round on a number line', 'Split and multiply',
       'Long division', 'Grow the fraction', 'Match the bottoms', 'Line up the points', 'The mystery number'],
   };

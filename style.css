@@ -383,6 +383,8 @@ body.kb .ans.sel { outline: .9cqw solid var(--accent); outline-offset: .3cqw; }
 .vis.tenframe .dot.a::after { background: #e8506a; }
 .vis.tenframe .dot.b::after { background: #4a9ae8; }
 .vis.tenframe .gone::after { opacity: .3; }
+/* Mystery numbers: the missing part is empty spots, outlined in gold. */
+.vis.tenframe .cell.q { background: #fff6d6; box-shadow: inset 0 0 0 .5cqw #f2c84b; }
 .vis.tenframe .gone::before { content: '✕'; position: absolute; font-size: 4.4cqw; color: var(--ink); }
 
 .vis.baseten .grp { display: flex; align-items: flex-end; gap: .7cqw; }
